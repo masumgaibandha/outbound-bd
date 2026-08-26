@@ -5,7 +5,7 @@
 // than "any same-origin relative path") is defense in depth: `redirectTo` is
 // round-tripped through a query string an attacker could craft and send to a
 // victim, so it must never be able to point anywhere outside the app.
-const SAFE_REDIRECT_PREFIXES = ["/dashboard", "/admin"];
+const SAFE_REDIRECT_PREFIXES = ["/dashboard", "/admin", "/order"];
 
 /**
  * Validates an untrusted `redirectTo` value (e.g. from a URL query param)

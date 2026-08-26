@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/orders", label: "Orders" },
   { href: "/dashboard/campaigns", label: "Campaigns" },
   { href: "/dashboard/leads", label: "Leads" },
   { href: "/dashboard/settings", label: "Settings" },

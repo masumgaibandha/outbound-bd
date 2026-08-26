@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { SERVICES } from "@/components/public/services-data";
+import { normalizeWebsite } from "@/lib/normalize-website";
 
 export const SERVICE_INTEREST_OPTIONS = [
   ...SERVICES.map((service) => ({
@@ -25,14 +26,6 @@ export const BUDGET_RANGE_OPTIONS = [
 const BUDGET_RANGE_VALUES = BUDGET_RANGE_OPTIONS.map(
   (option) => option.value,
 ) as [string, ...string[]];
-
-function normalizeWebsite(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed || /^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-  return `https://${trimmed}`;
-}
 
 export const inquirySchema = z.object({
   name: z

@@ -3,7 +3,7 @@ import { buttonVariants } from "@heroui/styles";
 
 import {
   formatPriceCents,
-  getCatalogContactHref,
+  getCatalogOrderHref,
   type OneTimeOffer,
 } from "@/lib/pricing-catalog";
 
@@ -32,10 +32,10 @@ export function OneTimeOfferSection({
               </p>
             </div>
             <Link
-              href={getCatalogContactHref(offer)}
+              href={getCatalogOrderHref(offer)}
               className={`${buttonVariants({ variant: "outline", size: "sm" })} rounded-lg`}
             >
-              Request this
+              Order Now
             </Link>
           </div>
         ))}

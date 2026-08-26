@@ -233,3 +233,61 @@ export function getCatalogContactHref(entry: CatalogEntry): string {
   });
   return `/contact?${params.toString()}`;
 }
+
+/** Builds the "Order Now" href for a catalog entry — only fixed-price
+ * catalog items are orderable; custom services stay contact-only. */
+export function getCatalogOrderHref(entry: CatalogEntry): string {
+  return `/order/${entry.id}`;
+}
+
+/**
+ * An immutable, order-time snapshot of a catalog entry's name/price/scope.
+ * Orders store this instead of a live reference, so a later price change in
+ * the catalog never retroactively alters an existing order.
+ */
+export type OrderCatalogSnapshot = {
+  catalogId: string;
+  kind: "managed-plan" | "one-time-offer";
+  name: string;
+  currency: "USD";
+  billingType: "recurring" | "one-time";
+  setupPriceCents?: number;
+  monthlyPriceCents?: number;
+  priceCents?: number;
+  unit?: string;
+  scope?: {
+    campaigns?: string;
+    leadsIncluded?: number;
+    inboxes?: string;
+  };
+};
+
+export function buildOrderCatalogSnapshot(
+  entry: CatalogEntry,
+): OrderCatalogSnapshot {
+  if (entry.kind === "managed-plan") {
+    return {
+      catalogId: entry.id,
+      kind: entry.kind,
+      name: entry.name,
+      currency: "USD",
+      billingType: "recurring",
+      setupPriceCents: entry.setupPriceCents,
+      monthlyPriceCents: entry.monthlyPriceCents,
+      scope: {
+        campaigns: entry.campaigns,
+        leadsIncluded: entry.leadsIncluded,
+        inboxes: entry.inboxes,
+      },
+    };
+  }
+  return {
+    catalogId: entry.id,
+    kind: entry.kind,
+    name: entry.name,
+    currency: "USD",
+    billingType: "one-time",
+    priceCents: entry.priceCents,
+    unit: entry.unit,
+  };
+}

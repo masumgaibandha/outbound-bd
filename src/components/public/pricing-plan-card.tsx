@@ -4,7 +4,7 @@ import { buttonVariants } from "@heroui/styles";
 import { CheckIcon } from "@/components/public/icons";
 import {
   formatPriceCents,
-  getCatalogContactHref,
+  getCatalogOrderHref,
   type ManagedPlan,
 } from "@/lib/pricing-catalog";
 
@@ -39,10 +39,10 @@ export function PricingPlanCard({ plan }: { plan: ManagedPlan }) {
       </ul>
 
       <Link
-        href={getCatalogContactHref(plan)}
+        href={getCatalogOrderHref(plan)}
         className={`${buttonVariants({ variant: "primary" })} mt-8 w-full rounded-lg`}
       >
-        Get started with {plan.name}
+        Order Now
       </Link>
     </div>
   );

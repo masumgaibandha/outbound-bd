@@ -52,7 +52,9 @@ export function DashboardShell({
         </div>
         <nav className="flex-1 space-y-1 px-3">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
             return (
               <Link
                 key={item.href}
