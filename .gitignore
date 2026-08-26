@@ -50,3 +50,7 @@ next-env.d.ts
 playwright/.cache/
 
 .vercel
+.env*.local
+
+# large design-reference source file — analysis lives in docs/, not the PDF
+/src/assets/reference-website/

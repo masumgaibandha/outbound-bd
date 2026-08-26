@@ -5,7 +5,14 @@ import { isValidObjectId } from "mongoose";
 
 import { CancelOrderButton } from "@/components/dashboard/cancel-order-button";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
+import { PaymentStatusPanel } from "@/components/dashboard/payment-status-panel";
+import {
+  PaymentSubmissionForm,
+  type SubmittablePaymentMethod,
+} from "@/components/dashboard/payment-submission-form";
 import { isOrderCancellable, Order } from "@/lib/models/order";
+import { PaymentMethod } from "@/lib/models/payment-method";
+import { Payment } from "@/lib/models/payment";
 import { connectToDatabase } from "@/lib/mongoose";
 import { formatPriceCents } from "@/lib/pricing-catalog";
 import { requireUser } from "@/lib/session";
@@ -37,6 +44,22 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
   const { catalog } = order;
 
+  const payment = await Payment.findOne({ orderId: order._id }).lean();
+  const showPaymentForm = order.status === "AWAITING_PAYMENT";
+  let paymentMethods: SubmittablePaymentMethod[] = [];
+  if (showPaymentForm) {
+    const activeMethods = await PaymentMethod.find({ isActive: true }).sort({ type: 1 }).lean();
+    paymentMethods = activeMethods.map((method) => ({
+      id: String(method._id),
+      type: method.type,
+      label: method.label,
+      currency: method.currency,
+      beneficiaryName: method.beneficiaryName,
+      details: method.details,
+      instructions: method.instructions,
+    }));
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -55,16 +78,33 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <p className="mt-1 text-sm text-neutral-500">{order.orderNumber}</p>
       </div>
 
-      {order.status === "AWAITING_PAYMENT" ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-medium text-amber-800">
-            Payment instructions are coming next.
+      {payment ? (
+        <PaymentStatusPanel
+          payment={{
+            id: String(payment._id),
+            status: payment.status,
+            methodLabel: payment.paymentMethodSnapshot.label,
+            transactionReference: payment.transactionReference,
+            amountCents: payment.amountCents,
+            currency: payment.currency,
+            paymentDate: payment.paymentDate,
+            notes: payment.notes,
+            reviewNote: payment.reviewNote,
+          }}
+        />
+      ) : null}
+
+      {showPaymentForm ? (
+        <div className="rounded-lg border border-neutral-200 bg-white p-5">
+          <h3 className="text-sm font-semibold text-neutral-900">
+            {payment ? "Resubmit your payment" : "Submit your payment"}
+          </h3>
+          <p className="mt-1 text-sm text-neutral-500">
+            Choose a payment method below, complete the transfer, then let us know the details.
           </p>
-          <p className="mt-1 text-sm text-amber-700">
-            Your order is confirmed and awaiting payment. We&apos;ll follow
-            up by email with next steps — nothing further is needed from you
-            right now.
-          </p>
+          <div className="mt-4">
+            <PaymentSubmissionForm orderId={String(order._id)} methods={paymentMethods} />
+          </div>
         </div>
       ) : null}
 
