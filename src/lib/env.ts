@@ -1,24 +1,23 @@
+import "server-only";
+
 import { z } from "zod";
 
+// Scoped to exactly what mongodb.ts / mongoose.ts need. Kept separate from
+// auth-env.ts and public-env.ts so a misconfigured Better Auth or public-URL
+// variable can never fail the build for a route that only touches the
+// database (e.g. /api/inquiries) — each concern validates independently,
+// right where it's actually consumed.
 const envSchema = z.object({
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-  BETTER_AUTH_URL: z.url(),
-  NEXT_PUBLIC_APP_URL: z.url(),
 });
 
 const parsed = envSchema.safeParse({
   MONGODB_URI: process.env.MONGODB_URI,
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 });
 
 if (!parsed.success) {
   throw new Error(
-    `Invalid environment variables:\n${JSON.stringify(z.treeifyError(parsed.error), null, 2)}`,
+    `Invalid database environment variables:\n${JSON.stringify(z.treeifyError(parsed.error), null, 2)}`,
   );
 }
 

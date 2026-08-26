@@ -2,13 +2,13 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 
-import { env } from "@/lib/env";
+import { authEnv } from "@/lib/auth-env";
 import { getDb, mongoClient } from "@/lib/mongodb";
 import { DEFAULT_ROLE } from "@/lib/roles";
 
 export const auth = betterAuth({
-  secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.BETTER_AUTH_URL,
+  secret: authEnv.BETTER_AUTH_SECRET,
+  baseURL: authEnv.BETTER_AUTH_URL,
   database: mongodbAdapter(getDb(), {
     client: mongoClient,
     // A plain standalone MongoDB instance (the local dev default) has no
