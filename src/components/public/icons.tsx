@@ -1,0 +1,145 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement>;
+
+function Base({ children, ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={22}
+      height={22}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function TargetIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <circle cx="12" cy="12" r="4.25" />
+      <circle cx="12" cy="12" r="0.75" fill="currentColor" stroke="none" />
+    </Base>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 3.5 5 6v5.2c0 4.3 2.9 7.4 7 9.3 4.1-1.9 7-5 7-9.3V6l-7-2.5Z" />
+      <path d="m9.25 12 1.9 1.9 3.6-3.9" />
+    </Base>
+  );
+}
+
+export function PenLineIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+      <path d="m14 6 3.5 3.5" />
+    </Base>
+  );
+}
+
+export function InboxIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 12.5 6.5 5h11L20 12.5" />
+      <path d="M4 12.5V18a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5.5h-4.7a2.8 2.8 0 0 1-5.6 0H4Z" />
+    </Base>
+  );
+}
+
+export function UsersIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3.5 19c.7-3 3-4.8 5.5-4.8s4.8 1.8 5.5 4.8" />
+      <path d="M15.5 5.5a3 3 0 0 1 0 5.9" />
+      <path d="M17 14.4c2.1.5 3.7 2.1 4.2 4.6" />
+    </Base>
+  );
+}
+
+export function ChartIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 20V9.5" />
+      <path d="M11 20V4" />
+      <path d="M18 20v-7" />
+      <path d="M3 20h18" />
+    </Base>
+  );
+}
+
+export function GlobeIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M3.75 12h16.5" />
+      <path d="M12 3.75c2.4 2.3 3.7 5.1 3.7 8.25s-1.3 5.95-3.7 8.25c-2.4-2.3-3.7-5.1-3.7-8.25S9.6 6.05 12 3.75Z" />
+    </Base>
+  );
+}
+
+export function LockIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="5" y="11" width="14" height="9" rx="1.5" />
+      <path d="M7.75 11V7.5a4.25 4.25 0 0 1 8.5 0V11" />
+    </Base>
+  );
+}
+
+export function CalendarCheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="4" y="5" width="16" height="15" rx="1.5" />
+      <path d="M4 9.5h16" />
+      <path d="M8 3v3.5" />
+      <path d="M16 3v3.5" />
+      <path d="m9 14.5 2 2 4-4.2" />
+    </Base>
+  );
+}
+
+export function ArrowRightIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4.5 12h15" />
+      <path d="m13.5 6 6 6-6 6" />
+    </Base>
+  );
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </Base>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="m5 12.5 4.5 4.5L19 7" />
+    </Base>
+  );
+}
+
+export function XIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="m6 6 12 12M18 6 6 18" />
+    </Base>
+  );
+}
