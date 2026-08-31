@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { isValidObjectId } from "mongoose";
 
-import { auth } from "@/lib/auth";
+import { requireUserSession } from "@/lib/api-auth";
 import { connectToDatabase } from "@/lib/mongoose";
 import { isOrderCancellable, Order } from "@/lib/models/order";
 
 type RouteContext = { params: Promise<{ orderId: string }> };
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json(
-      { ok: false, message: "Sign in to manage this order." },
-      { status: 401 },
-    );
-  }
+  const { session, response: sessionResponse } = await requireUserSession(request);
+  if (sessionResponse) return sessionResponse;
 
   const { orderId } = await params;
   if (!isValidObjectId(orderId)) {

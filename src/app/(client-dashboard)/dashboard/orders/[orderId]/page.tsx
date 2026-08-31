@@ -5,6 +5,7 @@ import { isValidObjectId } from "mongoose";
 
 import { CancelOrderButton } from "@/components/dashboard/cancel-order-button";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
+import { PaymentStatusBadge } from "@/components/dashboard/payment-status-badge";
 import { PaymentStatusPanel } from "@/components/dashboard/payment-status-panel";
 import {
   PaymentSubmissionForm,
@@ -13,6 +14,7 @@ import {
 import { isOrderCancellable, Order } from "@/lib/models/order";
 import { PaymentMethod } from "@/lib/models/payment-method";
 import { Payment } from "@/lib/models/payment";
+import { PaymentAttempt } from "@/lib/models/payment-attempt";
 import { connectToDatabase } from "@/lib/mongoose";
 import { formatPriceCents } from "@/lib/pricing-catalog";
 import { requireUser } from "@/lib/session";
@@ -45,6 +47,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   const { catalog } = order;
 
   const payment = await Payment.findOne({ orderId: order._id }).lean();
+  const pastAttempts = payment
+    ? await PaymentAttempt.find({ paymentId: payment._id })
+        .sort({ attemptNumber: 1 })
+        .lean()
+    : [];
   const showPaymentForm = order.status === "AWAITING_PAYMENT";
   let paymentMethods: SubmittablePaymentMethod[] = [];
   if (showPaymentForm) {
@@ -92,6 +99,33 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             reviewNote: payment.reviewNote,
           }}
         />
+      ) : null}
+
+      {pastAttempts.length > 1 ? (
+        <div className="rounded-lg border border-neutral-200 bg-white p-5">
+          <h3 className="text-sm font-semibold text-neutral-900">Payment history</h3>
+          <ul className="mt-3 flex flex-col gap-2">
+            {pastAttempts.map((attempt) => (
+              <li
+                key={String(attempt._id)}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-neutral-200 p-3 text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-neutral-900">Attempt #{attempt.attemptNumber}</span>
+                  <PaymentStatusBadge status={attempt.status} />
+                </div>
+                <a
+                  href={`/api/payments/${String(payment?._id)}/attempts/${String(attempt._id)}/proof`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-neutral-900 underline underline-offset-2"
+                >
+                  View proof
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {showPaymentForm ? (

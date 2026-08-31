@@ -37,6 +37,7 @@ cp .env.example .env
 | `BETTER_AUTH_SECRET` | Random secret used to sign sessions. Generate with `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | The base URL Better Auth runs on (e.g. `http://localhost:3000`) |
 | `NEXT_PUBLIC_APP_URL` | Public app URL, used by the browser auth client |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob read/write token for the private payment-proof store. Create a Blob store in the Vercel dashboard and copy its token. Required for payment submission/proof-viewing routes. |
 
 ### 4. Run the dev server
 
@@ -103,7 +104,16 @@ npm run build         # production build
 npm run start           # run the production build
 npm run lint               # eslint
 npm run typecheck            # tsc --noEmit
+npm test                       # vitest — unit + integration tests
 ```
+
+### Testing
+
+Tests run against an ephemeral, in-memory MongoDB (via `mongodb-memory-server`)
+spun up per test file — never against `MONGODB_URI`. This is deliberate:
+`.env.local` in a Vercel-linked checkout typically holds the **production**
+database connection string (pulled via `vercel env pull`), so tests must
+never read it. See `vitest.config.ts` and `tests/global-setup.ts`.
 
 ## Notes
 

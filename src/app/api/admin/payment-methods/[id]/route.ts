@@ -9,7 +9,7 @@ import { paymentMethodUpdateSchema } from "@/lib/payment-schema";
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: RouteContext) {
-  const { response } = await requireAdminSession();
+  const { response } = await requireAdminSession(request);
   if (response) return response;
 
   const { id } = await params;

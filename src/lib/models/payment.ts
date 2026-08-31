@@ -29,6 +29,11 @@ export type PaymentHistoryEntry = {
   actorRole: "CLIENT" | "ADMIN";
   reason?: string;
   at: Date;
+  // Which PaymentAttempt this history entry belongs to. Absent on entries
+  // written before the attempt-history migration (Phase 2.1) — those refer
+  // to the Payment document itself, which still holds the full submission
+  // for that era (see payment-attempt.ts for the backward-compat read path).
+  attemptId?: Schema.Types.ObjectId;
 };
 
 export type PaymentProof = {
@@ -54,7 +59,16 @@ export interface PaymentDocument {
   reviewNote?: string;
   reviewedAt?: Date;
   reviewedBy?: string;
+  overrideReason?: string;
   history: PaymentHistoryEntry[];
+  // Added in Phase 2.1. Points at the latest PaymentAttempt for this order;
+  // absent on Payment documents created before the migration (this document
+  // itself remains the sole/complete record for those — see
+  // payment-attempt.ts). `attemptCount` is 0 for those legacy documents too.
+  currentAttemptId?: Schema.Types.ObjectId;
+  attemptCount: number;
+  expectedAmountCents?: number;
+  expectedCurrency?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,6 +102,7 @@ const paymentHistoryEntrySchema = new Schema<PaymentHistoryEntry>(
     actorRole: { type: String, required: true, enum: ["CLIENT", "ADMIN"] },
     reason: { type: String, trim: true },
     at: { type: Date, required: true },
+    attemptId: { type: Schema.Types.ObjectId, ref: "PaymentAttempt" },
   },
   { _id: false },
 );
@@ -114,7 +129,12 @@ const paymentSchema = new Schema<PaymentDocument>(
     reviewNote: { type: String, trim: true },
     reviewedAt: { type: Date },
     reviewedBy: { type: String },
+    overrideReason: { type: String, trim: true },
     history: { type: [paymentHistoryEntrySchema], required: true, default: [] },
+    currentAttemptId: { type: Schema.Types.ObjectId, ref: "PaymentAttempt" },
+    attemptCount: { type: Number, required: true, default: 0 },
+    expectedAmountCents: { type: Number },
+    expectedCurrency: { type: String },
   },
   { timestamps: true },
 );

@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import { get, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
 
 import { blobEnv } from "@/lib/blob-env";
 
@@ -43,4 +43,29 @@ export async function readPaymentProof(pathname: string) {
     access: "private",
     token: blobEnv.BLOB_READ_WRITE_TOKEN,
   });
+}
+
+/**
+ * Best-effort cleanup for a proof file that was just uploaded in the current
+ * request but whose owning database write then failed — e.g. the
+ * PaymentAttempt insert throws after `uploadPaymentProof` already succeeded.
+ * Only ever call this with a pathname from *this request's own* upload,
+ * never anything derived from an existing stored attempt/payment — deleting
+ * a proof that belongs to a successfully stored record would destroy real
+ * audit evidence.
+ *
+ * Never throws: a cleanup failure must not mask the original database error
+ * that triggered it, and the caller has nothing useful to do with a second
+ * error here beyond logging it. The token is never included in what's
+ * logged.
+ */
+export async function deleteOrphanedPaymentProof(pathname: string): Promise<void> {
+  try {
+    await del(pathname, { token: blobEnv.BLOB_READ_WRITE_TOKEN });
+  } catch (cleanupError) {
+    console.error("Failed to clean up orphaned payment proof blob", {
+      pathname,
+      cleanupError: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+    });
+  }
 }

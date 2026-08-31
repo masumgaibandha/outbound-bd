@@ -7,8 +7,8 @@ import { PaymentMethod } from "@/lib/models/payment-method";
 // Active payment methods only — this is what clients pick from when
 // submitting a payment. Inactive/retired methods are admin-only (see
 // /api/admin/payment-methods).
-export async function GET() {
-  const { response } = await requireUserSession();
+export async function GET(request: Request) {
+  const { response } = await requireUserSession(request);
   if (response) return response;
 
   await connectToDatabase();

@@ -67,7 +67,8 @@ export function PaymentSubmissionForm({
     body.set("paymentMethodId", selectedMethod.id);
     body.set("transactionReference", transactionReference);
     body.set("amountCents", String(amountCents));
-    body.set("currency", selectedMethod.currency);
+    // Currency is derived server-side from the selected payment method —
+    // never sent from the client (see payment-schema.ts).
     body.set("paymentDate", paymentDate);
     body.set("notes", notes);
     body.set("idempotencyKey", crypto.randomUUID());

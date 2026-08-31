@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { PAYMENT_STATUSES, Payment } from "@/lib/models/payment";
 
 export async function GET(request: Request) {
-  const { response } = await requireAdminSession();
+  const { response } = await requireAdminSession(request);
   if (response) return response;
 
   const { searchParams } = new URL(request.url);

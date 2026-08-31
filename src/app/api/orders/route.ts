@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { requireUserSession } from "@/lib/api-auth";
 import { connectToDatabase } from "@/lib/mongoose";
 import { createOrderRequestSchema } from "@/lib/order-schema";
 import { buildOrderCatalogSnapshot, getCatalogEntryById } from "@/lib/pricing-catalog";
@@ -22,13 +21,8 @@ function isDuplicateKeyError(
 }
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json(
-      { ok: false, message: "Sign in to place an order." },
-      { status: 401 },
-    );
-  }
+  const { session, response: sessionResponse } = await requireUserSession(request);
+  if (sessionResponse) return sessionResponse;
 
   let body: unknown;
   try {

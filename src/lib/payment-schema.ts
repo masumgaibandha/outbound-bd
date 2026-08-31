@@ -54,6 +54,11 @@ export const PAYMENT_PROOF_ALLOWED_TYPES = [
 
 const MAX_FUTURE_SKEW_MS = 24 * 60 * 60 * 1000; // tolerate client/server clock drift
 
+// Currency is deliberately NOT accepted from the client here — it's always
+// taken server-side from the selected payment method (see the submission
+// route), never trusted from the request body. This closes a gap where a
+// client could previously submit any PAYMENT_METHOD_CURRENCIES value
+// independent of which method they actually selected.
 export const paymentSubmissionSchema = z.object({
   paymentMethodId: objectIdSchema,
   transactionReference: z
@@ -65,7 +70,6 @@ export const paymentSubmissionSchema = z.object({
     .number()
     .int("Amount must be a whole number of minor units")
     .positive("Enter the amount you paid"),
-  currency: z.enum(PAYMENT_METHOD_CURRENCIES),
   paymentDate: z.coerce
     .date({ error: "Enter a valid payment date" })
     .refine((date) => date.getTime() <= Date.now() + MAX_FUTURE_SKEW_MS, {
@@ -87,8 +91,17 @@ export type PaymentSubmissionFieldErrors = Partial<
 
 // --- Admin: payment review -------------------------------------------------
 
+// `overrideReason` is only required when the route determines the attempt
+// being verified doesn't match the expected amount/currency (that check
+// needs the order's catalog snapshot, so it can't live in this schema —
+// see the review route for the enforcement). It's always accepted here so
+// a matching attempt can still carry an optional note.
 export const paymentReviewSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("VERIFY"), reason: z.string().trim().max(2000).optional() }),
+  z.object({
+    action: z.literal("VERIFY"),
+    reason: z.string().trim().max(2000).optional(),
+    overrideReason: z.string().trim().max(2000).optional(),
+  }),
   z.object({
     action: z.literal("REJECT"),
     reason: z.string().trim().min(3, "Explain why this payment was rejected").max(2000),
@@ -100,3 +113,5 @@ export const paymentReviewSchema = z.discriminatedUnion("action", [
 ]);
 
 export type PaymentReviewInput = z.infer<typeof paymentReviewSchema>;
+
+export const MISMATCH_OVERRIDE_MIN_LENGTH = 10;

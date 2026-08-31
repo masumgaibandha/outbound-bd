@@ -5,8 +5,8 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { PaymentMethod } from "@/lib/models/payment-method";
 import { paymentMethodInputSchema } from "@/lib/payment-schema";
 
-export async function GET() {
-  const { response } = await requireAdminSession();
+export async function GET(request: Request) {
+  const { response } = await requireAdminSession(request);
   if (response) return response;
 
   await connectToDatabase();
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { response } = await requireAdminSession();
+  const { response } = await requireAdminSession(request);
   if (response) return response;
 
   let body: unknown;
