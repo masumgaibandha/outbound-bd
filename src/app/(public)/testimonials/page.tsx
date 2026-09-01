@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { Section } from "@/components/public/section";
-import { TestimonialCard } from "@/components/public/testimonial-card";
+import { TestimonialsGrid } from "@/components/public/testimonials-grid";
 import { testimonials, testimonialsIntro } from "@/components/public/testimonials-data";
 
 export const metadata: Metadata = {
@@ -29,13 +29,7 @@ export default function TestimonialsPage() {
       </section>
 
       <Section tone="canvas">
-        <ul className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial) => (
-            <li key={testimonial.id} className="h-full" data-reveal>
-              <TestimonialCard testimonial={testimonial} />
-            </li>
-          ))}
-        </ul>
+        <TestimonialsGrid items={testimonials} />
       </Section>
 
       <FinalCtaSection

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CampaignEvidenceCategorized } from "@/components/public/campaign-evidence-categorized";
+import { campaignEvidence } from "@/components/public/campaign-evidence-data";
+import { CampaignEvidenceSection } from "@/components/public/campaign-evidence-section";
 import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { ResultsSection } from "@/components/public/results-section";
 import { Section } from "@/components/public/section";
 import { SectionHeading } from "@/components/public/section-heading";
-import { TestimonialCard } from "@/components/public/testimonial-card";
+import { TestimonialsGrid } from "@/components/public/testimonials-grid";
 import { testimonials } from "@/components/public/testimonials-data";
 
 export const metadata: Metadata = {
@@ -43,7 +44,7 @@ export default function ResultsPage() {
           align="left"
         />
         <div className="mt-14">
-          <CampaignEvidenceCategorized />
+          <CampaignEvidenceSection items={campaignEvidence} />
         </div>
       </Section>
 
@@ -55,13 +56,9 @@ export default function ResultsPage() {
           title="Verified client feedback from Abdullah Al Masum"
           align="left"
         />
-        <ul className="mt-14 grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial) => (
-            <li key={testimonial.id} className="h-full" data-reveal>
-              <TestimonialCard testimonial={testimonial} />
-            </li>
-          ))}
-        </ul>
+        <div className="mt-14">
+          <TestimonialsGrid items={testimonials} />
+        </div>
       </Section>
 
       <section className="border-hairline border-t py-16 sm:py-20">

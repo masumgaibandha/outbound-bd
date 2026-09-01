@@ -2,11 +2,11 @@ import Link from "next/link";
 
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
-import { TestimonialCard } from "@/components/public/testimonial-card";
+import { TestimonialsGrid } from "@/components/public/testimonials-grid";
 import { testimonials, testimonialsIntro } from "@/components/public/testimonials-data";
 
 export function TestimonialsSection() {
-  const featured = testimonials.slice(0, 3);
+  const featured = testimonials.slice(0, 2);
 
   return (
     <Section id="testimonials" tone="canvasAlt" labelledBy="testimonials-heading">
@@ -17,13 +17,9 @@ export function TestimonialsSection() {
         align="left"
       />
 
-      <ul className="mt-14 grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {featured.map((testimonial) => (
-          <li key={testimonial.id} className="h-full" data-reveal>
-            <TestimonialCard testimonial={testimonial} />
-          </li>
-        ))}
-      </ul>
+      <div className="mt-14">
+        <TestimonialsGrid items={featured} />
+      </div>
 
       <div className="mt-10">
         <Link

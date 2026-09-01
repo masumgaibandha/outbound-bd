@@ -188,3 +188,24 @@ export function CircleCheckIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function ArrowLeftIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M19.5 12h-15" />
+      <path d="m10.5 6-6 6 6 6" />
+    </Base>
+  );
+}
+
+/** Four-corner "expand to fullscreen" glyph, used as the enlarge affordance. */
+export function ExpandIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M9 4.5H4.5V9" />
+      <path d="M15 4.5h4.5V9" />
+      <path d="M4.5 15v4.5H9" />
+      <path d="M19.5 15v4.5H15" />
+    </Base>
+  );
+}
