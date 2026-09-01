@@ -40,8 +40,22 @@ import instantly20250805 from "@/assets/results/instantly_2025-08-05.png";
  * test (see the inbox-placement category). Dollar figures shown next to
  * "Opportunities" on the source screenshots (e.g. "$25,000") are Instantly's
  * own pipeline-value estimate, not independently verified revenue, so they
- * are intentionally omitted from every caption/alt text below even though
- * they're still visible in the screenshots themselves.
+ * are intentionally omitted from every caption/alt text below.
+ *
+ * That was true in text from the start, but as of 2026-09-02 it's also true
+ * of the pixels: instantly_2025-08-05.png, instantly-result_98.png, and
+ * instantly-campaign-result-2.png each had their "$25,000" / "$17,000" /
+ * "$140,000" figure redacted directly in the image — a solid, bordered,
+ * non-transparent gray block composited over just that text (measured to
+ * the exact glyph bounds via pixel scanning first, so nothing else in the
+ * same card was touched). The adjacent verified opportunity counts ("25",
+ * "17", "140"), every other metric, every chart, and every platform label
+ * are byte-for-byte the original screenshot pixels outside the redaction
+ * box. This is a deliberate, visibly-a-redaction edit (not a crop, since
+ * the dollar figure sits inline mid-card next to data that has to stay
+ * visible) — each of the three items below carries a note saying so, per
+ * the standing rule that a screenshot must never look like the platform
+ * itself omitted the figure.
  *
  * Rejected outright (not used anywhere):
  * - campaign-send-reply-volume.png: low-quality/illegible, superseded by
@@ -82,6 +96,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     category: "campaign-performance",
     caption:
       "Sustained campaign performance on Instantly — 5.6K sent, a platform-reported 83.9% open rate, and a 2.7% reply rate over roughly three months, generating 25 sales opportunities.",
+    note: "Platform-assigned monetary value hidden because it is not verified revenue.",
     featured: true,
   },
   {
@@ -103,6 +118,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     category: "campaign-performance",
     caption:
       "A second, smaller campaign on Instantly — 759 sequence sends, a platform-reported 98% open rate, and 17 sales opportunities generated.",
+    note: "Platform-assigned monetary value hidden because it is not verified revenue.",
   },
   {
     id: "instantly-campaign-result-2",
@@ -112,7 +128,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     category: "campaign-performance",
     caption:
       "127,149 sequence starts generated 140 opportunities. Instantly reported a 78.65% Positive Reply Rate among replies—not an overall campaign reply rate.",
-    note: "An exceptional individual result, not a typical or guaranteed outcome — most campaigns perform closer to the other examples shown here.",
+    note: "An exceptional individual result, not a typical or guaranteed outcome — most campaigns perform closer to the other examples shown here. Platform-assigned monetary value hidden because it is not verified revenue.",
   },
   {
     id: "campaign-result-smartlead",
