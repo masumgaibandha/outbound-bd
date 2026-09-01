@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { buttonVariants } from "@heroui/styles";
-
+import { ButtonLink } from "@/components/public/button";
 import {
   formatPriceCents,
-  getCatalogOrderHref,
+  getCatalogContactHref,
   type OneTimeOffer,
 } from "@/lib/pricing-catalog";
 
@@ -16,27 +14,28 @@ export function OneTimeOfferSection({
 }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold tracking-[0.08em] text-ink uppercase">
+      <h3 className="text-ink-muted text-xs font-semibold tracking-[0.16em] uppercase">
         {label}
       </h3>
-      <div className="mt-4 divide-y divide-hairline border-t border-b border-hairline">
+      <div className="divide-hairline border-hairline mt-5 divide-y border-t border-b">
         {offers.map((offer) => (
           <div
             key={offer.id}
-            className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 py-6 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p className="text-sm font-medium text-ink">{offer.name}</p>
-              <p className="mt-0.5 text-sm text-subtext">
+              <p className="text-ink font-medium">{offer.name}</p>
+              <p className="text-ink-muted mt-0.5 text-sm">
                 {formatPriceCents(offer.priceCents)} &middot; {offer.unit}
               </p>
             </div>
-            <Link
-              href={getCatalogOrderHref(offer)}
-              className={`${buttonVariants({ variant: "outline", size: "sm" })} rounded-lg`}
+            <ButtonLink
+              href={getCatalogContactHref(offer)}
+              tone="outline"
+              className="shrink-0"
             >
-              Order Now
-            </Link>
+              Request a Proposal
+            </ButtonLink>
           </div>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 
 const STEPS = [
   {
@@ -33,41 +34,45 @@ const STEPS = [
   },
 ] as const;
 
-export function ProcessSection() {
-  return (
-    <section
-      id="process"
-      className="scroll-mt-20 border-t border-hairline py-20 sm:py-28"
-    >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="How we work"
-          title="A disciplined process, not a black box"
-          description="The same five stages for every engagement, so you always know what's happening and why."
-        />
+type ProcessSectionProps = {
+  /** Homepage uses a shorter, 4-step teaser; /how-it-works shows all 5. */
+  compact?: boolean;
+};
 
-        <ol className="mt-16 grid grid-cols-1 gap-10 md:grid-cols-3 lg:grid-cols-5 lg:gap-6">
-          {STEPS.map((step) => (
-            <li key={step.number} className="relative">
-              <div className="flex items-center gap-3 lg:block">
-                <span className="text-sm font-semibold text-royal tabular-nums">
-                  {step.number}
-                </span>
-                <div
-                  aria-hidden="true"
-                  className="h-px flex-1 bg-hairline lg:mt-3 lg:mb-5 lg:w-full"
-                />
-              </div>
-              <h3 className="mt-3 text-base font-semibold text-ink lg:mt-0">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-subtext">
-                {step.description}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
+export function ProcessSection({ compact = false }: ProcessSectionProps) {
+  const steps = compact ? STEPS.slice(0, 4) : STEPS;
+
+  return (
+    <Section id="process" tone="canvas" labelledBy="process-heading">
+      <SectionHeading
+        eyebrow="How we work"
+        title="A disciplined process, not a black box"
+        description={
+          compact
+            ? "Every engagement runs through the same stages, so you always know what's happening and why."
+            : "The same five stages for every engagement, so you always know what's happening and why."
+        }
+      />
+
+      <ol
+        className={`mt-16 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:gap-8 ${
+          compact ? "lg:grid-cols-4" : "lg:grid-cols-5"
+        }`}
+      >
+        {steps.map((step) => (
+          <li key={step.number} className="border-hairline border-t pt-6" data-reveal>
+            <span className="text-action font-heading text-sm tabular-nums">
+              {step.number}
+            </span>
+            <h3 className="text-ink mt-3 text-lg font-semibold">
+              {step.title}
+            </h3>
+            <p className="text-ink-muted mt-2 text-sm leading-relaxed">
+              {step.description}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </Section>
   );
 }

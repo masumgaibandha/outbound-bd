@@ -20,7 +20,7 @@ export default function AboutPage() {
       <FinalCtaSection
         heading="Ready to talk about your outbound program?"
         secondaryHref="/contact"
-        secondaryLabel="Send a project inquiry"
+        secondaryLabel="Request a Proposal"
       />
     </>
   );

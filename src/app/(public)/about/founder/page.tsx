@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Container } from "@/components/public/container";
 import { ExpertiseSection } from "@/components/public/expertise-section";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { FounderSection } from "@/components/public/founder-section";
@@ -15,15 +16,15 @@ export const metadata: Metadata = {
 export default function FounderPage() {
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
-        <nav aria-label="Breadcrumb" className="text-sm text-subtext">
-          <Link href="/about" className="transition-colors hover:text-ink">
+      <Container className="pt-8">
+        <nav aria-label="Breadcrumb" className="text-ink-muted text-sm">
+          <Link href="/about" className="hover:text-ink transition-colors">
             About
           </Link>
           <span className="mx-2">/</span>
           <span className="text-ink/70">The Founder</span>
         </nav>
-      </div>
+      </Container>
 
       <FounderSection />
       <ExpertiseSection />
@@ -32,7 +33,7 @@ export default function FounderPage() {
       <FinalCtaSection
         heading="Ready to talk about your outbound program?"
         secondaryHref="/contact"
-        secondaryLabel="Send a project inquiry"
+        secondaryLabel="Request a Proposal"
       />
     </>
   );

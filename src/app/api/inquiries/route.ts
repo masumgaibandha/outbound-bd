@@ -12,6 +12,12 @@ const MIN_FILL_TIME_MS = 2500;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
 
+// A resubmit of the same person/company within this window is almost
+// always an accidental double-click or a retried request, not two distinct
+// inquiries — treat it as idempotent rather than creating a duplicate
+// document.
+const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
+
 function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
@@ -89,6 +95,17 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
+  }
+
+  const duplicate = await Inquiry.findOne({
+    email: parsed.data.email.toLowerCase(),
+    company: parsed.data.company,
+    createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+  });
+
+  if (duplicate) {
+    // Idempotent: report success without creating a second document.
+    return NextResponse.json({ ok: true }, { status: 201 });
   }
 
   await Inquiry.create({

@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 
 const EXPERTISE = [
   "Lead generation",
@@ -13,25 +14,23 @@ const EXPERTISE = [
 
 export function ExpertiseSection() {
   return (
-    <section className="border-t border-hairline py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Expertise"
-          title="Hands-on across every discipline outbound needs"
-          align="left"
-        />
+    <Section tone="canvasAlt" compact labelledBy="expertise-heading">
+      <SectionHeading
+        eyebrow="Expertise"
+        title="Hands-on across every discipline outbound needs"
+        align="left"
+      />
 
-        <ul className="mt-10 flex flex-wrap gap-3">
-          {EXPERTISE.map((skill) => (
-            <li
-              key={skill}
-              className="rounded-md border border-hairline px-4 py-2 text-sm font-medium text-ink"
-            >
-              {skill}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+      <ul className="mt-10 flex flex-wrap gap-3">
+        {EXPERTISE.map((skill) => (
+          <li
+            key={skill}
+            className="border-hairline text-ink rounded-full border px-4 py-2 text-sm font-medium"
+          >
+            {skill}
+          </li>
+        ))}
+      </ul>
+    </Section>
   );
 }

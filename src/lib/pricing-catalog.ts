@@ -1,11 +1,13 @@
 import type { ServiceSlug } from "@/components/public/services-data";
 
 /**
- * Centralized, typed catalog of every priced offer Outbound BD sells.
- * This is the single source of truth for pricing — the /pricing page reads
- * from it, and the future ordering system should read from it too rather
- * than re-declaring prices elsewhere. All money is stored in integer cents
- * to avoid floating-point rounding issues.
+ * Centralized, typed catalog of every priced offer Outbound BD sells. This
+ * is the single source of truth for pricing guidance shown on /pricing and
+ * quoted into the "Request a Proposal" contact flow — Outbound BD is a
+ * consultation-led agency, not a self-serve checkout, so these figures are
+ * starting points confirmed during scoping, not live purchasable prices.
+ * All money is stored in integer cents to avoid floating-point rounding
+ * issues.
  */
 
 export type ServiceInterest = ServiceSlug | "not-sure";
@@ -225,69 +227,12 @@ export function getCatalogPrefillNote(entry: CatalogEntry): string {
   return `Interested in ${entry.name} (${formatPriceCents(entry.priceCents)}, ${entry.unit}).`;
 }
 
-/** Builds the validated /contact query string for a catalog entry's CTA. */
+/** Builds the validated /contact query string for a catalog entry's
+ * "Request a Proposal" CTA. */
 export function getCatalogContactHref(entry: CatalogEntry): string {
   const params = new URLSearchParams({
     service: entry.relatedServiceSlug,
     plan: entry.id,
   });
   return `/contact?${params.toString()}`;
-}
-
-/** Builds the "Order Now" href for a catalog entry — only fixed-price
- * catalog items are orderable; custom services stay contact-only. */
-export function getCatalogOrderHref(entry: CatalogEntry): string {
-  return `/order/${entry.id}`;
-}
-
-/**
- * An immutable, order-time snapshot of a catalog entry's name/price/scope.
- * Orders store this instead of a live reference, so a later price change in
- * the catalog never retroactively alters an existing order.
- */
-export type OrderCatalogSnapshot = {
-  catalogId: string;
-  kind: "managed-plan" | "one-time-offer";
-  name: string;
-  currency: "USD";
-  billingType: "recurring" | "one-time";
-  setupPriceCents?: number;
-  monthlyPriceCents?: number;
-  priceCents?: number;
-  unit?: string;
-  scope?: {
-    campaigns?: string;
-    leadsIncluded?: number;
-    inboxes?: string;
-  };
-};
-
-export function buildOrderCatalogSnapshot(
-  entry: CatalogEntry,
-): OrderCatalogSnapshot {
-  if (entry.kind === "managed-plan") {
-    return {
-      catalogId: entry.id,
-      kind: entry.kind,
-      name: entry.name,
-      currency: "USD",
-      billingType: "recurring",
-      setupPriceCents: entry.setupPriceCents,
-      monthlyPriceCents: entry.monthlyPriceCents,
-      scope: {
-        campaigns: entry.campaigns,
-        leadsIncluded: entry.leadsIncluded,
-        inboxes: entry.inboxes,
-      },
-    };
-  }
-  return {
-    catalogId: entry.id,
-    kind: entry.kind,
-    name: entry.name,
-    currency: "USD",
-    billingType: "one-time",
-    priceCents: entry.priceCents,
-    unit: entry.unit,
-  };
 }

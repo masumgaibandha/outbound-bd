@@ -3,56 +3,188 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Outbound BD's visual system is ported from masumdev.com (the founder's own
+ * site, owned by the same person) rather than the earlier flat blue/navy
+ * palette — see globals.css history for that version. Warm paper canvas,
+ * terracotta action color, serif display headings over a sans body face.
+ */
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
+  --font-heading: var(--font-playfair);
 
-  /* Outbound BD brand palette — do not add colors outside this set. */
-  --color-canvas: #f7f7f5;
-  --color-ink: #0a0a0a;
-  --color-subtext: #6b6b68;
-  --color-hairline: #e8e8e4;
-  --color-navy: #082b6e;
-  --color-royal: #1d5be0;
-  --color-azure: #6ba6f5;
+  /* Page + card surfaces */
+  --color-canvas: #fdfbf6;
+  --color-canvas-alt: #f5f1e8;
+  --color-surface: #ffffff;
+
+  /* Pale yellow. A highlight, never a background. */
+  --color-accent: #f7efc9;
+  --color-accent-ink: #5c4a12;
+
+  /* Terracotta: primary CTAs, active nav, link hover, focus rings. */
+  --color-action: #b4462a;
+  --color-action-hover: #963a22;
+  /* Lightened for legibility on dark bands. */
+  --color-action-dark: #d4674a;
+
+  --color-ink: #1a1815;
+  --color-ink-muted: #57534e;
+  --color-hairline: #e7e1d4;
+
+  --color-on-dark: #f5f1e8;
+  --color-on-dark-muted: #a8a296;
+
+  /* The hero clearly outranks section headings, so the page has one obvious
+     entry point rather than competing display type. */
+  --type-display: clamp(2.5rem, 4.6vw, 4.25rem);
+  --type-section: clamp(1.75rem, 2.8vw, 2.5rem);
 }
 
 /*
- * Retheme HeroUI's semantic tokens to the brand palette. Written unlayered
+ * Retheme HeroUI's semantic tokens to the ported palette. Written unlayered
  * (outside @theme/@layer) so it beats @heroui/styles' `@layer base` tokens
  * in the cascade regardless of source order.
  */
 :root {
   --background: var(--color-canvas);
   --foreground: var(--color-ink);
-  --muted: var(--color-subtext);
+  --muted: var(--color-ink-muted);
   --border: var(--color-hairline);
   --separator: var(--color-hairline);
 
-  --surface: var(--color-canvas);
+  --surface: var(--color-surface);
   --surface-foreground: var(--color-ink);
 
-  --default: var(--color-hairline);
+  --default: var(--color-canvas-alt);
   --default-foreground: var(--color-ink);
 
-  --accent: var(--color-royal);
-  --accent-foreground: var(--color-canvas);
-  --focus: var(--color-royal);
-  --link: var(--color-royal);
+  --accent: var(--color-action);
+  --accent-foreground: #ffffff;
+  --focus: var(--color-action);
+  --link: var(--color-action);
 
-  /* No red in the brand palette — invalid/error states reuse royal instead
-     of HeroUI's default danger red, so form validation stays on-brand. */
-  --danger: var(--color-royal);
-  --danger-foreground: var(--color-canvas);
+  --danger: var(--color-action);
+  --danger-foreground: #ffffff;
+
+  --field-background: var(--color-surface);
+  --field-foreground: var(--color-ink);
+  --field-placeholder: color-mix(in srgb, var(--color-ink-muted) 70%, transparent);
+  --field-border: var(--color-hairline);
+  --field-border-width: 1px;
+
+  --radius: 0.5rem;
 }
 
-/* HeroUI's button defaults to a full pill (rounded-3xl); the brand is more restrained. */
+/* HeroUI's button defaults to a full pill — kept, it matches the ported system. */
 .button {
-  border-radius: 0.625rem;
+  border-radius: 9999px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
 }
 
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   background-color: var(--color-canvas);
   color: var(--color-ink);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), ui-serif, Georgia, serif;
+  font-weight: 700;
+}
+
+/* Section anchors clear the sticky header. */
+[id] {
+  scroll-margin-top: 6rem;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+@layer components {
+  /*
+   * Entry animation. Elements opt in with `data-reveal`; RevealOnScroll
+   * flips `data-revealed` on via IntersectionObserver.
+   */
+  @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(12px);
+      transition:
+        opacity 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    [data-reveal][data-revealed="true"] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@utility type-display {
+  font-size: var(--type-display);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+}
+
+@utility type-section {
+  font-size: var(--type-section);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Interactive card — for cards that navigate somewhere on click. */
+@utility card-interactive {
+  transition:
+    transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--color-action) 35%, transparent);
+    box-shadow: 0 12px 28px -12px rgb(26 24 21 / 0.18);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: border-color 220ms linear;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+/* Static card: warms its border on hover without implying it is clickable. */
+@utility card-static {
+  transition: border-color 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--color-action) 22%, transparent);
+  }
+}
+
+/* The one gradient the design allows: the warm wash behind the hero. */
+@utility hero-wash {
+  background:
+    radial-gradient(
+      110% 85% at 82% 6%,
+      var(--color-accent) 0%,
+      color-mix(in srgb, var(--color-canvas-alt) 85%, transparent) 46%,
+      transparent 74%
+    ),
+    radial-gradient(90% 70% at 6% 94%, var(--color-canvas-alt) 0%, transparent 66%);
 }

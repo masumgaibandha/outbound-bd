@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 // Deliberately NOT "server-only" — NEXT_PUBLIC_* variables are meant to be
-// readable from the browser bundle, and this is imported by auth-client.ts
-// (a "use client" module). Validated separately from env.ts / auth-env.ts
+// readable from the browser bundle. Used for the site's canonical URL
+// (metadataBase, sitemap.ts, robots.ts). Validated separately from env.ts
 // so a problem here never fails a build for routes that don't need it.
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url(),

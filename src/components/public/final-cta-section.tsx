@@ -1,7 +1,10 @@
-import Link from "next/link";
-import { buttonVariants } from "@heroui/styles";
-
-import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
+import { ButtonLink } from "@/components/public/button";
+import { Container } from "@/components/public/container";
+import {
+  STRATEGY_CALL_HREF,
+  STRATEGY_CALL_LABEL,
+  STRATEGY_CALL_LINK_PROPS,
+} from "@/components/public/site-config";
 
 type FinalCtaSectionProps = {
   heading?: string;
@@ -13,33 +16,32 @@ type FinalCtaSectionProps = {
 export function FinalCtaSection({
   heading = "Ready for pipeline that doesn't depend on inbound?",
   description = "Tell us about your ICP and goals on a 30-minute call. We'll tell you honestly whether cold email is the right channel for you.",
-  secondaryHref = "/#results",
-  secondaryLabel = "See results",
+  secondaryHref = "/contact",
+  secondaryLabel = "Request a Proposal",
 }: FinalCtaSectionProps) {
   return (
-    <section className="bg-navy py-20 sm:py-28">
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <h2 className="text-3xl font-semibold tracking-tight text-balance text-canvas sm:text-4xl">
+    <section className="bg-ink py-20 md:py-28">
+      <Container className="max-w-3xl text-center">
+        <h2 className="font-heading text-on-dark type-section text-balance">
           {heading}
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-pretty text-azure">
+        <p className="text-on-dark-muted mx-auto mt-5 max-w-xl text-lg text-pretty">
           {description}
         </p>
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
+          <ButtonLink
             href={STRATEGY_CALL_HREF}
-            className={`${buttonVariants({ variant: "primary", size: "lg" })} w-full rounded-lg sm:w-auto`}
+            tone="onDark"
+            size="lg"
+            {...STRATEGY_CALL_LINK_PROPS}
           >
-            Book a Strategy Call
-          </Link>
-          <Link
-            href={secondaryHref}
-            className="w-full rounded-lg border border-azure/40 px-6 py-3 text-center text-base font-medium text-canvas transition-colors hover:bg-white/5 sm:w-auto"
-          >
+            {STRATEGY_CALL_LABEL}
+          </ButtonLink>
+          <ButtonLink href={secondaryHref} tone="onDarkOutline" size="lg">
             {secondaryLabel}
-          </Link>
+          </ButtonLink>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

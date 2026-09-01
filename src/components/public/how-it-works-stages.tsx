@@ -1,3 +1,5 @@
+import { Container } from "@/components/public/container";
+
 const STAGES = [
   {
     title: "Discovery",
@@ -38,29 +40,30 @@ const STAGES = [
 
 export function HowItWorksStages() {
   return (
-    <section className="border-t border-hairline py-16 sm:py-20">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <ol className="divide-y divide-hairline border-t border-b border-hairline">
+    <section className="border-hairline border-t py-20 md:py-28">
+      <Container className="max-w-4xl">
+        <ol className="divide-hairline border-hairline divide-y border-t border-b">
           {STAGES.map((stage, index) => (
             <li
               key={stage.title}
-              className="grid gap-2 py-8 sm:grid-cols-[8rem_1fr] sm:gap-8"
+              className="grid gap-2 py-9 sm:grid-cols-[8rem_1fr] sm:gap-8"
+              data-reveal
             >
-              <span className="text-sm font-semibold text-royal tabular-nums">
+              <span className="text-action font-heading text-sm tabular-nums">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <div>
-                <h3 className="text-xl font-semibold text-ink">
+                <h3 className="font-heading text-ink text-xl tracking-tight">
                   {stage.title}
                 </h3>
-                <p className="mt-2 text-base leading-relaxed text-subtext">
+                <p className="text-ink-muted mt-2 text-base leading-relaxed">
                   {stage.description}
                 </p>
               </div>
             </li>
           ))}
         </ol>
-      </div>
+      </Container>
     </section>
   );
 }

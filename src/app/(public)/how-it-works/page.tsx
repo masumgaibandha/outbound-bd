@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { HowItWorksStages } from "@/components/public/how-it-works-stages";
 import { RequirementsSection } from "@/components/public/requirements-section";
@@ -22,20 +23,20 @@ const CLIENT_RESPONSIBILITIES = [
 export default function HowItWorksPage() {
   return (
     <>
-      <section className="border-b border-hairline">
-        <div className="mx-auto max-w-3xl px-4 pt-16 pb-16 text-center sm:px-6 sm:pt-20 sm:pb-20">
-          <p className="text-xs font-semibold tracking-[0.14em] text-royal uppercase">
+      <section className="hero-wash relative border-b border-hairline">
+        <Container className="max-w-3xl pt-16 pb-16 text-center sm:pt-20 sm:pb-20">
+          <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
             How it works
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
+          <h1 className="font-heading text-ink type-section mt-4 text-balance">
             One connected program, from discovery to reporting
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty text-subtext">
+          <p className="text-ink-muted mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty">
             Every engagement runs through the same seven stages. Here&apos;s
             what happens at each one, and what we need from you along the
             way.
           </p>
-        </div>
+        </Container>
       </section>
 
       <HowItWorksStages />
@@ -44,7 +45,7 @@ export default function HowItWorksPage() {
       <FinalCtaSection
         heading="Ready to get started?"
         secondaryHref="/contact"
-        secondaryLabel="Send a project inquiry"
+        secondaryLabel="Request a Proposal"
       />
     </>
   );

@@ -1,75 +1,78 @@
 import Link from "next/link";
 
-import {
-  InboxIcon,
-  PenLineIcon,
-  ShieldIcon,
-  TargetIcon,
-} from "@/components/public/icons";
+import { ArrowRightIcon, CheckIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
-
-const SERVICES = [
-  {
-    icon: TargetIcon,
-    title: "Targeting & list building",
-    description:
-      "We define your ideal-customer profile, then research and verify a prospect list matched to it — no purchased or recycled data.",
-  },
-  {
-    icon: ShieldIcon,
-    title: "Deliverability & infrastructure",
-    description:
-      "Dedicated sending domains, staged warm-up, and inbox rotation, monitored continuously so your sequences land in the primary inbox.",
-  },
-  {
-    icon: PenLineIcon,
-    title: "Copywriting & sequence strategy",
-    description:
-      "Multi-step sequences written by senior strategists, grounded in your positioning and tested against real reply data.",
-  },
-  {
-    icon: InboxIcon,
-    title: "Reply handling & meeting booking",
-    description:
-      "Every reply is triaged by a human. Qualified conversations are booked directly onto your calendar, ready for your team.",
-  },
-] as const;
+import { Section } from "@/components/public/section";
+import { SERVICES } from "@/components/public/services-data";
 
 export function ServicesSection() {
   return (
-    <section id="services" className="scroll-mt-20 py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Core services"
-          title="Everything cold email needs to work, in one program"
-          description="Four disciplines, run together by one team, so nothing falls through the cracks between strategy and send."
-        />
+    <Section id="services" tone="canvasAlt" labelledBy="services-heading">
+      <SectionHeading
+        eyebrow="Core services"
+        title="Everything cold email needs to work, in one program"
+        description="Four disciplines, run together by one team, so nothing falls through the cracks between strategy and send."
+      />
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-4">
-          {SERVICES.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="bg-canvas p-8">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-navy/[0.06] text-navy">
-                <Icon />
-              </div>
-              <h3 className="mt-5 text-base font-semibold text-ink">
-                {title}
+      <ul className="mt-16 grid gap-6 md:grid-cols-2">
+        {SERVICES.map((service, index) => (
+          <li key={service.slug} data-reveal>
+            <Link
+              href={`/services/${service.slug}`}
+              className="card-interactive border-hairline bg-surface group flex h-full flex-col border p-8 md:p-9"
+            >
+              <span
+                className="text-ink-muted font-heading block text-sm"
+                aria-hidden="true"
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="font-heading text-ink mt-3 text-2xl tracking-tight">
+                {service.navLabel}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-subtext">
-                {description}
+              <p className="text-ink-muted mt-4 leading-relaxed">
+                {service.shortDescription}
               </p>
-            </div>
-          ))}
-        </div>
 
-        <div className="mt-10 text-center">
-          <Link
-            href="/services"
-            className="text-sm font-medium text-royal transition-colors hover:text-navy"
-          >
-            View all services &rarr;
-          </Link>
-        </div>
+              <ul className="mt-6 flex-1 space-y-2.5">
+                {service.deliverables.slice(0, 4).map((item) => (
+                  <li
+                    key={item.title}
+                    className="flex items-start gap-2.5 text-sm"
+                  >
+                    <CheckIcon
+                      width={16}
+                      height={16}
+                      className="text-action mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="text-ink">{item.title}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <span className="text-action group-hover:text-action-hover mt-7 inline-flex items-center gap-2 text-sm font-medium">
+                Learn more
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-10 text-center">
+        <Link
+          href="/services"
+          className="text-ink decoration-action hover:text-action focus-visible:outline-action rounded-sm text-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
+        >
+          View all services →
+        </Link>
       </div>
-    </section>
+    </Section>
   );
 }

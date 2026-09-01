@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 
 const TOOL_CATEGORIES = [
   {
@@ -17,34 +18,32 @@ const TOOL_CATEGORIES = [
 
 export function FounderToolsSection() {
   return (
-    <section className="border-t border-hairline py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Tools"
-          title="Run inside the platforms clients already trust"
-          align="left"
-        />
+    <Section tone="canvas" compact labelledBy="tools-heading">
+      <SectionHeading
+        eyebrow="Tools"
+        title="Run inside the platforms clients already trust"
+        align="left"
+      />
 
-        <div className="mt-10 grid gap-10 sm:grid-cols-3">
-          {TOOL_CATEGORIES.map((category) => (
-            <div key={category.label}>
-              <h3 className="text-sm font-semibold text-ink">
-                {category.label}
-              </h3>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {category.tools.map((tool) => (
-                  <li
-                    key={tool}
-                    className="rounded-md border border-hairline px-3 py-1.5 text-sm text-subtext"
-                  >
-                    {tool}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      <div className="mt-10 grid gap-10 sm:grid-cols-3">
+        {TOOL_CATEGORIES.map((category) => (
+          <div key={category.label}>
+            <h3 className="text-ink text-sm font-semibold">
+              {category.label}
+            </h3>
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {category.tools.map((tool) => (
+                <li
+                  key={tool}
+                  className="border-hairline text-ink-muted rounded-full border px-3 py-1.5 text-sm"
+                >
+                  {tool}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }

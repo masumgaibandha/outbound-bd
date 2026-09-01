@@ -1,5 +1,6 @@
 import { CheckIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 
 type DeliverablesSectionProps = {
   items: { title: string; description: string }[];
@@ -7,30 +8,32 @@ type DeliverablesSectionProps = {
 
 export function DeliverablesSection({ items }: DeliverablesSectionProps) {
   return (
-    <section className="border-t border-hairline py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="What's included"
-          title="Deliverables"
-          description="Everything that's part of this service, from day one through ongoing delivery."
-        />
+    <Section tone="canvasAlt" compact labelledBy="deliverables-heading">
+      <SectionHeading
+        eyebrow="What's included"
+        title="Deliverables"
+        description="Everything that's part of this service, from day one through ongoing delivery."
+      />
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.title} className="bg-canvas p-7">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy/[0.06] text-navy">
-                <CheckIcon width={18} height={18} />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-ink">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-subtext">
-                {item.description}
-              </p>
+      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.title}
+            className="border-hairline bg-surface card-static border p-7"
+            data-reveal
+          >
+            <div className="bg-action/[0.08] text-action flex h-10 w-10 items-center justify-center rounded-full">
+              <CheckIcon width={18} height={18} />
             </div>
-          ))}
-        </div>
+            <h3 className="text-ink mt-4 text-base font-semibold">
+              {item.title}
+            </h3>
+            <p className="text-ink-muted mt-2 text-sm leading-relaxed">
+              {item.description}
+            </p>
+          </div>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }

@@ -6,6 +6,7 @@ import {
   UsersIcon,
 } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 
 const REASONS = [
   {
@@ -42,30 +43,28 @@ const REASONS = [
 
 export function WhySection() {
   return (
-    <section className="border-t border-hairline bg-canvas py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Why Outbound BD"
-          title="Built to be the outbound partner you don't have to manage"
-          align="left"
-        />
+    <Section tone="canvas" labelledBy="why-heading">
+      <SectionHeading
+        eyebrow="Why Outbound BD"
+        title="Built to be the outbound partner you don't have to manage"
+        align="left"
+      />
 
-        <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
-          {REASONS.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="flex gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy/[0.06] text-navy">
-                <Icon width={19} height={19} />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-ink">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-subtext">
-                  {description}
-                </p>
-              </div>
+      <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+        {REASONS.map(({ icon: Icon, title, description }) => (
+          <div key={title} className="flex gap-4" data-reveal>
+            <div className="bg-action/[0.08] text-action flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+              <Icon width={19} height={19} />
             </div>
-          ))}
-        </div>
+            <div>
+              <h3 className="text-ink text-base font-semibold">{title}</h3>
+              <p className="text-ink-muted mt-1.5 text-sm leading-relaxed">
+                {description}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }

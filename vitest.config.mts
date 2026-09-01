@@ -1,26 +1,23 @@
-import { defineConfig } from "vitest/config";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
 
-const dirname = import.meta.dirname;
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
-    tsconfigPaths: true,
     alias: {
-      // See tests/noop-server-only.ts.
-      "server-only": path.resolve(dirname, "tests/noop-server-only.ts"),
+      "@": path.resolve(dirname, "./src"),
+      // See tests/helpers/server-only-stub.ts for why.
+      "server-only": path.resolve(dirname, "./tests/helpers/server-only-stub.ts"),
     },
   },
   test: {
     environment: "node",
-    globalSetup: ["./tests/global-setup.ts"],
-    testTimeout: 30000,
-    hookTimeout: 60000,
-    // Route handlers connect to one shared in-memory MongoDB instance
-    // (started in global-setup.ts); running test files in parallel worker
-    // pools is fine since each uses its own users/orders, but keep it
-    // single-threaded to avoid flakiness from Mongoose's global connection
-    // cache (src/lib/mongoose.ts caches one connection on globalThis).
-    fileParallelism: false,
+    include: ["tests/**/*.test.ts"],
+    // DB-backed tests spin up their own mongodb-memory-server instance and
+    // can take a few seconds to download/start the binary on first run.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
 });

@@ -143,3 +143,48 @@ export function XIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function MenuIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" />
+    </Base>
+  );
+}
+
+export function MailIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+      <path d="m4.5 7 7.5 6 7.5-6" />
+    </Base>
+  );
+}
+
+export function ArrowUpRightIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M7 17 17 7" />
+      <path d="M9 7h8v8" />
+    </Base>
+  );
+}
+
+export function AlertTriangleIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M10.6 4.3a1.6 1.6 0 0 1 2.8 0l7.6 13.5A1.6 1.6 0 0 1 19.6 20H4.4a1.6 1.6 0 0 1-1.4-2.2Z" />
+      <path d="M12 9.5v4" />
+      <path d="M12 16.7v.1" />
+    </Base>
+  );
+}
+
+export function CircleCheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.3 12.3 2.5 2.5 5-5.2" />
+    </Base>
+  );
+}

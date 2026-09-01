@@ -2,8 +2,12 @@
 
 # Outbound BD
 
-B2B lead generation and cold email outreach agency app. Next.js App Router,
-TypeScript, MongoDB via Mongoose, HeroUI + Tailwind CSS, Better Auth, npm.
+B2B lead generation and cold email outreach agency site. Next.js App Router,
+TypeScript, MongoDB via Mongoose, HeroUI + Tailwind CSS, npm. Consultation-led
+— there is no authentication, no user accounts, no dashboards, and no
+self-serve ordering or payment flow. Every conversion path ends at a Calendly
+booking link or the contact form; agreements and invoicing happen outside the
+website.
 
 ## Stack
 
@@ -12,53 +16,42 @@ TypeScript, MongoDB via Mongoose, HeroUI + Tailwind CSS, Better Auth, npm.
 - **UI**: HeroUI v3 (`@heroui/react`, `@heroui/styles`) + Tailwind CSS v4
   (CSS-first config — there is no `tailwind.config.js`; theme and plugin
   wiring live in `src/app/globals.css`)
-- **Auth**: Better Auth, email/password, MongoDB adapter (native `mongodb`
-  driver)
-- **Data**: MongoDB. Better Auth owns its own collections (`user`,
-  `session`, `account`, `verification`) via the native driver; application
-  domain models should be defined with Mongoose against the same database.
+- **Data**: MongoDB via Mongoose only (no native `mongodb` driver dependency
+  — it's present in `node_modules` solely as Mongoose's own transitive
+  dependency). One collection, `Inquiry`, backs the contact form.
 - **Package manager**: npm
 
 ## Architecture
 
-`src`-based layout with route groups:
+`src`-based layout. There is exactly one route group — the whole site is
+public:
 
-- `src/app/(public)` — marketing site shell (header + footer) and the full
-  homepage (hero, services, process, results, tools, why-us, FAQ, final CTA)
-- `src/app/(auth)` — centered auth layout, `/sign-in`, `/sign-up`
-- `src/app/(client-dashboard)` — `/dashboard/*`, any authenticated user
-- `src/app/(admin-dashboard)` — `/admin/*`, `ADMIN` role only
-- `src/app/api/auth/[...all]` — Better Auth's catch-all route handler
-- `src/lib` — `auth.ts` (server auth instance), `auth-client.ts` (React
-  client), `session.ts` (server-side role guards), `mongodb.ts` (native
-  driver singleton, used by the auth adapter), `mongoose.ts` (Mongoose
-  connection singleton, for app models), `env.ts` (validated env vars),
-  `roles.ts` (the `Role` type)
-- `src/components` — `public/` (header, footer, logo, and one component per
-  homepage section — see below), `auth/` (sign-in/up forms), `dashboard/`
-  (shared `DashboardShell`, nav, placeholders)
+- `src/app/(public)` — the marketing site: homepage, `/services` index + 4
+  service detail pages, `/about`, `/about/founder`, `/how-it-works`,
+  `/results`, `/testimonials`, `/pricing`, `/faq`, `/contact`,
+  `/privacy-policy`, `/terms-of-service`
+- `src/app/api/inquiries` — the only API route; validates and persists
+  contact-form submissions
+- `src/app/sitemap.ts`, `src/app/robots.ts` — SEO metadata routes
+- `src/lib` — `env.ts` (validated `MONGODB_URI`), `public-env.ts` (validated
+  `NEXT_PUBLIC_APP_URL`), `mongoose.ts` (connection singleton),
+  `inquiry-schema.ts` (Zod schema, shared by the form and the API route),
+  `models/inquiry.ts` (Mongoose model), `contact-prefill.ts` (pure function
+  resolving `?service=&plan=` query params into form prefill values),
+  `pricing-catalog.ts` (managed-plan/one-time-offer data), `normalize-website.ts`
+- `src/components/public` — one component per homepage section, the shared
+  `Logo`/`Container`/`Section`/`SectionHeading`/`Button` primitives, and
+  `site-config.ts` (nav links, Calendly URL, contact email — see Brand below)
 - `src/assets/logos` — brand logo/favicon source files, imported into
-  components via static `next/image` imports (see `components/public/logo.tsx`)
-- `src/proxy.ts` — optimistic, cookie-presence-only redirect for
-  `/dashboard/*` and `/admin/*`. Not the security boundary. (Next.js 16
-  renamed the `middleware.ts` convention to `proxy.ts`.)
+  `Logo` via static `next/image` imports
+- `src/assets/founder`, `src/assets/results` — the founder portrait and the
+  two real campaign-evidence screenshots used on the homepage and `/results`
 
-## Roles and authorization
-
-Two roles: `ADMIN` and `CLIENT` (see `src/lib/roles.ts`). New sign-ups
-always default to `CLIENT` — the `role` field is `input: false` on the
-Better Auth user schema, so it can never be set from client-supplied
-sign-up/update payloads. Promote a user to `ADMIN` directly in the
-database (or build an internal admin-only endpoint that uses
-`auth.api` — never trust a client-submitted role).
-
-**Security model**: `src/proxy.ts` only checks whether a session
-cookie is present, purely for redirect UX — it does not verify the
-session or role. The actual authorization boundary is
-`requireUser` / `requireRole` in `src/lib/session.ts`, called at the top
-of each dashboard route group's `layout.tsx` (server components), which
-re-verifies the session against the database on every request. Any new
-protected route group must call one of these at the top of its layout.
+There is no `proxy.ts`/`middleware.ts`, no session/role guards, and no
+protected route group — none of that exists in this app. Do not reintroduce
+auth, dashboards, ordering, or payment functionality; if a task seems to
+call for one of those, stop and confirm with the user first, since removing
+that entire system was a deliberate, explicit decision.
 
 ## Commands
 
@@ -68,32 +61,54 @@ npm run build       # production build
 npm run start        # run the production build
 npm run lint          # eslint
 npm run typecheck      # tsc --noEmit
+npm test                # vitest — schema/API/route tests, isolated mongodb-memory-server
 ```
+
+Tests never touch the real `MONGODB_URI` — `.env.local` in this checkout
+holds the **production** connection string (pulled via `vercel env pull`),
+so every DB-backed test file imports `tests/helpers/mongodb-memory-server.ts`
+first to point at an isolated in-memory instance instead. See that file's
+own comment for why import order matters here.
 
 ## Brand
 
-Outbound BD's palette is a fixed 7-color set, defined once as Tailwind
-theme tokens in `src/app/globals.css` (`canvas`, `ink`, `subtext`,
-`hairline`, `navy`, `royal`, `azure` — see `src/assets/logos/outbound-bd-color-palette.png`
-for usage guidance). The same file rethemes HeroUI's semantic CSS
-variables (`--accent`, `--background`, `--border`, etc.) to this palette
-via an unlayered `:root` override, so HeroUI primitives (e.g. `Button`)
-pick up brand colors automatically — don't hardcode Tailwind's default
-gray/blue/slate palette in new marketing UI. Use the `Logo` component
-(`src/components/public/logo.tsx`) rather than importing logo assets
-directly — it picks the correct light/navy asset for the background it's
-placed on.
+Outbound BD's visual system is ported from masumdev.com (the founder's own
+site) — warm paper canvas, terracotta action color, serif Playfair Display
+headings over a Poppins body face. Tokens are defined once in
+`src/app/globals.css` (`canvas`, `canvas-alt`, `surface`, `accent`,
+`accent-ink`, `action`, `action-hover`, `action-dark`, `ink`, `ink-muted`,
+`hairline`, `on-dark`, `on-dark-muted` — see
+`src/assets/logos/outbound-bd-color-palette.png` for swatches, hex/rgb, and
+usage notes). The same file rethemes HeroUI's semantic CSS variables
+(`--accent`, `--background`, `--border`, etc.) to this palette via an
+unlayered `:root` override, so HeroUI primitives pick up brand colors
+automatically — don't hardcode Tailwind's default gray/blue/slate palette,
+and don't reintroduce the old navy/royal-blue palette.
+
+Use the `Logo` component (`src/components/public/logo.tsx`) rather than
+importing logo assets directly — `surface="canvas"|"dark"` picks the correct
+asset for the background it's placed on, and `tone="brand"|"monochrome"`
+switches to a flat single-color lockup. Every logo variant is a recolored
+PNG (no SVG source exists for the mark) with `unoptimized` set so none of
+them depend on Vercel's image-optimization quota.
+
+Every "Book a ..." CTA site-wide reads `STRATEGY_CALL_HREF` /
+`STRATEGY_CALL_LABEL` / `STRATEGY_CALL_LINK_PROPS` from
+`src/components/public/site-config.ts` — that file's `CALENDLY_URL`
+constant is the single place the real booking link lives. Never hardcode a
+booking URL or CTA label anywhere else; if `CALENDLY_URL` is ever cleared it
+correctly falls back to `/contact` instead of a placeholder/`#`.
 
 ## Conventions
 
-- Server-only modules (`src/lib/auth.ts`, `src/lib/session.ts`,
-  `src/lib/mongodb.ts`, `src/lib/mongoose.ts`) must never be imported from
-  a Client Component.
+- Server-only modules (`src/lib/env.ts`, `src/lib/mongoose.ts`,
+  `src/lib/models/inquiry.ts`) must never be imported from a Client
+  Component.
 - HeroUI v3 has no `HeroUIProvider` and no `tailwind.config.js` — styling
-  is wired entirely through `@import "@heroui/styles";` in
-  `src/app/globals.css`. Don't add either back in.
-- Prefer `next/link` for navigation; use HeroUI's exported
-  `buttonVariants`/`linkVariants` (from `@heroui/styles`) as `className`
-  on it for consistent styling, rather than HeroUI's own `Link` primitive,
-  which isn't wired to the Next.js router.
-- No Express, no payments — out of scope for this stage.
+  is wired entirely through `@import "tailwindcss"; @import "@heroui/styles";`
+  in `src/app/globals.css`. Don't add either back in.
+- Prefer `next/link` for navigation; use the shared `buttonClass`/`ButtonLink`
+  from `src/components/public/button.tsx` for button-styled CTAs rather than
+  raw `buttonVariants` calls, so tone/size stay consistent site-wide.
+- No Express, no self-serve payments — the site is consultation-led;
+  pricing shown anywhere is guidance, not a checkout flow.

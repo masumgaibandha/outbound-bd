@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
 import { ArrowRightIcon } from "@/components/public/icons";
+import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { SectionHeading } from "@/components/public/section-heading";
+import { Section } from "@/components/public/section";
 import { SERVICES } from "@/components/public/services-data";
 
 export const metadata: Metadata = {
@@ -14,56 +17,58 @@ export const metadata: Metadata = {
 export default function ServicesIndexPage() {
   return (
     <>
-      <section className="border-b border-hairline">
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-16 text-center sm:px-6 sm:pt-20 sm:pb-20">
-          <p className="text-xs font-semibold tracking-[0.14em] text-royal uppercase">
+      <section className="hero-wash relative border-b border-hairline">
+        <Container className="max-w-4xl pt-16 pb-16 text-center sm:pt-20 sm:pb-20">
+          <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
             Services
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink sm:text-4xl lg:text-5xl">
+          <h1 className="font-heading text-ink type-section mt-4 text-balance">
             Everything cold email needs to work, run as one program
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty text-subtext">
+          <p className="text-ink-muted mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty">
             Targeting, infrastructure, copy, and deliverability are usually
             split across separate vendors or tools. We run them together, so
             nothing falls through the cracks between strategy and send.
           </p>
-        </div>
+        </Container>
       </section>
 
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="Our services"
-            title="Four disciplines, one team"
-            align="left"
-          />
+      <Section tone="canvas" labelledBy="services-index-heading">
+        <SectionHeading
+          eyebrow="Our services"
+          title="Four disciplines, one team"
+          align="left"
+        />
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2">
-            {SERVICES.map((service) => (
+        <ul className="mt-10 grid gap-6 sm:grid-cols-2">
+          {SERVICES.map((service, index) => (
+            <li key={service.slug} data-reveal>
               <Link
-                key={service.slug}
                 href={`/services/${service.slug}`}
-                className="group flex flex-col rounded-xl border border-hairline p-8 transition-colors hover:border-royal/40"
+                className="card-interactive border-hairline bg-surface group flex h-full flex-col border p-8"
               >
-                <h2 className="text-xl font-semibold text-ink">
+                <span className="text-ink-muted font-heading block text-sm" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h2 className="font-heading text-ink mt-3 text-2xl tracking-tight">
                   {service.navLabel}
                 </h2>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-subtext">
+                <p className="text-ink-muted mt-3 flex-1 leading-relaxed">
                   {service.shortDescription}
                 </p>
-                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-royal">
+                <span className="text-action group-hover:text-action-hover mt-6 inline-flex items-center gap-2 text-sm font-medium">
                   Learn more
                   <ArrowRightIcon
                     width={16}
                     height={16}
-                    className="transition-transform group-hover:translate-x-0.5"
+                    className="transition-transform duration-200 group-hover:translate-x-1"
                   />
                 </span>
               </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
       <FinalCtaSection />
     </>

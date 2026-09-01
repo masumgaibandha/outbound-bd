@@ -3,6 +3,7 @@ type SectionHeadingProps = {
   title: string;
   description?: string;
   align?: "left" | "center";
+  /** "canvas" is for use on the dark bands (footer, final CTA) — inverts the palette. */
   tone?: "ink" | "canvas";
 };
 
@@ -14,32 +15,35 @@ export function SectionHeading({
   tone = "ink",
 }: SectionHeadingProps) {
   const isCenter = align === "center";
-  const isOnNavy = tone === "canvas";
+  const onDark = tone === "canvas";
 
   return (
     <div
-      className={`max-w-2xl ${isCenter ? "mx-auto text-center" : "text-left"}`}
+      className={`max-w-3xl ${isCenter ? "mx-auto text-center" : "text-left"}`}
+      data-reveal
     >
       {eyebrow ? (
         <p
-          className={`text-xs font-semibold tracking-[0.14em] uppercase ${
-            isOnNavy ? "text-azure" : "text-royal"
-          }`}
+          className={`flex items-center gap-3 text-xs font-semibold tracking-[0.18em] uppercase ${
+            isCenter ? "justify-center" : ""
+          } ${onDark ? "text-on-dark-muted" : "text-ink-muted"}`}
         >
+          <span
+            aria-hidden="true"
+            className={`h-px w-8 shrink-0 ${onDark ? "bg-action-dark" : "bg-action"}`}
+          />
           {eyebrow}
         </p>
       ) : null}
       <h2
-        className={`mt-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl ${
-          isOnNavy ? "text-canvas" : "text-ink"
-        }`}
+        className={`type-section mt-5 text-balance ${onDark ? "text-on-dark" : "text-ink"}`}
       >
         {title}
       </h2>
       {description ? (
         <p
-          className={`mt-4 text-base leading-relaxed text-pretty sm:text-lg ${
-            isOnNavy ? "text-azure/90" : "text-subtext"
+          className={`mx-auto mt-6 max-w-prose text-base leading-relaxed text-pretty md:text-lg ${
+            onDark ? "text-on-dark-muted" : "text-ink-muted"
           }`}
         >
           {description}

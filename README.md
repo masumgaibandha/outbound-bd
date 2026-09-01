@@ -1,13 +1,15 @@
 # Outbound BD
 
-B2B lead generation and cold email outreach agency platform.
+B2B lead generation and cold email outreach agency site. Consultation-led —
+no accounts, no dashboards, no self-serve checkout. Visitors either book a
+Calendly call or submit a project inquiry, and every engagement is scoped
+and invoiced outside the website.
 
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router) + TypeScript
-- [MongoDB](https://www.mongodb.com) with [Mongoose](https://mongoosejs.com)
-- [HeroUI](https://heroui.com) + Tailwind CSS
-- [Better Auth](https://better-auth.com) (email/password, MongoDB adapter)
+- [MongoDB](https://www.mongodb.com) with [Mongoose](https://mongoosejs.com) — one collection, `Inquiry`
+- [HeroUI](https://heroui.com) + Tailwind CSS v4
 - npm
 
 ## Getting started
@@ -33,11 +35,8 @@ cp .env.example .env
 
 | Variable | Description |
 | --- | --- |
-| `MONGODB_URI` | MongoDB connection string, used by both Better Auth and Mongoose |
-| `BETTER_AUTH_SECRET` | Random secret used to sign sessions. Generate with `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | The base URL Better Auth runs on (e.g. `http://localhost:3000`) |
-| `NEXT_PUBLIC_APP_URL` | Public app URL, used by the browser auth client |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob read/write token for the private payment-proof store. Create a Blob store in the Vercel dashboard and copy its token. Required for payment submission/proof-viewing routes. |
+| `MONGODB_URI` | MongoDB connection string, used by Mongoose |
+| `NEXT_PUBLIC_APP_URL` | Public app URL — used for `metadataBase`, `sitemap.xml`, and `robots.txt` |
 
 ### 4. Run the dev server
 
@@ -47,54 +46,55 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000).
 
-## Roles
+## Booking / Calendly
 
-There are two roles: `ADMIN` and `CLIENT`.
-
-- New sign-ups always default to `CLIENT`. The client can never set its
-  own role — it's a server-only field on the Better Auth user schema.
-- To promote a user to `ADMIN`, update their user document's `role`
-  field directly in MongoDB:
-
-  ```js
-  db.user.updateOne({ email: "you@example.com" }, { $set: { role: "ADMIN" } })
-  ```
-
-- `/dashboard/*` is available to any signed-in user.
-- `/admin/*` is available to `ADMIN` users only. Signed-in non-admins are
-  redirected to `/dashboard`; signed-out visitors are redirected to
-  `/sign-in`.
-
-Route protection is enforced server-side (in each dashboard route group's
-`layout.tsx`, via `requireUser` / `requireRole` in `src/lib/session.ts`),
-re-checked against the database on every request. `src/proxy.ts` only
-does a lightweight cookie-presence redirect for UX and is not the security
-boundary.
+Every "Book a ..." CTA site-wide reads a single centralized href, label, and
+link-safety props from `src/components/public/site-config.ts`
+(`STRATEGY_CALL_HREF` / `STRATEGY_CALL_LABEL` / `STRATEGY_CALL_LINK_PROPS`).
+To change the booking link, edit the `CALENDLY_URL` constant in that file —
+nothing else needs to change. If it's ever cleared, every CTA safely falls
+back to the `/contact` page instead of a broken link.
 
 ## Project structure
 
 ```
 src/
   app/
-    (public)/            marketing site — header, footer, landing page
-    (auth)/               sign-in / sign-up
-    (client-dashboard)/    /dashboard/* — any authenticated user
-    (admin-dashboard)/      /admin/* — ADMIN only
-    api/auth/[...all]/       Better Auth route handler
+    (public)/            the entire site — homepage, services, about,
+                          founder, how-it-works, results, testimonials,
+                          pricing, faq, contact, privacy-policy, terms
+    api/inquiries/         validates and persists contact-form submissions
+    sitemap.ts, robots.ts    SEO metadata routes
   components/
-    public/                header, footer
-    auth/                    sign-in / sign-up forms
-    dashboard/                shared dashboard shell, nav, placeholders
+    public/                 one component per homepage section, plus the
+                             shared Container/Section/SectionHeading/Button
+                             primitives, Logo, site-config (nav + Calendly)
   lib/
-    auth.ts                 Better Auth server instance
-    auth-client.ts            Better Auth React client
-    session.ts                 server-side session/role guards
-    mongodb.ts                   native MongoDB client (used by the auth adapter)
-    mongoose.ts                    Mongoose connection singleton (for app models)
-    env.ts                          validated environment variables
-    roles.ts                         the Role type ("ADMIN" | "CLIENT")
-  proxy.ts
+    env.ts                    validated MONGODB_URI
+    public-env.ts               validated NEXT_PUBLIC_APP_URL
+    mongoose.ts                   Mongoose connection singleton
+    inquiry-schema.ts               Zod schema shared by the form + API route
+    models/inquiry.ts                 Mongoose model
+    contact-prefill.ts                  resolves ?service=&plan= query params
+    pricing-catalog.ts                    managed-plan / one-time-offer data
+  assets/
+    logos/                    brand logo + favicon source PNGs
+    founder/                    founder portrait
+    results/                      real campaign-evidence screenshots
 ```
+
+There is no authentication, no dashboards, and no `proxy.ts`/`middleware.ts`
+— the entire site is public. Do not reintroduce any of that without an
+explicit request; removing it was a deliberate decision.
+
+## Brand
+
+The visual system is ported from masumdev.com's own design (warm cream
+canvas, terracotta action color, Playfair Display + Poppins). All 13 color
+tokens live in `src/app/globals.css` and are documented with hex/rgb/usage
+notes in `src/assets/logos/outbound-bd-color-palette.png`. Always go through
+the `Logo` component (`src/components/public/logo.tsx`) rather than
+importing a logo asset directly.
 
 ## Scripts
 
@@ -104,22 +104,22 @@ npm run build         # production build
 npm run start           # run the production build
 npm run lint               # eslint
 npm run typecheck            # tsc --noEmit
-npm test                       # vitest — unit + integration tests
+npm test                       # vitest — schema/API/route tests
 ```
 
 ### Testing
 
-Tests run against an ephemeral, in-memory MongoDB (via `mongodb-memory-server`)
-spun up per test file — never against `MONGODB_URI`. This is deliberate:
-`.env.local` in a Vercel-linked checkout typically holds the **production**
-database connection string (pulled via `vercel env pull`), so tests must
-never read it. See `vitest.config.ts` and `tests/global-setup.ts`.
+Tests run against an isolated, in-memory MongoDB (via `mongodb-memory-server`)
+— never against `MONGODB_URI`. This is deliberate: `.env.local` in a
+Vercel-linked checkout typically holds the **production** database
+connection string (pulled via `vercel env pull`), so tests must never read
+it. See `vitest.config.mts` and `tests/helpers/mongodb-memory-server.ts`.
 
 ## Notes
 
-- This scaffold intentionally does not include Express (Next.js API/route
-  handlers are the backend) or payments — both are out of scope for this
-  stage.
+- No Express (Next.js route handlers are the backend) and no payments —
+  the site is consultation-led; pricing shown anywhere is guidance, not a
+  checkout flow.
 - HeroUI v3 requires no `HeroUIProvider` and no `tailwind.config.js`; its
-  theme is wired entirely through `@import "@heroui/styles";` in
-  `src/app/globals.css`.
+  theme is wired entirely through `@import "tailwindcss"; @import "@heroui/styles";`
+  in `src/app/globals.css`.

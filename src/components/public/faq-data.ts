@@ -43,7 +43,7 @@ export const FAQS: FaqEntry[] = [
     category: "services",
     question: "Which service should I start with if I'm not sure?",
     answer:
-      "Most clients start with Cold Email Outreach, which bundles targeting, infrastructure, copy, and reply handling into one program. If you already have infrastructure or lists in place, Email Deliverability or Lead Generation alone may fit better — tell us your situation on a strategy call and we'll point you to the right service.",
+      "Most clients start with Cold Email Outreach, which bundles targeting, infrastructure, copy, and reply handling into one program. If you already have infrastructure or lists in place, Email Deliverability or Lead Generation alone may fit better — tell us your situation on a discovery call and we'll point you to the right service.",
   },
   {
     id: "process-copywriting",

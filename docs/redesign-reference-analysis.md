@@ -1,5 +1,17 @@
 # Reference-site analysis: design direction for the Outbound BD redesign
 
+> **Superseded.** This document is a historical planning snapshot from
+> before the redesign it discusses actually happened. Its "hard constraints"
+> section below (palette, logo, and functionality "stays as-is") describes
+> what was true **at the time of writing**, not the current app — since
+> then, the palette was superseded by a design system ported from
+> masumdev.com (see `CLAUDE.md` → Brand), the logo/favicon/brand assets
+> were recolored to match, and the entire auth/dashboard/ordering/payment
+> system this document assumes is still present was removed in favor of a
+> consultation-led model (Calendly booking + contact-form inquiry only).
+> Kept for its record of what reference site was analyzed and why; do not
+> treat anything below as current guidance.
+
 **Source**: `src/assets/reference-website/full-page.pdf` (6-page print capture of a live
 one-page freelancer/agency site — "10xFreelancing", a solo cold-outreach consultant's
 site). Reviewed in full, section by section, at native resolution.
