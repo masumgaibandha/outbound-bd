@@ -44,76 +44,92 @@ export function SiteHeader() {
   }, [isMenuOpen]);
 
   return (
-    <header className="border-hairline bg-canvas/95 sticky top-0 z-50 border-b backdrop-blur-sm">
-      <Container className="flex h-18 items-center justify-between gap-6 md:h-20">
-        <Link
-          href="/"
-          aria-label="Outbound BD — home"
-          className="focus-visible:outline-action rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
-        >
-          <Logo className="h-8 w-auto sm:h-9 lg:h-10" priority />
-        </Link>
+    <>
+      <header className="border-hairline bg-canvas/95 sticky top-0 z-50 border-b backdrop-blur-sm">
+        <Container className="flex h-18 items-center justify-between gap-6 md:h-20">
+          <Link
+            href="/"
+            aria-label="Outbound BD — home"
+            className="focus-visible:outline-action rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
+          >
+            {/*
+             * The source lockup PNG is now cropped tight to its visible
+             * pixels (see src/assets/logos), so these heights map directly
+             * to the actual rendered mark — not a padded canvas — at
+             * roughly 138px/153px/168px wide (~5.1:1 aspect ratio).
+             */}
+            <Logo className="h-[27px] w-auto sm:h-[30px] lg:h-[33px]" priority />
+          </Link>
 
-        <div className="flex items-center gap-2 lg:flex-1 lg:justify-end lg:gap-8">
-          <nav aria-label="Primary" className="hidden items-center gap-8 lg:flex">
-            {NAV_ITEMS.map((item) => {
-              if (item.type === "link") {
-                const active = isNavLinkActive(pathname, item.href);
+          <div className="flex items-center gap-2 lg:flex-1 lg:justify-end lg:gap-8">
+            <nav aria-label="Primary" className="hidden items-center gap-8 lg:flex">
+              {NAV_ITEMS.map((item) => {
+                if (item.type === "link") {
+                  const active = isNavLinkActive(pathname, item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`focus-visible:outline-action relative rounded-sm text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-full after:origin-left after:bg-action after:transition-transform ${
+                        active
+                          ? "text-action after:scale-x-100"
+                          : "text-ink-muted hover:text-ink after:scale-x-0"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={`focus-visible:outline-action relative rounded-sm text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-full after:origin-left after:bg-action after:transition-transform ${
-                      active
-                        ? "text-action after:scale-x-100"
-                        : "text-ink-muted hover:text-ink after:scale-x-0"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
+                  <NavDropdown
+                    key={item.label}
+                    label={item.label}
+                    items={item.items}
+                    pathname={pathname}
+                  />
                 );
-              }
-              return (
-                <NavDropdown
-                  key={item.label}
-                  label={item.label}
-                  items={item.items}
-                  pathname={pathname}
-                />
-              );
-            })}
-          </nav>
+              })}
+            </nav>
 
-          <ButtonLink
-            href={STRATEGY_CALL_HREF}
-            tone="action"
-            className="hidden sm:inline-flex"
-            {...STRATEGY_CALL_LINK_PROPS}
-          >
-            {STRATEGY_CALL_LABEL}
-          </ButtonLink>
+            <ButtonLink
+              href={STRATEGY_CALL_HREF}
+              tone="action"
+              className="hidden sm:inline-flex"
+              {...STRATEGY_CALL_LINK_PROPS}
+            >
+              {STRATEGY_CALL_LABEL}
+            </ButtonLink>
 
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((open) => !open)}
-            aria-expanded={isMenuOpen}
-            aria-controls="mobile-nav"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            className={buttonClass({
-              tone: "outline",
-              className: "size-11 px-0 lg:hidden",
-            })}
-          >
-            {isMenuOpen ? (
-              <XIcon width={19} height={19} aria-hidden="true" />
-            ) : (
-              <MenuIcon width={19} height={19} aria-hidden="true" />
-            )}
-          </button>
-        </div>
-      </Container>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((open) => !open)}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-nav"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              className={buttonClass({
+                tone: "outline",
+                className: "size-11 px-0 lg:hidden",
+              })}
+            >
+              {isMenuOpen ? (
+                <XIcon width={19} height={19} aria-hidden="true" />
+              ) : (
+                <MenuIcon width={19} height={19} aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </Container>
+      </header>
 
+      {/*
+       * Rendered as a sibling of <header>, not a child — the header's
+       * backdrop-blur-sm establishes a new containing block for
+       * position:fixed descendants (per spec, backdrop-filter behaves
+       * like filter/transform here), which was collapsing this panel's
+       * fixed top/bottom offsets against the ~73px-tall header instead
+       * of the viewport, rendering it at ~1px tall and invisible.
+       */}
       {isMenuOpen ? (
         <div
           id="mobile-nav"
@@ -201,7 +217,7 @@ export function SiteHeader() {
           </nav>
         </div>
       ) : null}
-    </header>
+    </>
   );
 }
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CampaignEvidenceSection } from "@/components/public/campaign-evidence-section";
+import { CampaignEvidenceCategorized } from "@/components/public/campaign-evidence-categorized";
 import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { ResultsSection } from "@/components/public/results-section";
@@ -38,12 +38,12 @@ export default function ResultsPage() {
       <Section tone="canvas" labelledBy="evidence-heading">
         <SectionHeading
           eyebrow="Available today"
-          title="Selected results from Abdullah Al Masum's independent work"
-          description="The same discipline every Outbound BD engagement is run on."
+          title="Selected results from Abdullah Al Masum's independent client work"
+          description="The same discipline every Outbound BD engagement is run on — campaign performance, inbox-placement tests, and sender infrastructure, each shown on its own terms."
           align="left"
         />
         <div className="mt-14">
-          <CampaignEvidenceSection />
+          <CampaignEvidenceCategorized />
         </div>
       </Section>
 

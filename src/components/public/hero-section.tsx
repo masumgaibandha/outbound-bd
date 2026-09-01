@@ -11,6 +11,7 @@ import {
   STRATEGY_CALL_LABEL,
   STRATEGY_CALL_LINK_PROPS,
 } from "@/components/public/site-config";
+import { UpworkProofLink } from "@/components/public/upwork-proof-link";
 
 /**
  * Ported structurally from masumdev.com's own Hero (warm radial wash,
@@ -104,6 +105,10 @@ export function HeroSection() {
             </div>
           ))}
         </dl>
+
+        <div className="mt-5">
+          <UpworkProofLink />
+        </div>
 
         <p className="text-ink-muted mt-6 text-sm">
           Run by the founder himself, Abdullah Al Masum —{" "}

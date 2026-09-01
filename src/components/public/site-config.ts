@@ -28,26 +28,31 @@ export const STRATEGY_CALL_LINK_PROPS = CALENDLY_URL
   ? ({ target: "_blank", rel: "noopener noreferrer" } as const)
   : {};
 
+// The founder's official public Upwork profile — the single source for the
+// "View verified Upwork profile" link shown near founder stats. Centralized
+// here so it's set in exactly one place; every consumer also spreads
+// EXTERNAL_LINK_PROPS so the tab-safety attributes can't drift out of sync.
+export const UPWORK_PROFILE_URL =
+  "https://www.upwork.com/freelancers/~01a5eccfaf40a8a065?viewMode=1";
+
+export const EXTERNAL_LINK_PROPS = {
+  target: "_blank",
+  rel: "noopener noreferrer",
+} as const;
+
 export type NavLink = { href: string; label: string };
 
 export type NavItem =
   | ({ type: "link" } & NavLink)
   | { type: "dropdown"; label: string; items: NavLink[] };
 
-// Primary site navigation. Dropdown items render as accessible desktop
-// popovers and a mobile accordion — see SiteHeader. Testimonials and the
-// legal pages are deliberately footer-only (see FOOTER_EXPLORE_LINKS /
-// FOOTER_LEGAL_LINKS below) rather than adding two more top-level items.
+// Primary site navigation — deliberately short. "Home" is dropped since the
+// logo already links there; "How It Works" and "FAQ" are dropped from the
+// primary bar but stay fully reachable via the footer and in-page links
+// (e.g. the process/FAQ teasers already link out from the homepage). About
+// is a direct link, not a dropdown — /about/founder is reached from links
+// on that page and the footer instead of crowding the header with a menu.
 export const NAV_ITEMS: NavItem[] = [
-  { type: "link", href: "/", label: "Home" },
-  {
-    type: "dropdown",
-    label: "About",
-    items: [
-      { href: "/about", label: "About Outbound BD" },
-      { href: "/about/founder", label: "About the Founder" },
-    ],
-  },
   {
     type: "dropdown",
     label: "Services",
@@ -56,10 +61,9 @@ export const NAV_ITEMS: NavItem[] = [
       label: service.navLabel,
     })),
   },
-  { type: "link", href: "/how-it-works", label: "How It Works" },
   { type: "link", href: "/results", label: "Results" },
   { type: "link", href: "/pricing", label: "Pricing" },
-  { type: "link", href: "/faq", label: "FAQ" },
+  { type: "link", href: "/about", label: "About" },
   { type: "link", href: "/contact", label: "Contact" },
 ];
 

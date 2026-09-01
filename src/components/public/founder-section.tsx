@@ -3,6 +3,7 @@ import Image from "next/image";
 import founderPortrait from "@/assets/founder/abdullah-al-masum-portrait.webp";
 import { Container } from "@/components/public/container";
 import { founderStats } from "@/components/public/founder-stats";
+import { UpworkProofLink } from "@/components/public/upwork-proof-link";
 
 export function FounderSection() {
   return (
@@ -61,6 +62,10 @@ export function FounderSection() {
                 </div>
               ))}
             </dl>
+
+            <div className="mt-6">
+              <UpworkProofLink />
+            </div>
           </div>
 
           <div className="relative mx-auto w-full max-w-sm lg:mx-0 lg:max-w-none">

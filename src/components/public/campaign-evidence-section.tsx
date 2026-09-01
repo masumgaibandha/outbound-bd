@@ -1,11 +1,15 @@
 import Image from "next/image";
 
-import { campaignEvidence } from "@/components/public/campaign-evidence-data";
+import type { CampaignEvidenceItem } from "@/components/public/campaign-evidence-data";
 
-export function CampaignEvidenceSection() {
+type CampaignEvidenceSectionProps = {
+  items: readonly CampaignEvidenceItem[];
+};
+
+export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps) {
   return (
     <ul className="grid gap-6 lg:grid-cols-2">
-      {campaignEvidence.map((item) => (
+      {items.map((item) => (
         <li key={item.id} data-reveal>
           <article className="card-static border-hairline bg-surface flex h-full flex-col overflow-hidden border">
             <div className="bg-canvas-alt border-hairline flex items-center justify-center border-b p-5 md:p-6">
@@ -19,6 +23,9 @@ export function CampaignEvidenceSection() {
               />
             </div>
             <div className="flex flex-1 flex-col p-7 md:p-8">
+              <span className="border-hairline text-ink-muted mb-3 inline-block w-fit rounded-full border px-2.5 py-1 text-xs font-medium">
+                {item.platform}
+              </span>
               <p className="text-ink leading-relaxed">{item.caption}</p>
               {item.note ? (
                 <p className="text-ink-muted mt-3 text-sm leading-relaxed italic">

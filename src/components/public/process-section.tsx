@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
 
@@ -73,6 +75,17 @@ export function ProcessSection({ compact = false }: ProcessSectionProps) {
           </li>
         ))}
       </ol>
+
+      {compact ? (
+        <div className="mt-10">
+          <Link
+            href="/how-it-works"
+            className="text-ink decoration-action hover:text-action focus-visible:outline-action rounded-sm text-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
+          >
+            See the full process →
+          </Link>
+        </div>
+      ) : null}
     </Section>
   );
 }

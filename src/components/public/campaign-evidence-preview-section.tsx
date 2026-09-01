@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getFeaturedEvidence } from "@/components/public/campaign-evidence-data";
 import { CampaignEvidenceSection } from "@/components/public/campaign-evidence-section";
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
@@ -20,7 +21,7 @@ export function CampaignEvidencePreviewSection() {
       />
 
       <div className="mt-14">
-        <CampaignEvidenceSection />
+        <CampaignEvidenceSection items={getFeaturedEvidence()} />
       </div>
 
       <div className="border-hairline mt-10 flex flex-col gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
