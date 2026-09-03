@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import { env } from "@/lib/env";
+import { getDatabaseEnv } from "@/lib/env";
 
 type MongooseCache = {
   conn: typeof mongoose | null;
@@ -29,7 +29,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 
   // If the connection attempt fails, clear the cached promise so the next
   // call retries instead of permanently re-throwing the same rejection.
-  cache.promise ??= mongoose.connect(env.MONGODB_URI).catch((error) => {
+  cache.promise ??= mongoose.connect(getDatabaseEnv().MONGODB_URI).catch((error) => {
     cache.promise = null;
     throw error;
   });
