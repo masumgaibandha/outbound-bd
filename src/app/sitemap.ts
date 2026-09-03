@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SERVICES } from "@/components/public/services-data";
+import { isRegistrationEnabled } from "@/lib/masterclass/env";
 import { publicEnv } from "@/lib/public-env";
 
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
@@ -36,5 +37,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...serviceEntries];
+  /*
+   * The masterclass sales page is deliberately excluded from the sitemap
+   * (and, correspondingly, from indexing via that page's own `robots`
+   * metadata) until registration is actually open to the public. Reusing
+   * `MASTERCLASS_REGISTRATION_ENABLED` here — rather than a second,
+   * undocumented flag — means flipping the one env var that opens
+   * registration is also what makes the page publicly discoverable; there
+   * is no separate manual step to remember before a real launch.
+   */
+  const masterclassEntries: MetadataRoute.Sitemap = isRegistrationEnabled()
+    ? [
+        {
+          url: `${baseUrl}/masterclass/lead-generation-cold-email`,
+          lastModified,
+          changeFrequency: "weekly",
+          priority: 0.8,
+        },
+      ]
+    : [];
+
+  return [...staticEntries, ...serviceEntries, ...masterclassEntries];
 }

@@ -209,3 +209,61 @@ export function ExpandIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function CalendarIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="4" y="5" width="16" height="15" rx="1.5" />
+      <path d="M4 9.5h16" />
+      <path d="M8 3v3.5" />
+      <path d="M16 3v3.5" />
+    </Base>
+  );
+}
+
+export function CircleAlertIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v5.5" />
+      <path d="M12 16.2v.1" />
+    </Base>
+  );
+}
+
+export function ArrowDownIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 4.5v15" />
+      <path d="m6 13.5 6 6 6-6" />
+    </Base>
+  );
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="8.5" y="8.5" width="11" height="11" rx="1.5" />
+      <path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" />
+    </Base>
+  );
+}
+
+export function InfoIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.8v.1" />
+    </Base>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 4.5v15" />
+      <path d="M4.5 12h15" />
+    </Base>
+  );
+}

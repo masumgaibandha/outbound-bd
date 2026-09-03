@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { cn } from "tailwind-variants";
 
 import {
@@ -15,19 +15,11 @@ type CampaignEvidenceSectionProps = {
   items: readonly CampaignEvidenceItem[];
 };
 
-export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const triggerRefs = useRef<(HTMLButtonElement | null)[]>([]);
+/** The active lightbox index plus the exact button that opened it — the two travel together so navigation (which only ever replaces `index`) can never touch `trigger`. */
+type OpenLightboxState = { index: number; trigger: HTMLElement } | null;
 
-  function handleClose() {
-    const previousIndex = openIndex;
-    setOpenIndex(null);
-    if (previousIndex !== null) {
-      // The lightbox unmounts on close, so wait a frame before returning
-      // focus to the thumbnail that opened it.
-      requestAnimationFrame(() => triggerRefs.current[previousIndex]?.focus());
-    }
-  }
+export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps) {
+  const [openState, setOpenState] = useState<OpenLightboxState>(null);
 
   return (
     <>
@@ -51,11 +43,8 @@ export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps)
                 )}
               >
                 <button
-                  ref={(el) => {
-                    triggerRefs.current[index] = el;
-                  }}
                   type="button"
-                  onClick={() => setOpenIndex(index)}
+                  onClick={(event) => setOpenState({ index, trigger: event.currentTarget })}
                   aria-label={`Enlarge screenshot — ${item.alt}`}
                   className={cn(
                     "group bg-canvas-alt border-hairline focus-visible:outline-action relative flex shrink-0 items-center justify-center border-b p-5 focus-visible:outline-2 focus-visible:-outline-offset-2 md:p-6",
@@ -106,12 +95,15 @@ export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps)
         })}
       </ul>
 
-      {openIndex !== null ? (
+      {openState ? (
         <CampaignEvidenceLightbox
           items={items}
-          activeIndex={openIndex}
-          onClose={handleClose}
-          onNavigate={setOpenIndex}
+          activeIndex={openState.index}
+          triggerElement={openState.trigger}
+          onClose={() => setOpenState(null)}
+          onNavigate={(nextIndex) =>
+            setOpenState((prev) => (prev ? { ...prev, index: nextIndex } : prev))
+          }
         />
       ) : null}
     </>

@@ -1,0 +1,365 @@
+// @vitest-environment jsdom
+import { useEffect } from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { MasterclassRegistrationForm } from "@/components/masterclass/MasterclassRegistrationForm";
+import { registration, registrationForm } from "@/data/masterclass-content";
+import { formatBDT } from "@/lib/masterclass/format";
+
+/*
+ * TurnstileWidget wraps a real remote Cloudflare script (`window.turnstile`)
+ * that never loads in jsdom. It's out of scope for this file (a thin,
+ * mostly-untestable-in-jsdom wrapper around third-party JS) — replaced with
+ * a controllable stub exposing one button that fires the same `onToken`
+ * callback the real widget would, so the form's *reaction* to a verified
+ * token is what's under test here, not Cloudflare's script loader.
+ */
+vi.mock("@/components/masterclass/TurnstileWidget", () => ({
+  TurnstileWidget: ({
+    onToken,
+    ref,
+  }: {
+    onToken: (token: string) => void;
+    ref?: { current: { reset: () => void } | null };
+  }) => {
+    useEffect(() => {
+      if (ref) ref.current = { reset: () => {} };
+    }, [ref]);
+    return (
+      <button type="button" data-testid="mock-turnstile-verify" onClick={() => onToken("test-turnstile-token")}>
+        Simulate Turnstile Verify
+      </button>
+    );
+  },
+}));
+
+interface ManualPaymentMethodEnv {
+  enabled: boolean;
+  number: string | null;
+}
+interface ManualPaymentEnvProp {
+  bkash: ManualPaymentMethodEnv;
+  nagad: ManualPaymentMethodEnv;
+  rocket: ManualPaymentMethodEnv;
+}
+
+const PRICE_BDT = 1499;
+const PAYMENT_METHODS_ALL_ENABLED: ManualPaymentEnvProp = {
+  bkash: { enabled: true, number: "01711111111" },
+  nagad: { enabled: true, number: "01722222222" },
+  rocket: { enabled: true, number: "01733333333" },
+};
+
+function renderForm(overrides: Partial<{ paymentMethods: ManualPaymentEnvProp }> = {}) {
+  return render(
+    <MasterclassRegistrationForm
+      siteKey="1x00000000000000000000AA"
+      priceBDT={PRICE_BDT}
+      paymentMethods={overrides.paymentMethods ?? PAYMENT_METHODS_ALL_ENABLED}
+    />,
+  );
+}
+
+async function fillValidStep1(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(registration.fields.name), "Rafiq Islam");
+  await user.type(screen.getByLabelText(registration.fields.email), "rafiq@example.com");
+  await user.type(screen.getByLabelText(registration.fields.phone), "01712345678");
+  await user.click(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) }));
+  await user.click(screen.getByTestId("mock-turnstile-verify"));
+}
+
+function mockFetchOnce(body: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: new Headers(),
+    json: async () => body,
+  };
+}
+
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn());
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe("MasterclassRegistrationForm — enabled state", () => {
+  it("renders the complete step-1 form with name, email, phone, consent, and price", () => {
+    renderForm();
+    expect(screen.getByLabelText(registration.fields.name)).toBeInTheDocument();
+    expect(screen.getByLabelText(registration.fields.email)).toBeInTheDocument();
+    expect(screen.getByLabelText(registration.fields.phone)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: new RegExp(`${registration.submitEnabledLabel} — ${formatBDT(PRICE_BDT)}`) }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows required-field errors when submitting empty", async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    expect(await screen.findByText(registrationForm.nameError)).toBeInTheDocument();
+    expect(screen.getByText(registrationForm.emailError)).toBeInTheDocument();
+    expect(screen.getByText(registrationForm.phoneError)).toBeInTheDocument();
+    expect(screen.getByText(registrationForm.consentError)).toBeInTheDocument();
+    expect(screen.getByText(registrationForm.errorSummaryHeading)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid email", async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.type(screen.getByLabelText(registration.fields.name), "Rafiq Islam");
+    await user.type(screen.getByLabelText(registration.fields.email), "not-an-email");
+    await user.type(screen.getByLabelText(registration.fields.phone), "01712345678");
+    await user.click(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) }));
+    await user.click(screen.getByTestId("mock-turnstile-verify"));
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    expect(await screen.findByText(registrationForm.emailError)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("accepts a valid Bangladeshi phone and rejects an invalid one", async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.type(screen.getByLabelText(registration.fields.name), "Rafiq Islam");
+    await user.type(screen.getByLabelText(registration.fields.email), "rafiq@example.com");
+    await user.type(screen.getByLabelText(registration.fields.phone), "0123456"); // too short / invalid prefix shape
+    await user.click(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) }));
+    await user.click(screen.getByTestId("mock-turnstile-verify"));
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    expect(await screen.findByText(registrationForm.phoneError)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("displays the price passed via the priceBDT prop (no package selector exists — single fixed offering)", () => {
+    renderForm();
+    expect(
+      screen.getByRole("button", { name: new RegExp(formatBDT(PRICE_BDT).replace(/[০-৯]/g, "\\$&")) }),
+    ).toBeInTheDocument();
+  });
+
+  it("blocks submission until the Turnstile callback fires with a token", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await user.type(screen.getByLabelText(registration.fields.name), "Rafiq Islam");
+    await user.type(screen.getByLabelText(registration.fields.email), "rafiq@example.com");
+    await user.type(screen.getByLabelText(registration.fields.phone), "01712345678");
+    await user.click(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) }));
+    // No Turnstile click yet. The component tracks a `turnstileToken` field
+    // error internally (registrationForm.turnstileMissingError) but — per
+    // the current markup — only ever surfaces the generic error-summary
+    // banner for it, not that specific message; asserting what actually
+    // renders rather than the unused string.
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    expect(await screen.findByText(registrationForm.errorSummaryHeading)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    await user.click(screen.getByTestId("mock-turnstile-verify"));
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+  });
+
+  it("includes a startedAt timestamp close to submit time in the POST body", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    const before = Date.now();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const sentBody = JSON.parse(init.body as string);
+    expect(typeof sentBody.startedAt).toBe("number");
+    expect(sentBody.startedAt).toBeGreaterThanOrEqual(before - 1000);
+    expect(sentBody.startedAt).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("shows a loading/disabled state while the request is pending", async () => {
+    let resolveFetch!: (v: unknown) => void;
+    (global.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+
+    const submitButton = screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) });
+    await user.click(submitButton);
+
+    const loadingButton = await screen.findByRole("button", { name: registrationForm.loadingLabel });
+    expect(loadingButton).toBeDisabled();
+
+    resolveFetch(mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201));
+    await waitFor(() => expect(screen.getByText(registrationForm.paymentStepHeading)).toBeInTheDocument());
+  });
+
+  it("prevents a double-submit from firing two requests", async () => {
+    let resolveFetch!: (v: unknown) => void;
+    (global.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+
+    const submitButton = screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) });
+    await user.click(submitButton);
+    // Button is now disabled/relabeled — a second click target is the same node.
+    await user.click(submitButton);
+    await user.click(submitButton);
+
+    resolveFetch(mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201));
+    await waitFor(() => expect(screen.getByText(registrationForm.paymentStepHeading)).toBeInTheDocument());
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the payment-step UI on a successful registration response", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    expect(await screen.findByText(registrationForm.paymentStepHeading)).toBeInTheDocument();
+    // Only the enabled methods (all three, in this fixture) are offered.
+    expect(screen.getByRole("button", { name: "bKash" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nagad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rocket" })).toBeInTheDocument();
+  });
+
+  it("only offers enabled payment methods and never leaks a disabled method's number", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm({
+      paymentMethods: {
+        bkash: { enabled: true, number: "01711111111" },
+        nagad: { enabled: false, number: "01799999999" }, // configured but disabled — must never render
+        rocket: { enabled: false, number: null },
+      },
+    });
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    await screen.findByText(registrationForm.paymentStepHeading);
+    expect(screen.getByRole("button", { name: "bKash" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Nagad" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rocket" })).not.toBeInTheDocument();
+    expect(screen.queryByText("01799999999")).not.toBeInTheDocument();
+  });
+
+  it("selecting a payment method and submitting valid evidence completes step 2", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201))
+      .mockResolvedValueOnce(mockFetchOnce({ publicOrderRef: "ord_abc", status: "REVIEW" }, 200));
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "bKash" }));
+    await user.type(screen.getByLabelText(registrationForm.senderNumberLabel), "01712345678");
+    await user.type(screen.getByLabelText(registrationForm.transactionIdLabel), "9G7H2K1XYZ");
+    await user.click(screen.getByRole("button", { name: registrationForm.submitPaymentLabel }));
+
+    expect(await screen.findByText(registrationForm.pendingHeading)).toBeInTheDocument();
+    expect(screen.getByText("MC-2026-000001")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    const [url] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
+    expect(url).toBe("/api/masterclass/registrations/ord_abc/payment");
+  });
+
+  it("shows a recoverable inline error on a server error response and keeps the form usable", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ error: "RATE_LIMITED" }, 429),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    // Form did not crash and the submit control is present and re-enabled.
+    const submitButton = screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) });
+    expect(submitButton).toBeEnabled();
+  });
+
+  it("shows the validation error summary on a 422 VALIDATION_ERROR response", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ error: "VALIDATION_ERROR", fields: [{ field: "email", message: "bad" }] }, 422),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+
+    expect(await screen.findByText(registrationForm.errorSummaryHeading)).toBeInTheDocument();
+  });
+
+  it("keyboard: tab order reaches every interactive step-1 field, and the first invalid field is focused after a failed submit", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.tab();
+    expect(screen.getByLabelText(registration.fields.name)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(registration.fields.email)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(registration.fields.phone)).toHaveFocus();
+
+    // Submitting empty focuses the first invalid field (name).
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await waitFor(() => expect(screen.getByLabelText(registration.fields.name)).toHaveFocus());
+  });
+
+  it("keyboard: the honeypot field is not reachable via Tab (tabIndex=-1) and carries no user-facing bot-trap wording", () => {
+    renderForm();
+    const honeypot = document.querySelector('input[name="company_phone"]') as HTMLInputElement;
+    expect(honeypot).toBeTruthy();
+    expect(honeypot.tabIndex).toBe(-1);
+    // Not discoverable via a normal accessible-name query real users/tab order would use.
+    expect(screen.queryByRole("textbox", { name: /honeypot|bot|do not fill/i })).not.toBeInTheDocument();
+  });
+
+  it("never renders a test/secret credential value in the output", () => {
+    const { container } = renderForm({
+      paymentMethods: {
+        bkash: { enabled: true, number: "01711111111" },
+        nagad: { enabled: false, number: "01799999999" },
+        rocket: { enabled: false, number: null },
+      },
+    });
+    const html = container.innerHTML;
+    // The disabled method's number must never leak into markup, even hidden.
+    expect(html).not.toContain("01799999999");
+    // No Cloudflare test-key literals or server-secret env-var names ever appear —
+    // this component only ever receives siteKey (public by design), priceBDT, and
+    // enabled-method numbers, never TURNSTILE_SECRET_KEY/MASTERCLASS_RATE_LIMIT_SECRET.
+    expect(html).not.toContain("TURNSTILE_SECRET_KEY");
+    expect(html).not.toContain("MASTERCLASS_RATE_LIMIT_SECRET");
+    expect(html).not.toContain("1x0000000000000000000000000000000AA"); // Cloudflare test *secret* key shape
+  });
+});

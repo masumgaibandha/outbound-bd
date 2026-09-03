@@ -12,6 +12,13 @@
 @theme {
   --font-sans: var(--font-poppins);
   --font-heading: var(--font-playfair);
+  /*
+   * Only set inside the masterclass route's own layout (a Bengali sales
+   * page nested under the site's Playfair/Poppins root layout) — falls back
+   * to the body sans face anywhere else, so this is safe to reference
+   * site-wide without every page needing to load the font.
+   */
+  --font-bengali: var(--font-hind-siliguri), var(--font-poppins), ui-sans-serif, sans-serif;
 
   /* Page + card surfaces */
   --color-canvas: #fdfbf6;
