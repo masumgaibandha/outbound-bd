@@ -57,6 +57,7 @@ export function InstructorCredibility() {
                 alt={instructor.proof.alt}
                 width={instructor.proof.width}
                 height={instructor.proof.height}
+                unoptimized
                 sizes="(min-width: 768px) 700px, 100vw"
                 className="h-auto w-full"
               />
