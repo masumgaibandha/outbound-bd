@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { sendContactNotification } from "@/lib/contact-notification";
 import { connectToDatabase } from "@/lib/mongoose";
 import { inquirySchema } from "@/lib/inquiry-schema";
 import { Inquiry } from "@/lib/models/inquiry";
@@ -108,11 +109,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
-  await Inquiry.create({
+  const created = await Inquiry.create({
     ...parsed.data,
     status: "NEW",
     ipAddress,
   });
+
+  // Notification is best-effort and strictly after persistence: its failure
+  // must never affect the response or the fact that the inquiry is safely
+  // stored. Awaited (not fire-and-forget) so a failure is observed and
+  // logged before the serverless invocation ends, but never rethrown.
+  const notificationResult = await sendContactNotification({
+    inquiryId: String(created._id),
+    name: parsed.data.name,
+    email: parsed.data.email,
+    company: parsed.data.company,
+    website: parsed.data.website,
+    service: parsed.data.service,
+    budgetRange: parsed.data.budgetRange,
+    goals: parsed.data.goals,
+    createdAt: created.createdAt,
+  });
+
+  if (!notificationResult.ok) {
+    // Structured, non-sensitive diagnostic only: inquiry ID + error
+    // classification. Never the visitor's name/email/message, the Resend
+    // key, or a provider response body.
+    console.error(
+      JSON.stringify({
+        event: "contact_notification_failed",
+        inquiryId: String(created._id),
+        errorCode: notificationResult.errorCode,
+      }),
+    );
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

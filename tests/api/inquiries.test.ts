@@ -3,7 +3,20 @@
 import { mongod } from "../helpers/mongodb-memory-server";
 
 import mongoose from "mongoose";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Real Resend is never called in this suite. Most tests below leave
+// RESEND_API_KEY/RESEND_FROM_EMAIL/CONTACT_NOTIFICATION_EMAIL unset — in
+// that state `sendContactNotification()` returns before ever constructing a
+// `Resend` client, so this mock only actually matters for the
+// "contact-notification integration" describe block below, which stubs
+// those env vars explicitly.
+const sendMock = vi.hoisted(() => vi.fn());
+vi.mock("resend", () => ({
+  Resend: class {
+    emails = { send: sendMock };
+  },
+}));
 
 import { POST } from "@/app/api/inquiries/route";
 import { connectToDatabase } from "@/lib/mongoose";
@@ -42,10 +55,15 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await Inquiry.deleteMany({});
+  sendMock.mockReset();
+  sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
+  vi.unstubAllEnvs();
 });
 
 afterEach(async () => {
   await Inquiry.deleteMany({});
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -141,5 +159,106 @@ describe("POST /api/inquiries", () => {
 
     const count = await Inquiry.countDocuments({ email: "jordan@acme.com" });
     expect(count).toBe(2);
+  });
+});
+
+describe("POST /api/inquiries — contact notification", () => {
+  function stubNotificationEnv() {
+    vi.stubEnv("RESEND_API_KEY", "test-resend-key");
+    vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
+    vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "hello@outboundbd.com");
+  }
+
+  it("saves the inquiry before attempting notification, and sends exactly one notification after", async () => {
+    stubNotificationEnv();
+    let sawPersistedDocWhenSending = false;
+    sendMock.mockImplementation(async () => {
+      const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+      sawPersistedDocWhenSending = saved !== null;
+      return { data: { id: "email_1" }, error: null };
+    });
+
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(sawPersistedDocWhenSending).toBe(true);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    const [payload] = sendMock.mock.calls[0];
+    expect(payload.to).toBe("hello@outboundbd.com");
+    expect(payload.from).toBe("Outbound BD <notifications@updates.outboundbd.com>");
+    expect(payload.replyTo).toBe("jordan@acme.com");
+    expect(payload.html).toContain(String(saved?._id));
+  });
+
+  it("sends no notification for an invalid submission", async () => {
+    stubNotificationEnv();
+    const response = await POST(postRequest(validPayload({ email: "not-an-email" })));
+    expect(response.status).toBe(400);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no notification and preserves the existing failure behavior when MongoDB persistence fails", async () => {
+    stubNotificationEnv();
+    const createSpy = vi.spyOn(Inquiry, "create").mockRejectedValueOnce(new Error("connection lost"));
+
+    await expect(POST(postRequest(validPayload()))).rejects.toThrow("connection lost");
+    expect(sendMock).not.toHaveBeenCalled();
+
+    createSpy.mockRestore();
+    const count = await Inquiry.countDocuments({ email: "jordan@acme.com" });
+    expect(count).toBe(0);
+  });
+
+  it("still returns the normal successful response, with the inquiry persisted, when Resend fails", async () => {
+    stubNotificationEnv();
+    sendMock.mockRejectedValueOnce(new Error("network down"));
+
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    const body = (await response.json()) as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    expect(saved).not.toBeNull();
+  });
+
+  it("persists successfully and reports success when notification configuration is entirely missing", async () => {
+    // No stubNotificationEnv() call — RESEND_API_KEY / RESEND_FROM_EMAIL /
+    // CONTACT_NOTIFICATION_EMAIL are all unset, exactly like every other
+    // test in this file.
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(sendMock).not.toHaveBeenCalled();
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    expect(saved).not.toBeNull();
+  });
+
+  it("logs only the inquiry ID and a non-sensitive error classification on notification failure — no PII, no credentials, no provider response body", async () => {
+    stubNotificationEnv();
+    sendMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: "Sensitive provider detail that must never be logged" },
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await POST(postRequest(validPayload()));
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const [logged] = errorSpy.mock.calls[0];
+    expect(typeof logged).toBe("string");
+    const parsed = JSON.parse(logged as string) as Record<string, unknown>;
+    expect(parsed.event).toBe("contact_notification_failed");
+    expect(parsed.errorCode).toBe("PROVIDER_ERROR");
+    expect(typeof parsed.inquiryId).toBe("string");
+
+    const loggedText = logged as string;
+    expect(loggedText).not.toContain("Jordan Rivera");
+    expect(loggedText).not.toContain("jordan@acme.com");
+    expect(loggedText).not.toContain("test-resend-key");
+    expect(loggedText).not.toContain("Sensitive provider detail");
+
+    errorSpy.mockRestore();
   });
 });
