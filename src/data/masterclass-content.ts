@@ -465,7 +465,7 @@ export const finalCta = {
 export const footer = {
   positioning: "Abdullah Al Masum — Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ।",
   copyright: "© ২০২৬ Outbound BD। সর্বস্বত্ব সংরক্ষিত।",
-  backToPortfolio: "Outbound BD হোমপেজে ফিরে যান",
+  backToPortfolio: "Outbound BD-এর মূল ওয়েবসাইটে ফিরে যান",
 } as const;
 
 /* No embedded price — StickyMobileCta.tsx appends formatBDT(priceBDT). */
