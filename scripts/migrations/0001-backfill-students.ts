@@ -30,6 +30,16 @@
  *   avoids importing them, operating on plain `Db`/`Collection` handles
  *   instead. See `tests/lib/masterclass-backfill-migration.test.ts` for an
  *   automated before/after snapshot proving zero writes in dry-run mode.
+ * - Apply mode explicitly creates/verifies every index the Student
+ *   collection and the new `studentId` lookups depend on — via
+ *   `prepareIndexesForApply()` below — before any Student upsert or link
+ *   update runs. This script never relies on the deployed application's
+ *   own lazy `ensureIndexes()` having already fired (that would require
+ *   Production traffic to have exercised the new code first, an ordering
+ *   this script cannot assume). `createIndex()` is itself idempotent when
+ *   the name and specification are unchanged, and throws — before any
+ *   backfill write — if an index of the same name already exists with an
+ *   incompatible key/options.
  * - Idempotent and resumable: every write uses a `studentId: { $exists: false }`
  *   guard, so re-running after a partial failure never re-processes an
  *   already-linked registration or order, and never creates a second
@@ -57,6 +67,61 @@ interface StudentGroup {
   canonicalPhoneE164: string;
   canonicalEmail: string;
   count: number;
+}
+
+interface RequiredIndexSpec {
+  collection: string;
+  key: Record<string, 1 | -1>;
+  name: string;
+  unique: boolean;
+}
+
+/**
+ * Every index the migration's writes depend on. Index *names* may repeat
+ * across different collections (`student_id_lookup` exists on both
+ * `masterclass_registrations` and `payment_orders`) — MongoDB scopes index
+ * names per collection, never globally, so this is never a conflict.
+ * Exported so tests can assert against the exact same spec the migration
+ * itself uses, rather than duplicating the literal values.
+ */
+export const REQUIRED_MIGRATION_INDEXES: readonly RequiredIndexSpec[] = [
+  { collection: "masterclass_students", key: { emailNormalized: 1 }, name: "uniq_student_email", unique: true },
+  { collection: "masterclass_students", key: { publicStudentId: 1 }, name: "uniq_public_student_id", unique: true },
+  { collection: "masterclass_students", key: { phoneE164: 1 }, name: "phone_lookup", unique: false },
+  { collection: "masterclass_registrations", key: { studentId: 1 }, name: "student_id_lookup", unique: false },
+  { collection: "payment_orders", key: { studentId: 1 }, name: "student_id_lookup", unique: false },
+];
+
+/**
+ * Apply-mode only — never called in dry-run. Creates (or, on a re-run,
+ * verifies) every index in `REQUIRED_MIGRATION_INDEXES`, in order, before
+ * the caller performs any Student upsert or registration/order link
+ * update. `createIndex()` against an index of the same name with an
+ * identical key/options specification is a no-op (idempotent re-run);
+ * against an index of the same name with a *different* specification, the
+ * driver itself throws (`IndexOptionsConflict`/`IndexKeySpecsConflict`) —
+ * this function does not swallow that error, so a genuine mismatch aborts
+ * the whole migration attempt before any backfill write happens. Creating
+ * the two `masterclass_students` indexes naturally creates that collection
+ * if it doesn't exist yet — correct and expected, since this only ever
+ * runs in apply mode.
+ */
+export async function prepareIndexesForApply(
+  db: Db,
+  log: { info: (msg: string) => void } = { info: (msg) => console.log(msg) },
+): Promise<void> {
+  for (const spec of REQUIRED_MIGRATION_INDEXES) {
+    try {
+      await db.collection(spec.collection).createIndex(spec.key, { name: spec.name, unique: spec.unique });
+      log.info(`Index ready: ${spec.collection}.${spec.name}`);
+    } catch (error) {
+      throw new Error(
+        `Failed to create/verify required index "${spec.name}" on "${spec.collection}" — aborting before any backfill write. ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
 }
 
 export interface BackfillOptions {
@@ -140,6 +205,12 @@ export async function runBackfillStudents(
     for (const g of multiRegistrationGroups) {
       log.info(`  - ${g.count} registrations: [${g.registrationIds.map((id) => id.toHexString()).join(", ")}]`);
     }
+  }
+
+  // Apply mode only, and always before the very first Student upsert or
+  // link update below — dry-run never reaches this call.
+  if (apply) {
+    await prepareIndexesForApply(db, log);
   }
 
   let wouldCreate = 0;

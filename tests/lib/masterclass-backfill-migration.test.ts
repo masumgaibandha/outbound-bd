@@ -8,8 +8,14 @@ import { ObjectId } from "mongodb";
 import mongoose from "mongoose";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
+import type { Db } from "mongodb";
+
 import { connectToDatabase } from "@/lib/mongoose";
-import { runBackfillStudents } from "../../scripts/migrations/0001-backfill-students";
+import {
+  prepareIndexesForApply,
+  REQUIRED_MIGRATION_INDEXES,
+  runBackfillStudents,
+} from "../../scripts/migrations/0001-backfill-students";
 
 async function getDb() {
   const connection = await connectToDatabase();
@@ -116,10 +122,61 @@ async function snapshotDatabase() {
   return { names, indexesByCollection, documentsByCollection };
 }
 
+/**
+ * Drops every collection outright (not just its documents) so each test
+ * starts with a truly clean slate — including no leftover indexes. This
+ * matters once index creation itself is under test: a plain `deleteMany`
+ * would empty documents but leave an index created by a *previous* test
+ * still in place, silently masking whether the *current* test's own
+ * `runBackfillStudents` call actually created it.
+ */
 async function clearAllCollections() {
   const db = await getDb();
   const existing = await db.listCollections().toArray();
-  await Promise.all(existing.map((c) => db.collection(c.name).deleteMany({})));
+  await Promise.all(existing.map((c) => db.dropCollection(c.name)));
+}
+
+const WRITE_METHODS = new Set([
+  "insertOne",
+  "insertMany",
+  "updateOne",
+  "updateMany",
+  "findOneAndUpdate",
+  "deleteOne",
+  "deleteMany",
+]);
+
+/**
+ * Wraps a real `Db` so every `createIndex` and document-write call made
+ * through it (on any collection) is recorded, in order, into `callLog`.
+ * Used only to prove ordering ("indexes exist before the first write") —
+ * every underlying operation still runs against the real in-memory
+ * database; nothing here fakes MongoDB's own behavior.
+ */
+function instrumentDb(realDb: Db, callLog: string[]): Db {
+  return new Proxy(realDb, {
+    get(target, prop, receiver) {
+      if (prop === "collection") {
+        return (name: string, ...rest: unknown[]) => {
+          const realCollection = (target.collection as (...a: unknown[]) => unknown)(name, ...rest);
+          return new Proxy(realCollection as object, {
+            get(collTarget, methodProp, collReceiver) {
+              const original = Reflect.get(collTarget, methodProp, collReceiver);
+              const methodName = String(methodProp);
+              if (typeof original === "function" && (methodName === "createIndex" || WRITE_METHODS.has(methodName))) {
+                return (...args: unknown[]) => {
+                  callLog.push(`${name}.${methodName}`);
+                  return (original as (...a: unknown[]) => unknown).apply(collTarget, args);
+                };
+              }
+              return typeof original === "function" ? original.bind(collTarget) : original;
+            },
+          });
+        };
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  }) as Db;
 }
 
 beforeEach(async () => {
@@ -346,5 +403,114 @@ describe("runBackfillStudents — apply mode (in-memory only, never Production)"
     expect(await db.collection("masterclass_students").countDocuments({})).toBe(0);
     const stillPending = await db.collection("masterclass_registrations").findOne({ _id: pending._id });
     expect(stillPending?.studentId).toBeUndefined();
+  });
+});
+
+describe("runBackfillStudents — apply-mode index preparation and failure safety", () => {
+  it("dry run never calls createIndex/createCollection, even with matching data present", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "dryrun@example.com" }));
+
+    const log: string[] = [];
+    const instrumented = instrumentDb(db, log);
+    await runBackfillStudents(instrumented, { apply: false }, NO_OP_LOG);
+
+    expect(log.filter((entry) => entry.endsWith(".createIndex"))).toHaveLength(0);
+    const collectionNames = (await db.listCollections().toArray()).map((c) => c.name);
+    expect(collectionNames).not.toContain("masterclass_students");
+  });
+
+  it("apply mode creates all five required indexes, with the correct uniqueness on each", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "index-check@example.com" }));
+
+    await runBackfillStudents(db, { apply: true }, NO_OP_LOG);
+
+    for (const spec of REQUIRED_MIGRATION_INDEXES) {
+      const indexes = await db.collection(spec.collection).indexes();
+      const match = indexes.find((idx) => idx.name === spec.name);
+      expect(match, `${spec.collection}.${spec.name} should exist`).toBeDefined();
+      expect(match?.key).toEqual(spec.key);
+      expect(Boolean(match?.unique)).toBe(spec.unique);
+    }
+
+    // Explicit per the task's own uniqueness split.
+    const studentIndexes = await db.collection("masterclass_students").indexes();
+    expect(studentIndexes.find((i) => i.name === "uniq_student_email")?.unique).toBe(true);
+    expect(studentIndexes.find((i) => i.name === "uniq_public_student_id")?.unique).toBe(true);
+    expect(Boolean(studentIndexes.find((i) => i.name === "phone_lookup")?.unique)).toBe(false);
+    const regIndexes = await db.collection("masterclass_registrations").indexes();
+    expect(Boolean(regIndexes.find((i) => i.name === "student_id_lookup")?.unique)).toBe(false);
+    const orderIndexes = await db.collection("payment_orders").indexes();
+    expect(Boolean(orderIndexes.find((i) => i.name === "student_id_lookup")?.unique)).toBe(false);
+  });
+
+  it("creates masterclass_students as a side effect of index creation, only in apply mode", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "creates-collection@example.com" }));
+
+    let names = (await db.listCollections().toArray()).map((c) => c.name);
+    expect(names).not.toContain("masterclass_students");
+
+    await runBackfillStudents(db, { apply: true }, NO_OP_LOG);
+
+    names = (await db.listCollections().toArray()).map((c) => c.name);
+    expect(names).toContain("masterclass_students");
+  });
+
+  it("creates every required index before the first Student/registration/order write", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "ordering@example.com" }));
+
+    const log: string[] = [];
+    const instrumented = instrumentDb(db, log);
+    await runBackfillStudents(instrumented, { apply: true }, NO_OP_LOG);
+
+    const createIndexEntries = log.filter((entry) => entry.endsWith(".createIndex"));
+    expect(createIndexEntries).toHaveLength(REQUIRED_MIGRATION_INDEXES.length);
+
+    const lastCreateIndexPosition = log.lastIndexOf(createIndexEntries[createIndexEntries.length - 1]);
+    const firstWritePosition = log.findIndex((entry) => !entry.endsWith(".createIndex"));
+
+    expect(firstWritePosition).toBeGreaterThan(-1); // the seeded data does produce a real write
+    expect(lastCreateIndexPosition).toBeLessThan(firstWritePosition);
+  });
+
+  it("a second apply run treats every index idempotently — no error, same specification", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "rerun@example.com" }));
+
+    await runBackfillStudents(db, { apply: true }, NO_OP_LOG);
+    const indexesAfterFirst = await db.collection("masterclass_students").indexes();
+
+    await expect(prepareIndexesForApply(db, NO_OP_LOG)).resolves.toBeUndefined();
+    const indexesAfterSecond = await db.collection("masterclass_students").indexes();
+
+    expect(indexesAfterSecond.map((i) => i.name).sort()).toEqual(indexesAfterFirst.map((i) => i.name).sort());
+  });
+
+  it("a conflicting same-name index aborts before any Student/registration/order write", async () => {
+    const db = await getDb();
+    // Same name as the real spec, deliberately wrong key — a genuine
+    // specification conflict, not a re-run of the same index.
+    await db.collection("masterclass_students").createIndex({ phone: 1 }, { name: "uniq_student_email", unique: false });
+
+    await db.collection("masterclass_registrations").insertOne(rawRegistration({ email: "conflict@example.com" }));
+
+    const before = await snapshotDatabase();
+    await expect(runBackfillStudents(db, { apply: true }, NO_OP_LOG)).rejects.toThrow(/uniq_student_email/);
+    const after = await snapshotDatabase();
+
+    // Only the pre-existing conflicting index itself differs going in — no
+    // document anywhere was created, updated, or linked by the aborted run.
+    expect(after.documentsByCollection).toEqual(before.documentsByCollection);
+  });
+
+  it("prepareIndexesForApply alone aborts on a conflicting index without touching any collection's documents", async () => {
+    const db = await getDb();
+    await db.collection("masterclass_students").createIndex({ phone: 1 }, { name: "uniq_student_email", unique: false });
+
+    await expect(prepareIndexesForApply(db, NO_OP_LOG)).rejects.toThrow(/Failed to create\/verify required index/);
+    expect(await db.collection("masterclass_students").countDocuments({})).toBe(0);
   });
 });
