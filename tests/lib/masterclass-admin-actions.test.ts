@@ -306,6 +306,48 @@ describe("approveOrderAction — approval, idempotency, and the atomic double-ap
 });
 
 describe("rejectOrderAction", () => {
+  it("sends the rejection email exactly once, and reports its status in the action result", async () => {
+    const publicOrderRef = await seedOrderInReview();
+    mockRequestHeaders();
+
+    const result = await rejectOrderAction(publicOrderRef, "not verifiable");
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("Rejection email sent");
+    expect(result.needsRetry).toBeFalsy();
+    expect(sendMock).toHaveBeenCalledTimes(1);
+
+    // A repeated reject on the same (now-REJECTED) order must not send a second email.
+    const repeat = await rejectOrderAction(publicOrderRef, "irrelevant");
+    expect(repeat.ok).toBe(false);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not send an email when the caller is not authorized", async () => {
+    const publicOrderRef = await seedOrderInReview();
+    mockRequestHeaders({ authorization: null });
+
+    const result = await rejectOrderAction(publicOrderRef, "reason");
+    expect(result.ok).toBe(false);
+    expect(sendMock).not.toHaveBeenCalled();
+
+    const order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.status).toBe("REVIEW"); // untouched
+  });
+
+  it("surfaces a rejection-email delivery failure in the action result without undoing the rejection", async () => {
+    sendMock.mockRejectedValue(new Error("network down"));
+    const publicOrderRef = await seedOrderInReview();
+    mockRequestHeaders();
+
+    const result = await rejectOrderAction(publicOrderRef, "not verifiable");
+    expect(result.ok).toBe(true); // the rejection itself succeeded
+    expect(result.message).toContain("Rejection email NOT sent");
+    expect(result.needsRetry).toBe(true);
+
+    const order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.status).toBe("REJECTED");
+  });
+
   it("moves REVIEW -> REJECTED with reviewer/audit fields, and is idempotent", async () => {
     const publicOrderRef = await seedOrderInReview();
     mockRequestHeaders();
@@ -400,6 +442,68 @@ describe("email/CAPI delivery state via the approve action, and no duplicate on 
 
     mockRequestHeaders({ authorization: null });
     const result = await retryDeliveryAction(publicOrderRef);
+    expect(result.ok).toBe(false);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("legacy payment-order compatibility — rejectionEmail field entirely absent", () => {
+  /**
+   * Models a REAL Production shape: an order rejected before `rejectionEmail`
+   * existed has no such key in the stored document at all (not `null`, not
+   * an object with default sub-fields — genuinely absent). Built by rewriting
+   * a real order via a raw collection update with `$unset`, then confirmed
+   * absent, rather than trusting the `PaymentOrderDocument` TypeScript type
+   * (which is not enforced against pre-existing data).
+   */
+  async function seedLegacyRejectedOrderWithNoRejectionEmailField(): Promise<string> {
+    const publicOrderRef = await seedOrderInReview();
+    const connection = await connectToDatabase();
+    const db = connection.connection.db!;
+    await db.collection(PAYMENT_ORDERS_COLLECTION).updateOne(
+      { publicOrderRef },
+      {
+        $set: { status: "REJECTED", verifiedAt: new Date(), verifiedBy: "legacy-admin" },
+        $unset: { rejectionEmail: "", activeOrderLock: "" },
+      },
+    );
+    const raw = await db.collection(PAYMENT_ORDERS_COLLECTION).findOne({ publicOrderRef });
+    expect(raw).not.toHaveProperty("rejectionEmail"); // the fixture genuinely has no field, not a null/default one
+    return publicOrderRef;
+  }
+
+  it("a deliberate admin Retry click on a legacy REJECTED order never crashes, and can send the first-ever notification for it", async () => {
+    const publicOrderRef = await seedLegacyRejectedOrderWithNoRejectionEmailField();
+    mockRequestHeaders();
+
+    const result = await retryDeliveryAction(publicOrderRef); // must not throw
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("Rejection email sent");
+    expect(sendMock).toHaveBeenCalledTimes(1);
+
+    const after = await findOrderByPublicRef(publicOrderRef);
+    expect(after?.rejectionEmail.status).toBe("SENT");
+  });
+
+  it("the delivery summary reports a safe default (never crashes) when a legacy order's retry attempt also fails", async () => {
+    sendMock.mockRejectedValue(new Error("network down"));
+    const publicOrderRef = await seedLegacyRejectedOrderWithNoRejectionEmailField();
+    mockRequestHeaders();
+
+    const result = await retryDeliveryAction(publicOrderRef); // must not throw
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain("Rejection email NOT sent");
+    expect(result.needsRetry).toBe(true);
+  });
+
+  it("this legacy shape is never touched automatically — only an explicit Server Action call (a human's Retry click) ever reaches it", async () => {
+    // rejectOrderAction's atomic transition requires status REVIEW; a legacy
+    // order is already REJECTED, so it can only ever report already_processed
+    // here — never re-attempt (and never re-send) anything for it.
+    const publicOrderRef = await seedLegacyRejectedOrderWithNoRejectionEmailField();
+    mockRequestHeaders();
+
+    const result = await rejectOrderAction(publicOrderRef, "irrelevant");
     expect(result.ok).toBe(false);
     expect(sendMock).not.toHaveBeenCalled();
   });

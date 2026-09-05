@@ -5,14 +5,20 @@ export function toBengaliDigits(value: string): string {
 }
 
 /**
- * The single place a BDT amount becomes a displayed Bengali price string.
+ * The single place a BDT amount becomes a displayed price string. Deliberate
+ * change from the original MasumDev source (which rendered Bengali-digit
+ * amounts, e.g. `৳১,৪৯৯`): financial values now use clean Latin numerals
+ * (`৳1,499`) so they render legibly and align on a tabular grid in the
+ * project's sans-serif numeric styling (see `numericTextClass` in
+ * `MasterclassSection.tsx`) — a request from live production testing.
+ * Bengali digits remain everywhere else (dates, counts in body copy) via
+ * `toBengaliDigits()` below; this function is the one deliberate exception.
  * Always pass a value from `resolvePriceBDT()` or an already-stored order
- * amount, never a re-typed literal. Ported verbatim from the MasumDev
- * masterclass source.
+ * amount, never a re-typed literal.
  */
 export function formatBDT(amountBDT: number): string {
   const grouped = amountBDT.toLocaleString("en-US");
-  return `৳${toBengaliDigits(grouped)}`;
+  return `৳${grouped}`;
 }
 
 const BENGALI_MONTHS = [

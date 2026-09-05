@@ -1,9 +1,10 @@
 import { getMetaCapiEnv } from "@/lib/masterclass/env";
 import { registration as registrationCopy } from "@/data/masterclass-content";
-import { sendConfirmationEmail } from "@/lib/masterclass/email";
+import { sendConfirmationEmail, sendRejectionEmail } from "@/lib/masterclass/email";
 import { sendPurchaseEvent } from "@/lib/masterclass/meta-capi";
 import {
   findOrderByPublicRef,
+  getRejectionEmailState,
   rejectPayment,
   updateDeliveryState,
   verifyPayment,
@@ -103,11 +104,35 @@ export async function approvePayment(
   return { kind: "ok", order };
 }
 
+async function attemptRejectionEmail(
+  order: PaymentOrderDocument,
+  registration: RegistrationDocument,
+): Promise<void> {
+  const result = await sendRejectionEmail({
+    toEmail: registration.email,
+    studentName: registration.name,
+    registrationRef: registration.publicRegistrationRef,
+    idempotencyRef: order.publicOrderRef,
+  });
+  await updateDeliveryState(order.publicOrderRef, "rejectionEmail", result);
+}
+
 export type RejectPaymentResult =
   | { kind: "ok"; order: PaymentOrderDocument }
   | { kind: "not_found" }
   | { kind: "already_processed" };
 
+/**
+ * `REVIEW → REJECTED`, driven by the admin reject Server Action. Same
+ * shape/guarantees as `approvePayment()`: the atomic transition
+ * (`rejectPayment()`) happens first and is the only thing that decides
+ * whether this is a genuine first-time rejection — a retried/duplicate
+ * reject click (refresh, double-click) matches nothing the second time and
+ * this reports `already_processed`, so the rejection email below can only
+ * ever be attempted once per order, on the single winning transition. No
+ * Meta Pixel/CAPI event is ever sent for a rejection (see `meta-capi.ts` —
+ * Purchase is fired only from `approvePayment()`, at `REVIEW → PAID`).
+ */
 export async function rejectPaymentOrder(
   publicOrderRef: string,
   verifiedBy: string,
@@ -118,23 +143,50 @@ export async function rejectPaymentOrder(
     const existing = await findOrderByPublicRef(publicOrderRef);
     return existing ? { kind: "already_processed" } : { kind: "not_found" };
   }
+
+  const registration = await findRegistrationById(order.registrationId);
+  if (registration) {
+    await attemptRejectionEmail(order, registration);
+  }
+
   return { kind: "ok", order };
 }
 
-/** Re-attempts confirmation email + CAPI for an already-`PAID` order whose delivery isn't `SENT` yet. Used by the admin page's "Retry" action. */
+/**
+ * Re-attempts confirmation email + CAPI for an already-`PAID` order, or the
+ * rejection email for an already-`REJECTED` order, whichever delivery isn't
+ * `SENT` yet. Used by the admin page's "Retry" action — the same retry
+ * architecture now covers both outcomes rather than a second, parallel one.
+ */
 export async function retryDelivery(publicOrderRef: string, eventSourceUrl: string): Promise<void> {
   const order = await findOrderByPublicRef(publicOrderRef);
-  if (!order || order.status !== "PAID") return;
+  if (!order) return;
 
   const registration = await findRegistrationById(order.registrationId);
   if (!registration) return;
 
-  const tasks: Promise<void>[] = [];
-  if (order.confirmationEmail.status !== "SENT") {
-    tasks.push(attemptConfirmationEmail(order, registration));
+  if (order.status === "PAID") {
+    const tasks: Promise<void>[] = [];
+    if (order.confirmationEmail.status !== "SENT") {
+      tasks.push(attemptConfirmationEmail(order, registration));
+    }
+    if (order.purchaseCapi.status !== "SENT") {
+      tasks.push(attemptPurchaseCapi(order, registration, eventSourceUrl));
+    }
+    await Promise.allSettled(tasks);
+    return;
   }
-  if (order.purchaseCapi.status !== "SENT") {
-    tasks.push(attemptPurchaseCapi(order, registration, eventSourceUrl));
+
+  if (order.status === "REJECTED") {
+    // A REJECTED order from before this field existed has no `rejectionEmail`
+    // at all in the stored document — `getRejectionEmailState` reads that as
+    // "never attempted" rather than throwing, so an operator's explicit
+    // Retry click can deliberately backfill a notification for an old
+    // rejection. Never automatic: this only ever runs from a Server Action a
+    // human clicked, never a background job or bulk pass over old records.
+    const rejectionEmail = getRejectionEmailState(order);
+    if (rejectionEmail.status !== "SENT") {
+      await attemptRejectionEmail(order, registration);
+    }
   }
-  await Promise.allSettled(tasks);
 }

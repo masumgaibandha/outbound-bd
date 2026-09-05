@@ -35,3 +35,32 @@ export class OrderNotEditableError extends Error {
     this.name = "OrderNotEditableError";
   }
 }
+
+/** Every bounded attempt at generating a unique random public registration reference collided. Astronomically unlikely (31^8 possibilities) — a controlled failure, never an unhandled crash. */
+export class PublicReferenceGenerationError extends Error {
+  constructor() {
+    super("Could not generate a unique public registration reference after several attempts.");
+    this.name = "PublicReferenceGenerationError";
+  }
+}
+
+/**
+ * Thrown the instant a single insert attempt's random `publicRegistrationRef`
+ * collides with an existing document — signals the caller to retry the
+ * *whole* transaction with a brand-new session, never to keep operating on
+ * the session that just threw this. MongoDB aborts an entire multi-document
+ * transaction on any write error (confirmed empirically against a real
+ * replica set: a write's duplicate-key error leaves every later operation on
+ * that same session — even a plain read — failing with
+ * `NoSuchTransaction: Transaction ... has been aborted`), so this error
+ * deliberately carries no re-read of any kind from inside
+ * `upsertRegistration()`. See `registerForMasterclass()` in
+ * `registration-service.ts` for the fresh-session retry loop that catches
+ * this specifically.
+ */
+export class PublicReferenceCollisionError extends Error {
+  constructor() {
+    super("The randomly generated public registration reference collided with an existing one.");
+    this.name = "PublicReferenceCollisionError";
+  }
+}

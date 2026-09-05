@@ -7,7 +7,7 @@ import { publicEnv } from "@/lib/public-env";
 import { UnauthorizedAdminError, requireMasterclassAdmin } from "@/lib/masterclass/admin-auth";
 import { getAdminSecurityEnv } from "@/lib/masterclass/env";
 import { isRequestSameOrigin } from "@/lib/masterclass/origin-validation";
-import { findOrderByPublicRef } from "@/lib/masterclass/payment-orders-repository";
+import { findOrderByPublicRef, getRejectionEmailState } from "@/lib/masterclass/payment-orders-repository";
 import { approvePayment, rejectPaymentOrder, retryDelivery } from "@/lib/masterclass/verify-service";
 
 /*
@@ -29,10 +29,24 @@ export interface ActionResult {
   needsRetry?: boolean;
 }
 
+/** Branches by the order's own status — a REJECTED order only ever has a rejection email to report, never a confirmation email or a Meta Purchase event. */
 function deliverySummary(order: Awaited<ReturnType<typeof findOrderByPublicRef>>): {
   message: string;
   needsRetry: boolean;
 } {
+  if (order?.status === "REJECTED") {
+    // `getRejectionEmailState` reads legacy documents (rejected before this
+    // field existed) as "never attempted" rather than throwing.
+    const rejectionEmail = getRejectionEmailState(order);
+    const emailOk = rejectionEmail.status === "SENT";
+    return {
+      message: emailOk
+        ? "Rejection email sent."
+        : `Rejection email NOT sent (${rejectionEmail.lastErrorCode ?? "unknown"}).`,
+      needsRetry: !emailOk,
+    };
+  }
+
   const emailOk = order?.confirmationEmail.status === "SENT";
   const capiOk = order?.purchaseCapi.status === "SENT";
   const parts = [
@@ -101,7 +115,10 @@ export async function rejectOrderAction(publicOrderRef: string, reason: string):
   if (result.kind === "already_processed") {
     return { ok: false, message: "This order was already processed — it's no longer in REVIEW." };
   }
-  return { ok: true, message: `Rejected. The student is not notified automatically — contact them if needed.` };
+
+  const fresh = await findOrderByPublicRef(publicOrderRef);
+  const { message, needsRetry } = deliverySummary(fresh);
+  return { ok: true, message: `Rejected — order is now REJECTED. ${message}`, needsRetry };
 }
 
 export async function retryDeliveryAction(publicOrderRef: string): Promise<ActionResult> {

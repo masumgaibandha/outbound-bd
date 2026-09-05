@@ -6,6 +6,7 @@ import {
   MasterclassSection,
   eyebrowClass,
   eyebrowDotClass,
+  numericTextClass,
 } from "@/components/masterclass/MasterclassSection";
 import { legalPageLinks } from "@/data/legal-content";
 import { masterclassConfig, registration, registrationBatchNotice } from "@/data/masterclass-content";
@@ -83,12 +84,14 @@ export function Registration({ priceBDT, isEarlyBird, regularPriceBDT }: Registr
             <p className="text-ink-muted mt-1.5 text-sm leading-relaxed">
               {registrationBatchNotice.intro}
             </p>
-            <p className="text-ink mt-3 text-sm leading-relaxed">
-              {registrationBatchNotice.regularPriceLabel}{" "}
-              <span className="text-ink-muted line-through">{formatBDT(regularPriceBDT)}</span>
-              <span className="mx-2">•</span>
-              {registrationBatchNotice.firstBatchPriceLabel}{" "}
-              <strong className="text-action">{formatBDT(priceBDT)}</strong>
+            <p className="text-ink mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-relaxed">
+              <span>{registrationBatchNotice.regularPriceLabel}</span>
+              <span className={`${numericTextClass} text-ink-muted line-through`}>
+                {formatBDT(regularPriceBDT)}
+              </span>
+              <span aria-hidden="true">•</span>
+              <span>{registrationBatchNotice.firstBatchPriceLabel}</span>
+              <strong className={`${numericTextClass} text-action`}>{formatBDT(priceBDT)}</strong>
             </p>
             <p className="text-ink-muted mt-3 text-sm leading-relaxed">
               {registrationBatchNotice.closing}
@@ -104,12 +107,13 @@ export function Registration({ priceBDT, isEarlyBird, regularPriceBDT }: Registr
               <dt className="text-ink-muted font-bengali flex items-center gap-2 text-xs font-semibold tracking-[0.12em] uppercase">
                 {isEarlyBird ? registration.earlyBirdLabel : registration.priceLabel}
               </dt>
-              <dd className="font-heading text-ink mt-1.5 text-3xl tracking-tight">
+              <dd className={`${numericTextClass} text-ink mt-1.5 text-3xl`}>
                 {formatBDT(priceBDT)}
               </dd>
               {isEarlyBird ? (
-                <p className="text-ink-muted font-bengali mt-1 text-xs">
-                  {registration.regularPricePrefix} {formatBDT(regularPriceBDT)}
+                <p className="text-ink-muted font-bengali mt-1 flex items-baseline gap-1.5 text-xs">
+                  <span>{registration.regularPricePrefix}</span>
+                  <span className={numericTextClass}>{formatBDT(regularPriceBDT)}</span>
                 </p>
               ) : null}
             </div>

@@ -35,6 +35,18 @@ vi.mock("@/components/masterclass/TurnstileWidget", () => ({
   },
 }));
 
+/*
+ * HeroUI's `toast` is a global singleton — mocked here so assertions can
+ * check exactly what was called, without depending on a mounted
+ * `ToastProvider` (not rendered in this file) or on `document.startViewTransition`
+ * internals running inside jsdom.
+ */
+const toastSuccessMock = vi.hoisted(() => vi.fn());
+const toastDangerMock = vi.hoisted(() => vi.fn());
+vi.mock("@heroui/react", () => ({
+  toast: { success: toastSuccessMock, danger: toastDangerMock },
+}));
+
 interface ManualPaymentMethodEnv {
   enabled: boolean;
   number: string | null;
@@ -109,6 +121,8 @@ function mockFetchOnce(body: unknown, status = 200) {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
+  toastSuccessMock.mockClear();
+  toastDangerMock.mockClear();
 });
 
 afterEach(() => {
@@ -413,6 +427,101 @@ describe("MasterclassRegistrationForm — enabled state", () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
     const [url] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
     expect(url).toBe("/api/masterclass/registrations/ord_abc/payment");
+
+    // Success toast fires only after the API confirms persistence — never before.
+    expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+    expect(toastSuccessMock).toHaveBeenCalledWith(registrationForm.paymentSuccessToast);
+    expect(toastDangerMock).not.toHaveBeenCalled();
+  });
+
+  it("shows a loading/disabled state on the payment-step submit button while the request is pending", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    let resolvePayment!: (v: unknown) => void;
+    (global.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      // Never resolved during this test — the response for step 1 above is queued first via mockResolvedValueOnce.
+      new Promise((resolve) => {
+        resolvePayment = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "bKash" }));
+    await user.type(screen.getByLabelText(registrationForm.senderNumberLabel), "01712345678");
+    await user.type(screen.getByLabelText(registrationForm.transactionIdLabel), "9G7H2K1XYZ");
+    await user.click(screen.getByRole("button", { name: registrationForm.submitPaymentLabel }));
+
+    const loadingButton = await screen.findByRole("button", { name: registrationForm.loadingLabel });
+    expect(loadingButton).toBeDisabled();
+    expect(toastSuccessMock).not.toHaveBeenCalled(); // not shown before the response resolves
+
+    resolvePayment(mockFetchOnce({ publicOrderRef: "ord_abc", status: "REVIEW" }, 200));
+    await waitFor(() => expect(screen.getByText(registrationForm.pendingHeading)).toBeInTheDocument());
+    expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a concise error toast (never a raw server error) when payment submission fails, and does not duplicate on a repeated click", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201))
+      .mockResolvedValueOnce(mockFetchOnce({ error: "DUPLICATE_TRANSACTION_ID" }, 409));
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "bKash" }));
+    await user.type(screen.getByLabelText(registrationForm.senderNumberLabel), "01712345678");
+    await user.type(screen.getByLabelText(registrationForm.transactionIdLabel), "9G7H2K1XYZ");
+    await user.click(screen.getByRole("button", { name: registrationForm.submitPaymentLabel }));
+
+    await waitFor(() => expect(toastDangerMock).toHaveBeenCalledTimes(1));
+    expect(toastDangerMock).toHaveBeenCalledWith(registrationForm.paymentErrorToast);
+    // The specific inline message is preserved alongside the generic toast.
+    expect(await screen.findByText(registrationForm.duplicateTransactionError)).toBeInTheDocument();
+    expect(toastSuccessMock).not.toHaveBeenCalled();
+
+    // The form is usable again — a second click, without a second submission already in flight, is a distinct user action, not a dedup case; confirm no crash and no toast pile-up from the single failure above.
+    expect(toastDangerMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("guards against a duplicate payment submission from rapid double-clicking — only one request, one toast", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    let resolvePayment!: (v: unknown) => void;
+    (global.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolvePayment = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "bKash" }));
+    await user.type(screen.getByLabelText(registrationForm.senderNumberLabel), "01712345678");
+    await user.type(screen.getByLabelText(registrationForm.transactionIdLabel), "9G7H2K1XYZ");
+
+    const submitButton = screen.getByRole("button", { name: registrationForm.submitPaymentLabel });
+    await user.click(submitButton);
+    // Button is now disabled/relabeled — further clicks on the same node fire no new handler.
+    await user.click(submitButton);
+    await user.click(submitButton);
+
+    resolvePayment(mockFetchOnce({ publicOrderRef: "ord_abc", status: "REVIEW" }, 200));
+    await waitFor(() => expect(screen.getByText(registrationForm.pendingHeading)).toBeInTheDocument());
+
+    expect(global.fetch).toHaveBeenCalledTimes(2); // one step-1 call + exactly one payment call
+    expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+    expect(toastDangerMock).not.toHaveBeenCalled();
   });
 
   it("shows a recoverable inline error on a server error response and keeps the form usable", async () => {

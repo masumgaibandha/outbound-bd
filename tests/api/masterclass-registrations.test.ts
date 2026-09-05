@@ -109,7 +109,7 @@ describe("POST /api/masterclass/registrations", () => {
     const response = await POST(postRequest(validPayload()));
     expect(response.status).toBe(201);
     const body = await response.json();
-    expect(body.publicRegistrationRef).toMatch(/^MC-\d{4}-\d{6}$/);
+    expect(body.publicRegistrationRef).toMatch(/^MC-\d{4}-[23456789A-HJ-NP-Z]{8}$/);
     expect(body.status).toBe("PENDING");
   });
 

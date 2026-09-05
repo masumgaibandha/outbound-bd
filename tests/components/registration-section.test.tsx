@@ -84,6 +84,25 @@ describe("Registration section gating", () => {
   });
 });
 
+describe("Registration section — numeric typography", () => {
+  it("price display uses Latin digits (no Bengali digit ever appears in any ৳ price)", () => {
+    setOperationallyReadyEnv();
+    render(<Registration priceBDT={1499} isEarlyBird={true} regularPriceBDT={2499} />);
+    const priceEls = screen.getAllByText(formatBDT(1499));
+    expect(priceEls.length).toBeGreaterThan(0);
+    for (const el of priceEls) {
+      expect(el.textContent).not.toMatch(/[০-৯]/);
+    }
+  });
+
+  it("does not damage the Bengali date display — still renders in Bengali digits", () => {
+    setOperationallyReadyEnv();
+    render(<Registration priceBDT={1499} isEarlyBird={true} regularPriceBDT={2499} />);
+    expect(screen.getByText(registration.dateValue)).toBeInTheDocument();
+    expect(registration.dateValue).toMatch(/[০-৯]/); // unchanged Bengali-digit date copy
+  });
+});
+
 describe("Registration section — first-batch pricing notice", () => {
   it("shows the batch notice with both prices (regular struck through, first-batch price emphasized) while isEarlyBird is true", () => {
     setOperationallyReadyEnv();

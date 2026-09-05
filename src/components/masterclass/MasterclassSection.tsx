@@ -47,3 +47,14 @@ export const eyebrowClass =
   "text-ink-muted flex items-center gap-3 text-xs font-semibold tracking-[0.14em] uppercase";
 
 export const eyebrowDotClass = "bg-action h-px w-8 shrink-0";
+
+/**
+ * Numeric text — prices, payment phone/account numbers, transaction IDs, and
+ * public registration/order references. Always the project's clean
+ * sans-serif face (`font-sans`, i.e. Poppins — never the serif heading font
+ * or the Bengali face), with lining, tabular figures so digits share a fixed
+ * width and align on a common baseline instead of jiggling as they change.
+ * Never applied to Bengali dates or body copy — those keep their existing
+ * Bengali-digit rendering (`toBengaliDigits()` in `format.ts`) untouched.
+ */
+export const numericTextClass = "font-sans tabular-nums lining-nums";

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { OrderRow } from "@/components/masterclass/admin/OrderRow";
 import { UnauthorizedAdminError, requireMasterclassAdmin } from "@/lib/masterclass/admin-auth";
-import { listOrdersForReview } from "@/lib/masterclass/payment-orders-repository";
+import { countOrdersByStatus, listOrdersForReview } from "@/lib/masterclass/payment-orders-repository";
+import { countEnrolledRegistrations, countTotalRegistrations } from "@/lib/masterclass/registrations-repository";
 
 /* Never indexed, never in the sitemap — protection here is belt-and-suspenders alongside `proxy.ts`'s Basic Auth. */
 export const metadata: Metadata = {
@@ -48,7 +49,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   }
 
   const { cursor } = await searchParams;
-  const { orders, nextCursor } = await listOrdersForReview(cursor);
+  const [{ orders, nextCursor }, totalRegistrations, enrolledCount, reviewCount, rejectedCount] =
+    await Promise.all([
+      listOrdersForReview(cursor),
+      countTotalRegistrations(),
+      countEnrolledRegistrations(),
+      countOrdersByStatus("REVIEW"),
+      countOrdersByStatus("REJECTED"),
+    ]);
 
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", maxWidth: 880, margin: "0 auto", padding: "2.5rem 1.25rem" }}>
@@ -129,12 +137,58 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           border-color: #2563eb;
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
+        .mc-admin-summary {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+        }
+        .mc-admin-summary-card {
+          border: 1px solid #d8d8d0;
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+        }
+        .mc-admin-summary-value {
+          font-size: 1.5rem;
+          font-weight: 700;
+          font-variant-numeric: tabular-nums lining-nums;
+        }
+        .mc-admin-summary-label {
+          font-size: 0.78rem;
+          color: #666;
+          margin-top: 0.15rem;
+        }
       `}</style>
       <h1 style={{ fontSize: "1.4rem", marginBottom: "0.3rem" }}>Masterclass — payments awaiting review</h1>
-      <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+      <p style={{ color: "#666", marginBottom: "1rem", fontSize: "0.9rem" }}>
         Oldest submissions first. Approving sets the order to PAID, enrolls the student, and (best-effort) sends
-        the confirmation email and a Meta Purchase event. Rejecting does not notify the student automatically.
+        the confirmation email and a Meta Purchase event. Rejecting sends the student a best-effort rejection email.
       </p>
+
+      {/*
+       * Compact summary counts, derived entirely from document status —
+       * never from a public reference's shape or a count of generated IDs
+       * (random registration references reveal nothing about volume by
+       * themselves; this is the actual, intentional way to see totals).
+       */}
+      <div className="mc-admin-summary">
+        <div className="mc-admin-summary-card">
+          <div className="mc-admin-summary-value">{totalRegistrations}</div>
+          <div className="mc-admin-summary-label">Total registrations</div>
+        </div>
+        <div className="mc-admin-summary-card">
+          <div className="mc-admin-summary-value">{reviewCount}</div>
+          <div className="mc-admin-summary-label">Awaiting payment review</div>
+        </div>
+        <div className="mc-admin-summary-card">
+          <div className="mc-admin-summary-value">{enrolledCount}</div>
+          <div className="mc-admin-summary-label">Enrolled / paid students</div>
+        </div>
+        <div className="mc-admin-summary-card">
+          <div className="mc-admin-summary-value">{rejectedCount}</div>
+          <div className="mc-admin-summary-label">Rejected payments</div>
+        </div>
+      </div>
 
       {orders.length === 0 ? <p>Nothing waiting for review right now.</p> : null}
 

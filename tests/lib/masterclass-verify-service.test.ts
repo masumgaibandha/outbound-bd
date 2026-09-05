@@ -184,6 +184,98 @@ describe("rejectPaymentOrder", () => {
     const second = await rejectPaymentOrder(publicOrderRef, "admin", "irrelevant");
     expect(second.kind).toBe("already_processed");
   });
+
+  it("sends exactly one rejection email, to the registrant's own address, keyed by the order's own ref, only on the winning transition", async () => {
+    const { publicOrderRef, registrationRef } = await seedOrderInReview();
+    const registration = await findRegistrationByPublicRef(registrationRef);
+
+    const first = await rejectPaymentOrder(publicOrderRef, "admin", "not verifiable");
+    expect(first.kind).toBe("ok");
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    const [emailPayload, options] = sendMock.mock.calls[0];
+    expect(emailPayload.to).toBe(registration?.email);
+    expect(emailPayload.subject).toBe("আপনার পেমেন্ট যাচাই করা যায়নি — মাস্টার ক্লাস");
+    expect(options).toEqual({ idempotencyKey: `masterclass-rejection-${publicOrderRef}` });
+
+    const order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.rejectionEmail.status).toBe("SENT");
+    expect(order?.status).toBe("REJECTED"); // never re-verified as PAID by anything above
+
+    // A repeated/duplicate reject (refresh, double-click) must never send a second email.
+    const second = await rejectPaymentOrder(publicOrderRef, "admin", "irrelevant");
+    expect(second.kind).toBe("already_processed");
+    expect(sendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not send an email for not_found or already_processed outcomes", async () => {
+    const notFound = await rejectPaymentOrder("ord_does-not-exist", "admin", null);
+    expect(notFound.kind).toBe("not_found");
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("escapes the student's name in the rejection email HTML", async () => {
+    const email = `xss-${randomUUID()}@example.com`;
+    const registration = await upsertRegistration({
+      masterclassSlug: constants.masterclassSlug,
+      batchId: constants.batchId,
+      name: '<img src=x onerror=alert(1)>',
+      email,
+      emailNormalized: email,
+      phone: "01712345678",
+      phoneE164: "+8801712345678",
+      marketingConsent: false,
+      attribution: { capturedAt: new Date() },
+    });
+    const { order } = await createDraftOrder({
+      registrationId: registration._id!,
+      masterclassSlug: constants.masterclassSlug,
+      batchId: constants.batchId,
+      amount: constants.resolvePriceBDT(),
+      currency: constants.currency,
+      idempotencyKey: randomUUID(),
+      attribution: { capturedAt: new Date() },
+      clientIpAddress: null,
+      clientUserAgent: null,
+    });
+    await submitManualPayment({
+      publicOrderRef: order.publicOrderRef,
+      method: "BKASH",
+      senderNumber: "+8801712345678",
+      transactionIdRaw: `TXN-${randomUUID()}`,
+    });
+
+    await rejectPaymentOrder(order.publicOrderRef, "admin", null);
+
+    const [emailPayload] = sendMock.mock.calls[0];
+    expect(emailPayload.html).not.toContain("<img src=x onerror=alert(1)>");
+    expect(emailPayload.html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+
+  it("a Resend failure is recorded but never rolls back the REJECTED transition", async () => {
+    sendMock.mockRejectedValue(new Error("network down"));
+    const { publicOrderRef } = await seedOrderInReview();
+
+    const result = await rejectPaymentOrder(publicOrderRef, "admin", "not verifiable");
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") expect(result.order.status).toBe("REJECTED");
+
+    const order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.status).toBe("REJECTED");
+    expect(order?.rejectionEmail.status).toBe("FAILED");
+    expect(order?.rejectionEmail.lastErrorCode).toBe("NETWORK_ERROR");
+  });
+
+  it("never triggers a Meta Pixel/CAPI Purchase event for a rejection", async () => {
+    vi.stubEnv("META_PIXEL_ID", "1234567890");
+    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "capi-token");
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { publicOrderRef } = await seedOrderInReview();
+    await rejectPaymentOrder(publicOrderRef, "admin", "not verifiable");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("retryDelivery", () => {
@@ -200,5 +292,23 @@ describe("retryDelivery", () => {
     const order = await findOrderByPublicRef(publicOrderRef);
     expect(order?.confirmationEmail.status).toBe("SENT");
     expect(order?.purchaseCapi.attempts).toBeGreaterThanOrEqual(2); // retried since it wasn't SENT
+  });
+
+  it("retries a REJECTED order's rejection email when it previously failed, and never re-sends once it's SENT", async () => {
+    sendMock.mockRejectedValueOnce(new Error("network down"));
+    const { publicOrderRef } = await seedOrderInReview();
+    await rejectPaymentOrder(publicOrderRef, "admin", "not verifiable");
+    let order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.rejectionEmail.status).toBe("FAILED");
+
+    sendMock.mockResolvedValue({ data: { id: "email_2" }, error: null });
+    await retryDelivery(publicOrderRef, EVENT_SOURCE_URL);
+    order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.rejectionEmail.status).toBe("SENT");
+    expect(sendMock).toHaveBeenCalledTimes(2);
+
+    // Already SENT — a further retry call must not send a third email.
+    await retryDelivery(publicOrderRef, EVENT_SOURCE_URL);
+    expect(sendMock).toHaveBeenCalledTimes(2);
   });
 });

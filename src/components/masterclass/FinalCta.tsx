@@ -1,5 +1,6 @@
 import { Container } from "@/components/public/container";
 import { ArrowRightIcon } from "@/components/public/icons";
+import { numericTextClass } from "@/components/masterclass/MasterclassSection";
 import { finalCta } from "@/data/masterclass-content";
 import { formatBDT } from "@/lib/masterclass/format";
 
@@ -26,7 +27,7 @@ export function FinalCta({ priceBDT }: FinalCtaProps) {
             href="#registration"
             className="bg-action-dark text-ink hover:brightness-110 focus-visible:outline-action-dark font-bengali mt-8 inline-flex h-13 items-center gap-2 rounded-full px-7 text-[0.95rem] font-medium transition-[filter] focus-visible:outline-2 focus-visible:outline-offset-2"
           >
-            {finalCta.ctaLabel} — {formatBDT(priceBDT)}
+            {finalCta.ctaLabel} — <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
             <ArrowRightIcon className="size-4" aria-hidden="true" />
           </a>
         </div>

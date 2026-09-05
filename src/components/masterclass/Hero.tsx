@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { Container } from "@/components/public/container";
 import { ArrowDownIcon, ArrowRightIcon } from "@/components/public/icons";
+import { numericTextClass } from "@/components/masterclass/MasterclassSection";
 import { hero, offerDetails } from "@/data/masterclass-content";
 import { formatBDT } from "@/lib/masterclass/format";
 import portrait from "@/assets/founder/abdullah-al-masum-portrait.webp";
@@ -51,7 +52,7 @@ export function Hero({ priceBDT }: HeroProps) {
                 href="#registration"
                 className="bg-action hover:bg-action-hover focus-visible:outline-action inline-flex h-13 items-center gap-2 rounded-full px-7 text-[0.95rem] font-medium text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                {hero.primaryCtaLabel} — {formatBDT(priceBDT)}
+                {hero.primaryCtaLabel} — <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
                 <ArrowRightIcon className="size-4" aria-hidden="true" />
               </a>
               <a

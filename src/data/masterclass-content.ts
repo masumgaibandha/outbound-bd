@@ -421,6 +421,10 @@ export const registrationForm = {
     "এই Transaction ID ইতিমধ্যে অন্য একটি রেজিস্ট্রেশনে ব্যবহৃত হয়েছে। অনুগ্রহ করে আইডিটি আবার যাচাই করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
   orderNotEditableError:
     "এই রেজিস্ট্রেশনের পেমেন্ট ইতিমধ্যে প্রক্রিয়া করা হয়েছে। প্রশ্ন থাকলে hello@outboundbd.com-এ যোগাযোগ করুন।",
+  /* Toasts — supplementary to the inline messages above, never a replacement for them. */
+  paymentSuccessToast:
+    "পেমেন্ট তথ্য সফলভাবে জমা হয়েছে। যাচাই শেষে আপনাকে ইমেইলে জানানো হবে।",
+  paymentErrorToast: "পেমেন্ট তথ্য জমা দেওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
 
   /* Step 3 — pending verification. Deliberately never says "registration confirmed." */
   pendingHeading: "পেমেন্ট তথ্য জমা হয়েছে",

@@ -167,6 +167,8 @@ export interface PaymentOrderDocument {
   };
   confirmationEmail: DeliveryState;
   purchaseCapi: DeliveryState;
+  /** Sent only on `REVIEW → REJECTED` (never for PAID orders). Same best-effort semantics as `confirmationEmail` — a failed send never reverts `status`. */
+  rejectionEmail: DeliveryState;
   verifiedAt: Date | null;
   /** Opaque operator identifier (the Basic Auth username) — never a display name, never emailed. */
   verifiedBy: string | null;

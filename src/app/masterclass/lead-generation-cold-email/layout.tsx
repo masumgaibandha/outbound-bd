@@ -1,3 +1,4 @@
+import { Toast } from "@heroui/react";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Hind_Siliguri } from "next/font/google";
@@ -55,6 +56,19 @@ export default function MasterclassLayout({ children }: { children: ReactNode })
   return (
     <div lang="bn" className={`${hindSiliguri.variable} font-bengali`}>
       {children}
+      {/*
+        Renders HeroUI's global toast region for this route only —
+        `toast.success()`/`toast.danger()` (called from
+        MasterclassRegistrationForm.tsx) work anywhere once this is mounted
+        once. "top" placement avoids the fixed bottom StickyMobileCta bar on
+        mobile. `Toast.Provider` (the compound-component form) and the
+        standalone `ToastProvider` export are the exact same function on the
+        installed @heroui/react@3.2.4 (see components/toast/index.js's
+        `Object.assign(Toast, { Provider: ToastProvider, ... })`) — this uses
+        the compound form since that's the package's own primary public API
+        for the whole Toast.* family (Toast.Content, Toast.Title, ...).
+      */}
+      <Toast.Provider placement="top" />
     </div>
   );
 }

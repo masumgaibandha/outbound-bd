@@ -1,9 +1,11 @@
 "use client";
 
+import { toast } from "@heroui/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { CheckIcon, CircleAlertIcon, CircleCheckIcon, CopyIcon } from "@/components/public/icons";
+import { numericTextClass } from "@/components/masterclass/MasterclassSection";
 import {
   TurnstileWidget,
   type TurnstileWidgetHandle,
@@ -392,6 +394,8 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
       }
 
       if (response.status === 200 && body && "publicOrderRef" in body) {
+        /* Fired only after the API confirms the submission is persisted — never optimistically. */
+        toast.success(registrationForm.paymentSuccessToast);
         setStep("pending");
         return;
       }
@@ -418,9 +422,12 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
       } else {
         setPaymentError(registrationForm.genericError);
       }
+      /* One concise toast for every non-success outcome — the inline messages above stay specific (field errors, duplicate TxID, rate limit, ...); this is a supplementary, generic signal that never leaks a raw server error or stack trace. */
+      toast.danger(registrationForm.paymentErrorToast);
       setPaymentStatus("idle");
     } catch {
       setPaymentError(registrationForm.networkError);
+      toast.danger(registrationForm.paymentErrorToast);
       setPaymentStatus("idle");
     }
   }
@@ -436,7 +443,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
         </h3>
         {order ? (
           <p className="text-ink-muted font-bengali mt-2 text-sm">
-            {registrationForm.pendingRegistrationRefLabel}: <span className="text-ink font-medium">{order.publicRegistrationRef}</span>
+            {registrationForm.pendingRegistrationRefLabel}: <span className={`${numericTextClass} text-ink font-medium`}>{order.publicRegistrationRef}</span>
           </p>
         ) : null}
         <p className="text-ink-muted font-bengali mt-3 leading-relaxed">{registrationForm.pendingBody}</p>
@@ -508,15 +515,15 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
                 <p className="text-ink-muted font-bengali text-sm leading-relaxed">
                   {paymentMethodCopy[method].instructions}
                 </p>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
                     <p className="text-ink-muted font-bengali text-xs">{registrationForm.accountNumberLabel}</p>
-                    <p className="text-ink font-heading text-lg tracking-wide">{selectedNumber}</p>
+                    <p className={`${numericTextClass} text-ink mt-0.5 text-lg whitespace-nowrap`}>{selectedNumber}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyNumber(selectedNumber)}
-                    className="border-hairline text-ink hover:border-action hover:text-action font-bengali inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors"
+                    className="border-hairline text-ink hover:border-action hover:text-action font-bengali inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors"
                   >
                     {copied ? <CheckIcon className="size-4" aria-hidden="true" /> : <CopyIcon className="size-4" aria-hidden="true" />}
                     {copied ? registrationForm.copiedLabel : registrationForm.copyLabel}
@@ -524,7 +531,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
                 </div>
                 <div className="border-hairline border-t pt-3">
                   <p className="text-ink-muted font-bengali text-xs">{registrationForm.amountLabel}</p>
-                  <p className="text-ink font-heading text-lg tracking-wide">{formatBDT(priceBDT)}</p>
+                  <p className={`${numericTextClass} text-ink mt-0.5 text-lg`}>{formatBDT(priceBDT)}</p>
                 </div>
               </div>
             ) : null}
@@ -549,18 +556,18 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
                   </div>
                   <div>
                     <dt className="text-ink-muted font-bengali text-xs">{registrationForm.bankRoutingNumberLabel}</dt>
-                    <dd className="text-ink font-medium">{bankEnv.routingNumber}</dd>
+                    <dd className={`${numericTextClass} text-ink font-medium`}>{bankEnv.routingNumber}</dd>
                   </div>
                 </dl>
-                <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3">
-                  <div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-3">
+                  <div className="min-w-0">
                     <p className="text-ink-muted font-bengali text-xs">{registrationForm.bankAccountNumberLabel}</p>
-                    <p className="text-ink font-heading text-lg tracking-wide">{bankEnv.accountNumber}</p>
+                    <p className={`${numericTextClass} text-ink mt-0.5 text-lg break-words`}>{bankEnv.accountNumber}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => bankEnv.accountNumber && copyNumber(bankEnv.accountNumber)}
-                    className="border-hairline text-ink hover:border-action hover:text-action font-bengali inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors"
+                    className="border-hairline text-ink hover:border-action hover:text-action font-bengali inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors"
                   >
                     {copied ? <CheckIcon className="size-4" aria-hidden="true" /> : <CopyIcon className="size-4" aria-hidden="true" />}
                     {copied ? registrationForm.copiedLabel : registrationForm.copyLabel}
@@ -568,7 +575,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
                 </div>
                 <div className="border-hairline border-t pt-3">
                   <p className="text-ink-muted font-bengali text-xs">{registrationForm.amountLabel}</p>
-                  <p className="text-ink font-heading text-lg tracking-wide">{formatBDT(priceBDT)}</p>
+                  <p className={`${numericTextClass} text-ink mt-0.5 text-lg`}>{formatBDT(priceBDT)}</p>
                 </div>
               </div>
             ) : null}
@@ -882,7 +889,13 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
       ) : null}
 
       <button type="submit" disabled={registerStatus === "submitting"} className={`${primaryButtonClass} mt-6`}>
-        {registerStatus === "submitting" ? registrationForm.loadingLabel : `${registration.submitEnabledLabel} — ${formatBDT(priceBDT)}`}
+        {registerStatus === "submitting" ? (
+          registrationForm.loadingLabel
+        ) : (
+          <>
+            {registration.submitEnabledLabel} — <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
+          </>
+        )}
       </button>
     </form>
   );

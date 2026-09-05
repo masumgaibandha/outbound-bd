@@ -1,3 +1,4 @@
+import { numericTextClass } from "@/components/masterclass/MasterclassSection";
 import { stickyCta } from "@/data/masterclass-content";
 import { formatBDT } from "@/lib/masterclass/format";
 
@@ -21,7 +22,7 @@ export function StickyMobileCta({ priceBDT }: StickyMobileCtaProps) {
         href="#registration"
         className="bg-action active:bg-action-hover focus-visible:outline-action font-bengali flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:-outline-offset-4"
       >
-        <span>{formatBDT(priceBDT)}</span>
+        <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
         <span aria-hidden="true">•</span>
         <span>{stickyCta.label}</span>
       </a>

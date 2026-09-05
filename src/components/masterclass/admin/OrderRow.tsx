@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
 
 import {
   approveOrderAction,
@@ -17,6 +17,9 @@ const METHOD_LABEL: Record<string, string> = {
 };
 
 type PendingAction = "approve" | "reject" | "retry" | null;
+
+/** Tabular, lining figures for references, phone numbers, transaction IDs, and amounts — this admin island is already plain `system-ui` sans, so only the numeric-variant styling is needed here (no font-family change). */
+const numericStyle: CSSProperties = { fontVariantNumeric: "tabular-nums lining-nums" };
 
 /**
  * Ported verbatim from the MasumDev masterclass source. The entire admin UI
@@ -70,11 +73,11 @@ export function OrderRow({ order }: { order: AdminReviewOrder }) {
   return (
     <div style={{ border: "1px solid #d8d8d0", borderRadius: 8, padding: "1rem", opacity: processed ? 0.6 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", fontWeight: 600 }}>
-        <span>{order.publicRegistrationRef}</span>
+        <span style={numericStyle}>{order.publicRegistrationRef}</span>
         <span style={{ fontWeight: 400, color: "#666" }}>{new Date(order.createdAt).toLocaleString()}</span>
       </div>
       <p style={{ margin: "0.4rem 0" }}>
-        {order.name} &middot; {order.email} &middot; {order.phone}
+        {order.name} &middot; {order.email} &middot; <span style={numericStyle}>{order.phone}</span>
       </p>
       <p style={{ margin: "0.4rem 0" }}>
         <strong>{order.method ? METHOD_LABEL[order.method] : "—"}</strong>{" "}
@@ -85,10 +88,15 @@ export function OrderRow({ order }: { order: AdminReviewOrder }) {
             {order.manualPayment?.senderBankName ? ` (${order.manualPayment.senderBankName})` : ""}
           </>
         ) : (
-          <>sender {order.manualPayment?.senderNumber ?? "—"}</>
+          <>
+            sender <span style={numericStyle}>{order.manualPayment?.senderNumber ?? "—"}</span>
+          </>
         )}{" "}
         &middot; TxID{" "}
-        <code>{order.manualPayment?.transactionIdRaw ?? "—"}</code> &middot; {order.currency} {order.amount}
+        <code style={numericStyle}>{order.manualPayment?.transactionIdRaw ?? "—"}</code> &middot;{" "}
+        <span style={numericStyle}>
+          {order.currency} {order.amount}
+        </span>
       </p>
       {order.attributionSource ? (
         <p style={{ margin: "0.4rem 0", fontSize: "0.82em", color: "#888" }}>utm_source: {order.attributionSource}</p>

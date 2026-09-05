@@ -13,6 +13,7 @@ import type {
   DeliveryState,
   ManualPaymentMethod,
   PaymentOrderDocument,
+  PaymentOrderStatus,
 } from "@/types/masterclass-persistence";
 
 /** Ported verbatim (logic unchanged) from the MasumDev masterclass source — only the `getDb()` import path changed. */
@@ -139,6 +140,23 @@ function freshDeliveryState(): DeliveryState {
   };
 }
 
+/**
+ * `rejectionEmail` did not exist before this feature — Production has
+ * documents rejected earlier that have no such field at all in the actual
+ * stored document (TypeScript's `PaymentOrderDocument` type is not enforced
+ * against pre-existing data). Every reader of `order.rejectionEmail` must go
+ * through this rather than touching the field directly, so a legacy
+ * document reads as "never attempted" (matching what genuinely happened —
+ * no rejection email was ever sent for it) instead of throwing. Purely an
+ * in-memory default: never writes anything back to the document, and never
+ * bulk-migrates existing Production records.
+ */
+export function getRejectionEmailState(
+  order: Pick<PaymentOrderDocument, "rejectionEmail">,
+): DeliveryState {
+  return order.rejectionEmail ?? freshDeliveryState();
+}
+
 function assertSameRequest(
   existing: PaymentOrderDocument,
   registrationId: ObjectId,
@@ -247,6 +265,7 @@ export async function createDraftOrder(
     },
     confirmationEmail: freshDeliveryState(),
     purchaseCapi: freshDeliveryState(),
+    rejectionEmail: freshDeliveryState(),
     createdAt: now,
     updatedAt: now,
   };
@@ -257,12 +276,26 @@ export async function createDraftOrder(
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
 
-    // Lost a race — figure out which of the two unique indexes the winner
-    // satisfied and return that winner instead of a duplicate.
-    const winnerByKey = await collection.findOne(
-      { batchId: input.batchId, idempotencyKey: input.idempotencyKey },
-      { session },
-    );
+    if (session) {
+      // Inside a transaction, this write error has already aborted the
+      // entire transaction server-side (confirmed empirically against a
+      // real replica set: any write error poisons the whole
+      // multi-document transaction, and every later operation on this same
+      // session — even a plain read — then fails with `NoSuchTransaction`,
+      // not the winning document). So unlike the session-less path below,
+      // this never re-reads on `session`. The raw duplicate-key error is
+      // rethrown unchanged; `registerForMasterclass()`'s outer retry loop
+      // recognizes it via `isDuplicateKeyError()` and retries the whole
+      // operation with a brand-new session/transaction, whose own fresh
+      // leading read sees the now-committed winner cleanly.
+      throw error;
+    }
+
+    // No transaction here — this session-less call is free to look again.
+    const winnerByKey = await collection.findOne({
+      batchId: input.batchId,
+      idempotencyKey: input.idempotencyKey,
+    });
     if (winnerByKey) {
       assertSameRequest(winnerByKey, input.registrationId, fingerprint);
       return { order: winnerByKey, wasExisting: true, reason: "idempotent_replay" };
@@ -271,7 +304,7 @@ export async function createDraftOrder(
     const winnerByRegistration = await findActiveOrPaidOrderForRegistration(
       collection,
       input.registrationId,
-      session,
+      undefined,
     );
     if (winnerByRegistration) {
       return { order: winnerByRegistration, wasExisting: true, reason: "active_order_reuse" };
@@ -412,12 +445,13 @@ export async function rejectPayment(input: RejectPaymentInput): Promise<PaymentO
 }
 
 /**
- * Records the outcome of an attempted confirmation-email or Meta-CAPI send.
- * Never touches `status` — a failed send here can never undo `PAID`.
+ * Records the outcome of an attempted confirmation-email, Meta-CAPI, or
+ * rejection-email send. Never touches `status` — a failed send here can
+ * never undo `PAID` or `REJECTED`.
  */
 export async function updateDeliveryState(
   publicOrderRef: string,
-  field: "confirmationEmail" | "purchaseCapi",
+  field: "confirmationEmail" | "purchaseCapi" | "rejectionEmail",
   outcome: { ok: true } | { ok: false; errorCode: string },
 ): Promise<void> {
   const collection = await getCollection();
@@ -552,4 +586,10 @@ export async function listOrdersForReview(cursor?: string): Promise<ListOrdersFo
     docs.length === REVIEW_PAGE_SIZE && last ? `${last.createdAt.toISOString()}|${last._id.toHexString()}` : null;
 
   return { orders, nextCursor };
+}
+
+/** Derived purely from `status` — never from a public reference, an ID's shape, or a count of generated IDs. */
+export async function countOrdersByStatus(status: PaymentOrderStatus): Promise<number> {
+  const collection = await getCollection();
+  return collection.countDocuments({ status });
 }
