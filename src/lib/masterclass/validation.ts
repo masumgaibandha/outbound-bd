@@ -104,13 +104,23 @@ export const idempotencyKeySchema = z
   .string()
   .uuid("Idempotency-Key must be a valid UUID.");
 
+const transactionIdSchema = z
+  .string()
+  .trim()
+  .min(4, "Transaction ID looks too short.")
+  .max(50, "Transaction ID is too long.");
+
 /**
- * Step 2 of registration: choosing a manual payment method and submitting
- * evidence. `amount`/`currency` are deliberately absent — the server always
- * uses the price already stored on the order at creation time, never a
- * client-submitted figure.
+ * Step 2 of registration, mobile-wallet branch: choosing bKash/Nagad/Rocket
+ * and submitting the sender's own number + transaction ID. `amount`/
+ * `currency` are deliberately absent from both branches of this union — the
+ * server always uses the price already stored on the order at creation time,
+ * never a client-submitted figure. Likewise there is no destination-account
+ * field anywhere in either branch: the number/bank details a visitor sends
+ * *to* always come from `getManualPaymentEnv()` (server-only env), never from
+ * this schema.
  */
-export const manualPaymentInputSchema = z.object({
+const mobileWalletPaymentInputSchema = z.object({
   method: z.enum(["BKASH", "NAGAD", "ROCKET"], "Choose a valid payment method."),
   senderNumber: z
     .string()
@@ -120,12 +130,39 @@ export const manualPaymentInputSchema = z.object({
       (value) => normalizeBangladeshPhone(value) !== null,
       "Enter a valid Bangladeshi mobile number.",
     ),
-  transactionId: z
+  transactionId: transactionIdSchema,
+});
+
+/**
+ * Step 2, bank-transfer branch. Deliberately does not require the student's
+ * own full bank account number — the existing manual-verification workflow
+ * (an operator visually matching the payer name, amount, and reference
+ * against their own bank statement) doesn't need it, and asking for it would
+ * be sensitive data collected for no verification benefit. `senderBankName`
+ * is optional (a student may not know how to phrase it, or the operator may
+ * not need it); `payerName` and `transactionId` are the two pieces of
+ * evidence that actually make manual reconciliation possible.
+ */
+const bankPaymentInputSchema = z.object({
+  method: z.literal("BANK", "Choose a valid payment method."),
+  payerName: z
     .string()
     .trim()
-    .min(4, "Transaction ID looks too short.")
-    .max(50, "Transaction ID is too long."),
+    .min(2, "Enter the name on the sending bank account.")
+    .max(120, "Name is too long."),
+  senderBankName: z
+    .string()
+    .trim()
+    .max(120, "Bank name is too long.")
+    .optional()
+    .default(""),
+  transactionId: transactionIdSchema,
 });
+
+export const manualPaymentInputSchema = z.discriminatedUnion("method", [
+  mobileWalletPaymentInputSchema,
+  bankPaymentInputSchema,
+]);
 
 export type ManualPaymentInput = z.infer<typeof manualPaymentInputSchema>;
 

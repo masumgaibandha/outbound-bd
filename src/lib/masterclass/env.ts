@@ -140,27 +140,84 @@ export interface ManualPaymentMethodEnv {
   number: string | null;
 }
 
+/**
+ * All five fields are required together — a Bangladeshi bank transfer's
+ * manual-verification instructions need the bank name, account name, account
+ * number, branch, and routing number to be unambiguous for a student sending
+ * money and for an operator reconciling it. `enabled` is only ever true when
+ * every one of the five is set; a partially-configured bank never leaks a
+ * subset of its own details to the browser (see `getManualPaymentEnv()`
+ * below) — it simply stays hidden, exactly like an unconfigured
+ * bKash/Nagad/Rocket number.
+ */
+export interface ManualPaymentBankEnv {
+  enabled: boolean;
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+  branch: string | null;
+  routingNumber: string | null;
+}
+
 export interface ManualPaymentEnv {
   bkash: ManualPaymentMethodEnv;
   nagad: ManualPaymentMethodEnv;
   rocket: ManualPaymentMethodEnv;
+  bank: ManualPaymentBankEnv;
 }
 
 /**
  * Per-method: `enabled` only when its payment number is actually configured.
  * Never throws — an unconfigured method is simply hidden from the payment
- * picker rather than presenting a broken flow.
+ * picker rather than presenting a broken flow. The bank channel follows the
+ * same "hide, never half-show" rule but requires all five of its own
+ * variables together (see `ManualPaymentBankEnv`'s doc comment) — missing any
+ * one of them hides only the bank option, never bKash/Nagad/Rocket.
  */
 export function getManualPaymentEnv(): ManualPaymentEnv {
   const bkash = process.env.MASTERCLASS_BKASH_NUMBER?.trim() || null;
   const nagad = process.env.MASTERCLASS_NAGAD_NUMBER?.trim() || null;
   const rocket = process.env.MASTERCLASS_ROCKET_NUMBER?.trim() || null;
 
+  const bankName = process.env.MASTERCLASS_BANK_NAME?.trim() || null;
+  const bankAccountName = process.env.MASTERCLASS_BANK_ACCOUNT_NAME?.trim() || null;
+  const bankAccountNumber = process.env.MASTERCLASS_BANK_ACCOUNT_NUMBER?.trim() || null;
+  const bankBranch = process.env.MASTERCLASS_BANK_BRANCH?.trim() || null;
+  const bankRoutingNumber = process.env.MASTERCLASS_BANK_ROUTING_NUMBER?.trim() || null;
+  const bankComplete = Boolean(
+    bankName && bankAccountName && bankAccountNumber && bankBranch && bankRoutingNumber,
+  );
+
   return {
     bkash: { enabled: bkash !== null, number: bkash },
     nagad: { enabled: nagad !== null, number: nagad },
     rocket: { enabled: rocket !== null, number: rocket },
+    bank: {
+      enabled: bankComplete,
+      bankName: bankComplete ? bankName : null,
+      accountName: bankComplete ? bankAccountName : null,
+      accountNumber: bankComplete ? bankAccountNumber : null,
+      branch: bankComplete ? bankBranch : null,
+      routingNumber: bankComplete ? bankRoutingNumber : null,
+    },
   };
+}
+
+/**
+ * The single place that decides which manual methods actually show up in the
+ * payment picker — pure function of `ManualPaymentEnv`, so it's testable
+ * without touching `process.env` and reusable by both the registration form
+ * and its tests. Order is deliberate (mobile wallets first, bank last).
+ */
+export function listEnabledManualPaymentMethods(
+  paymentMethods: ManualPaymentEnv,
+): ("BKASH" | "NAGAD" | "ROCKET" | "BANK")[] {
+  const methods: ("BKASH" | "NAGAD" | "ROCKET" | "BANK")[] = [];
+  if (paymentMethods.bkash.enabled) methods.push("BKASH");
+  if (paymentMethods.nagad.enabled) methods.push("NAGAD");
+  if (paymentMethods.rocket.enabled) methods.push("ROCKET");
+  if (paymentMethods.bank.enabled) methods.push("BANK");
+  return methods;
 }
 
 export interface AdminAuthEnv {

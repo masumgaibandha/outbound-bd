@@ -107,12 +107,18 @@ describe("manualPaymentInputSchema", () => {
     expect(manualPaymentInputSchema.safeParse({ ...base, method: "PAYPAL" }).success).toBe(false);
   });
 
-  it("has no amount/currency/status fields at all — the server never trusts a client-submitted price or paid status", () => {
-    const shape = manualPaymentInputSchema.shape as Record<string, unknown>;
-    expect(shape).not.toHaveProperty("amount");
-    expect(shape).not.toHaveProperty("currency");
-    expect(shape).not.toHaveProperty("status");
-    expect(shape).not.toHaveProperty("paid");
+  it("has no amount/currency/status/destination-account fields at all, on either branch — the server never trusts a client-submitted price, paid status, or destination payment details", () => {
+    for (const option of manualPaymentInputSchema.options) {
+      const shape = option.shape as Record<string, unknown>;
+      expect(shape).not.toHaveProperty("amount");
+      expect(shape).not.toHaveProperty("currency");
+      expect(shape).not.toHaveProperty("status");
+      expect(shape).not.toHaveProperty("paid");
+      expect(shape).not.toHaveProperty("accountNumber");
+      expect(shape).not.toHaveProperty("bankAccountNumber");
+      expect(shape).not.toHaveProperty("routingNumber");
+      expect(shape).not.toHaveProperty("bankName");
+    }
   });
 
   it("rejects an invalid sender number", () => {
@@ -131,5 +137,66 @@ describe("manualPaymentInputSchema", () => {
       transactionId: "AB",
     });
     expect(result.success).toBe(false);
+  });
+
+  describe("BANK branch", () => {
+    it("accepts a valid bank submission with payerName + transactionId, senderBankName optional", () => {
+      const withBank = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        payerName: "Rafiq Islam",
+        senderBankName: "City Bank",
+        transactionId: "REF-12345",
+      });
+      expect(withBank.success).toBe(true);
+
+      const withoutSenderBankName = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        payerName: "Rafiq Islam",
+        transactionId: "REF-12345",
+      });
+      expect(withoutSenderBankName.success).toBe(true);
+      if (withoutSenderBankName.success && withoutSenderBankName.data.method === "BANK") {
+        expect(withoutSenderBankName.data.senderBankName).toBe("");
+      }
+    });
+
+    it("rejects a bank submission missing payerName", () => {
+      const result = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        transactionId: "REF-12345",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects a bank submission with a senderNumber instead of payerName — the two branches never cross-accept each other's fields", () => {
+      const result = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        senderNumber: "01712345678",
+        transactionId: "REF-12345",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("does not require or accept the student's full bank account number", () => {
+      const result = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        payerName: "Rafiq Islam",
+        transactionId: "REF-12345",
+        accountNumber: "1234567890123", // extra field a client might try to send
+      });
+      expect(result.success).toBe(true);
+      if (result.success && result.data.method === "BANK") {
+        expect(result.data as Record<string, unknown>).not.toHaveProperty("accountNumber");
+      }
+    });
+
+    it("rejects a too-short transaction id on the bank branch too", () => {
+      const result = manualPaymentInputSchema.safeParse({
+        method: "BANK",
+        payerName: "Rafiq Islam",
+        transactionId: "AB",
+      });
+      expect(result.success).toBe(false);
+    });
   });
 });

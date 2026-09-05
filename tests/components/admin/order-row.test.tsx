@@ -126,6 +126,26 @@ describe("OrderRow", () => {
     });
   });
 
+  it("clearly identifies a bank-transfer order and shows the submitted payer name/bank, not a sender number", () => {
+    const bankOrder: AdminReviewOrder = {
+      ...baseOrder,
+      method: "BANK",
+      manualPayment: {
+        senderNumber: null,
+        payerName: "Karim Ahmed",
+        senderBankName: "City Bank",
+        transactionIdRaw: "REF-998877",
+        transactionIdNormalized: "REF-998877",
+        submittedAt: new Date("2026-08-01T12:00:00Z"),
+      },
+    };
+    render(<OrderRow order={bankOrder} />);
+    expect(screen.getByText(/Bank Transfer/)).toBeInTheDocument();
+    expect(screen.getByText(/Karim Ahmed/)).toBeInTheDocument();
+    expect(screen.getByText(/City Bank/)).toBeInTheDocument();
+    expect(screen.getByText("REF-998877")).toBeInTheDocument();
+  });
+
   it("no unrelated order's data or a raw ObjectId/secret-looking value leaks into the rendered row", () => {
     const { container } = render(<OrderRow order={baseOrder} />);
     // Only this order's own public ref should ever appear — never a raw Mongo _id shape.

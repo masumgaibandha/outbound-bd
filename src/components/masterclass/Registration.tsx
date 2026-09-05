@@ -8,7 +8,7 @@ import {
   eyebrowDotClass,
 } from "@/components/masterclass/MasterclassSection";
 import { legalPageLinks } from "@/data/legal-content";
-import { masterclassConfig, registration } from "@/data/masterclass-content";
+import { masterclassConfig, registration, registrationBatchNotice } from "@/data/masterclass-content";
 import { getManualPaymentEnv, isRegistrationOperationallyReady } from "@/lib/masterclass/env";
 import { formatBDT } from "@/lib/masterclass/format";
 
@@ -70,6 +70,32 @@ export function Registration({ priceBDT, isEarlyBird, regularPriceBDT }: Registr
       <p className="text-ink-muted mt-4 max-w-prose leading-relaxed md:text-lg">
         {registration.description}
       </p>
+
+      {isEarlyBird ? (
+        <div className="border-action/30 bg-action/5 font-bengali mt-6 flex max-w-2xl flex-col gap-1 rounded-lg border p-5 sm:flex-row sm:gap-4">
+          <span aria-hidden="true" className="text-2xl leading-none">
+            {registrationBatchNotice.emoji}
+          </span>
+          <div>
+            <p className="font-heading text-ink text-lg tracking-tight">
+              {registrationBatchNotice.heading}
+            </p>
+            <p className="text-ink-muted mt-1.5 text-sm leading-relaxed">
+              {registrationBatchNotice.intro}
+            </p>
+            <p className="text-ink mt-3 text-sm leading-relaxed">
+              {registrationBatchNotice.regularPriceLabel}{" "}
+              <span className="text-ink-muted line-through">{formatBDT(regularPriceBDT)}</span>
+              <span className="mx-2">•</span>
+              {registrationBatchNotice.firstBatchPriceLabel}{" "}
+              <strong className="text-action">{formatBDT(priceBDT)}</strong>
+            </p>
+            <p className="text-ink-muted mt-3 text-sm leading-relaxed">
+              {registrationBatchNotice.closing}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
         <div className="border-hairline bg-surface h-fit border p-6 md:p-8">

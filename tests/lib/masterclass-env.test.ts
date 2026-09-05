@@ -8,6 +8,7 @@ import {
   isRegistrationEnabled,
   isRegistrationOperationallyReady,
   isUsingCloudflareTestKeys,
+  listEnabledManualPaymentMethods,
   verifyMetaPixelIdsMatch,
 } from "@/lib/masterclass/env";
 
@@ -128,6 +129,14 @@ describe("isUsingCloudflareTestKeys", () => {
   });
 });
 
+const FULL_BANK_ENV = {
+  MASTERCLASS_BANK_NAME: "Dutch-Bangla Bank",
+  MASTERCLASS_BANK_ACCOUNT_NAME: "Outbound BD",
+  MASTERCLASS_BANK_ACCOUNT_NUMBER: "1234567890123",
+  MASTERCLASS_BANK_BRANCH: "Gulshan",
+  MASTERCLASS_BANK_ROUTING_NUMBER: "090261234",
+};
+
 describe("getManualPaymentEnv", () => {
   it("enables only the methods whose number is actually configured", () => {
     vi.stubEnv("MASTERCLASS_BKASH_NUMBER", "01700000000");
@@ -135,6 +144,72 @@ describe("getManualPaymentEnv", () => {
     expect(env.bkash).toEqual({ enabled: true, number: "01700000000" });
     expect(env.nagad).toEqual({ enabled: false, number: null });
     expect(env.rocket).toEqual({ enabled: false, number: null });
+  });
+
+  it("bank: disabled and all fields null when none of the five bank variables are set", () => {
+    const env = getManualPaymentEnv();
+    expect(env.bank).toEqual({
+      enabled: false,
+      bankName: null,
+      accountName: null,
+      accountNumber: null,
+      branch: null,
+      routingNumber: null,
+    });
+  });
+
+  it("bank: enabled with all five values only when every one of the five is set", () => {
+    for (const [key, value] of Object.entries(FULL_BANK_ENV)) {
+      vi.stubEnv(key, value);
+    }
+    const env = getManualPaymentEnv();
+    expect(env.bank).toEqual({
+      enabled: true,
+      bankName: FULL_BANK_ENV.MASTERCLASS_BANK_NAME,
+      accountName: FULL_BANK_ENV.MASTERCLASS_BANK_ACCOUNT_NAME,
+      accountNumber: FULL_BANK_ENV.MASTERCLASS_BANK_ACCOUNT_NUMBER,
+      branch: FULL_BANK_ENV.MASTERCLASS_BANK_BRANCH,
+      routingNumber: FULL_BANK_ENV.MASTERCLASS_BANK_ROUTING_NUMBER,
+    });
+  });
+
+  it.each(Object.keys(FULL_BANK_ENV))(
+    "bank: missing just %s alone disables the whole bank option and reveals none of the other four values — never a half-shown bank",
+    (missingKey) => {
+      for (const [key, value] of Object.entries(FULL_BANK_ENV)) {
+        if (key !== missingKey) vi.stubEnv(key, value);
+      }
+      const env = getManualPaymentEnv();
+      expect(env.bank.enabled).toBe(false);
+      expect(env.bank.bankName).toBeNull();
+      expect(env.bank.accountName).toBeNull();
+      expect(env.bank.accountNumber).toBeNull();
+      expect(env.bank.branch).toBeNull();
+      expect(env.bank.routingNumber).toBeNull();
+    },
+  );
+
+  it("an incomplete bank configuration never disables bKash/Nagad/Rocket", () => {
+    vi.stubEnv("MASTERCLASS_BKASH_NUMBER", "01700000000");
+    vi.stubEnv("MASTERCLASS_NAGAD_NUMBER", "01700000001");
+    vi.stubEnv("MASTERCLASS_ROCKET_NUMBER", "01700000002");
+    vi.stubEnv("MASTERCLASS_BANK_NAME", "Dutch-Bangla Bank"); // only one of five — incomplete
+    const env = getManualPaymentEnv();
+    expect(env.bank.enabled).toBe(false);
+    expect(env.bkash.enabled).toBe(true);
+    expect(env.nagad.enabled).toBe(true);
+    expect(env.rocket.enabled).toBe(true);
+  });
+});
+
+describe("listEnabledManualPaymentMethods", () => {
+  it("returns only the enabled methods, bank last", () => {
+    const env = getManualPaymentEnv();
+    expect(listEnabledManualPaymentMethods(env)).toEqual([]);
+
+    vi.stubEnv("MASTERCLASS_BKASH_NUMBER", "01700000000");
+    for (const [key, value] of Object.entries(FULL_BANK_ENV)) vi.stubEnv(key, value);
+    expect(listEnabledManualPaymentMethods(getManualPaymentEnv())).toEqual(["BKASH", "BANK"]);
   });
 });
 

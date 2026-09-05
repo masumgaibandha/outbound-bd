@@ -192,6 +192,9 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
   /* --- Step 2: payment method + evidence --- */
   const [method, setMethod] = useState<ManualPaymentMethod | null>(null);
   const [senderNumber, setSenderNumber] = useState("");
+  /* Bank-transfer only. */
+  const [payerName, setPayerName] = useState("");
+  const [senderBankName, setSenderBankName] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -349,11 +352,12 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
 
     setPaymentError(null);
 
-    const parsed = manualPaymentInputSchema.safeParse({
-      method: method ?? undefined,
-      senderNumber,
-      transactionId,
-    });
+    const rawPayload =
+      method === "BANK"
+        ? { method, payerName, senderBankName, transactionId }
+        : { method: method ?? undefined, senderNumber, transactionId };
+
+    const parsed = manualPaymentInputSchema.safeParse(rawPayload);
 
     if (!parsed.success) {
       const nextErrors: Record<string, string> = {};
@@ -363,6 +367,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
       }
       if (nextErrors.method) nextErrors.method = registrationForm.paymentMethodError;
       if (nextErrors.senderNumber) nextErrors.senderNumber = registrationForm.senderNumberError;
+      if (nextErrors.payerName) nextErrors.payerName = registrationForm.payerNameError;
       if (nextErrors.transactionId) nextErrors.transactionId = registrationForm.transactionIdError;
       setPaymentErrors(nextErrors);
       setPaymentError(registrationForm.errorSummaryHeading);
@@ -440,12 +445,26 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
   }
 
   if (step === "payment" && order) {
-    const availableMethods = (["BKASH", "NAGAD", "ROCKET"] as const).filter((key) => {
-      const envKey = key.toLowerCase() as "bkash" | "nagad" | "rocket";
-      return paymentMethods[envKey].enabled;
-    });
+    /*
+     * Inlined rather than imported from `@/lib/masterclass/env` (which
+     * mirrors this exact same order via `listEnabledManualPaymentMethods()`,
+     * tested there directly): that module is `import "server-only"`-guarded,
+     * and this is a Client Component — importing a value (not just a type)
+     * from it would break the client bundle. `paymentMethods` itself is
+     * already the resolved, server-computed `ManualPaymentEnv` passed down
+     * as a prop, so no server-only code needs to run here.
+     */
+    const availableMethods: ManualPaymentMethod[] = [];
+    if (paymentMethods.bkash.enabled) availableMethods.push("BKASH");
+    if (paymentMethods.nagad.enabled) availableMethods.push("NAGAD");
+    if (paymentMethods.rocket.enabled) availableMethods.push("ROCKET");
+    if (paymentMethods.bank.enabled) availableMethods.push("BANK");
+
     const selectedNumber =
-      method && paymentMethods[method.toLowerCase() as "bkash" | "nagad" | "rocket"].number;
+      method && method !== "BANK"
+        ? paymentMethods[method.toLowerCase() as "bkash" | "nagad" | "rocket"].number
+        : null;
+    const bankEnv = method === "BANK" ? paymentMethods.bank : null;
 
     return (
       <form
@@ -467,7 +486,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
           </p>
         ) : (
           <>
-            <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {availableMethods.map((key) => (
                 <button
                   key={key}
@@ -510,53 +529,160 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
               </div>
             ) : null}
 
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              <div>
-                <label htmlFor={fieldId("sender-number")} className={labelClass}>
-                  {registrationForm.senderNumberLabel}
-                </label>
-                <input
-                  id={fieldId("sender-number")}
-                  type="tel"
-                  inputMode="tel"
-                  required
-                  placeholder={registrationForm.senderNumberPlaceholder}
-                  disabled={paymentStatus === "submitting"}
-                  value={senderNumber}
-                  onChange={(e) => setSenderNumber(e.target.value)}
-                  aria-invalid={Boolean(paymentErrors.senderNumber)}
-                  aria-describedby={paymentErrors.senderNumber ? errorId("sender-number") : undefined}
-                  className={`${fieldClass} mt-2`}
-                />
-                {paymentErrors.senderNumber ? (
-                  <p id={errorId("sender-number")} className={errorTextClass}>
-                    {paymentErrors.senderNumber}
-                  </p>
-                ) : null}
+            {bankEnv?.enabled ? (
+              <div className="border-hairline bg-canvas mt-5 space-y-4 border p-4">
+                <p className="text-ink-muted font-bengali text-sm leading-relaxed">
+                  {paymentMethodCopy.BANK.instructions}
+                </p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  <div>
+                    <dt className="text-ink-muted font-bengali text-xs">{registrationForm.bankNameLabel}</dt>
+                    <dd className="text-ink font-medium">{bankEnv.bankName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted font-bengali text-xs">{registrationForm.bankAccountNameLabel}</dt>
+                    <dd className="text-ink font-medium">{bankEnv.accountName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted font-bengali text-xs">{registrationForm.bankBranchLabel}</dt>
+                    <dd className="text-ink font-medium">{bankEnv.branch}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted font-bengali text-xs">{registrationForm.bankRoutingNumberLabel}</dt>
+                    <dd className="text-ink font-medium">{bankEnv.routingNumber}</dd>
+                  </div>
+                </dl>
+                <div className="flex items-center justify-between gap-3 border-t border-hairline pt-3">
+                  <div>
+                    <p className="text-ink-muted font-bengali text-xs">{registrationForm.bankAccountNumberLabel}</p>
+                    <p className="text-ink font-heading text-lg tracking-wide">{bankEnv.accountNumber}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => bankEnv.accountNumber && copyNumber(bankEnv.accountNumber)}
+                    className="border-hairline text-ink hover:border-action hover:text-action font-bengali inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors"
+                  >
+                    {copied ? <CheckIcon className="size-4" aria-hidden="true" /> : <CopyIcon className="size-4" aria-hidden="true" />}
+                    {copied ? registrationForm.copiedLabel : registrationForm.copyLabel}
+                  </button>
+                </div>
+                <div className="border-hairline border-t pt-3">
+                  <p className="text-ink-muted font-bengali text-xs">{registrationForm.amountLabel}</p>
+                  <p className="text-ink font-heading text-lg tracking-wide">{formatBDT(priceBDT)}</p>
+                </div>
               </div>
-              <div>
-                <label htmlFor={fieldId("transaction-id")} className={labelClass}>
-                  {registrationForm.transactionIdLabel}
-                </label>
-                <input
-                  id={fieldId("transaction-id")}
-                  type="text"
-                  required
-                  placeholder={registrationForm.transactionIdPlaceholder}
-                  disabled={paymentStatus === "submitting"}
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
-                  aria-invalid={Boolean(paymentErrors.transactionId)}
-                  aria-describedby={paymentErrors.transactionId ? errorId("transaction-id") : undefined}
-                  className={`${fieldClass} mt-2`}
-                />
-                {paymentErrors.transactionId ? (
-                  <p id={errorId("transaction-id")} className={errorTextClass}>
-                    {paymentErrors.transactionId}
-                  </p>
-                ) : null}
+            ) : null}
+
+            {method === "BANK" ? (
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={fieldId("payer-name")} className={labelClass}>
+                    {registrationForm.payerNameLabel}
+                  </label>
+                  <input
+                    id={fieldId("payer-name")}
+                    type="text"
+                    required
+                    placeholder={registrationForm.payerNamePlaceholder}
+                    disabled={paymentStatus === "submitting"}
+                    value={payerName}
+                    onChange={(e) => setPayerName(e.target.value)}
+                    aria-invalid={Boolean(paymentErrors.payerName)}
+                    aria-describedby={paymentErrors.payerName ? errorId("payer-name") : undefined}
+                    className={`${fieldClass} mt-2`}
+                  />
+                  {paymentErrors.payerName ? (
+                    <p id={errorId("payer-name")} className={errorTextClass}>
+                      {paymentErrors.payerName}
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <label htmlFor={fieldId("sender-bank-name")} className={labelClass}>
+                    {registrationForm.senderBankNameLabel}
+                  </label>
+                  <input
+                    id={fieldId("sender-bank-name")}
+                    type="text"
+                    placeholder={registrationForm.senderBankNamePlaceholder}
+                    disabled={paymentStatus === "submitting"}
+                    value={senderBankName}
+                    onChange={(e) => setSenderBankName(e.target.value)}
+                    className={`${fieldClass} mt-2`}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor={fieldId("transaction-id")} className={labelClass}>
+                    {registrationForm.transactionIdBankLabel}
+                  </label>
+                  <input
+                    id={fieldId("transaction-id")}
+                    type="text"
+                    required
+                    placeholder={registrationForm.transactionIdPlaceholder}
+                    disabled={paymentStatus === "submitting"}
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    aria-invalid={Boolean(paymentErrors.transactionId)}
+                    aria-describedby={paymentErrors.transactionId ? errorId("transaction-id") : undefined}
+                    className={`${fieldClass} mt-2`}
+                  />
+                  {paymentErrors.transactionId ? (
+                    <p id={errorId("transaction-id")} className={errorTextClass}>
+                      {paymentErrors.transactionId}
+                    </p>
+                  ) : null}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={fieldId("sender-number")} className={labelClass}>
+                    {registrationForm.senderNumberLabel}
+                  </label>
+                  <input
+                    id={fieldId("sender-number")}
+                    type="tel"
+                    inputMode="tel"
+                    required
+                    placeholder={registrationForm.senderNumberPlaceholder}
+                    disabled={paymentStatus === "submitting"}
+                    value={senderNumber}
+                    onChange={(e) => setSenderNumber(e.target.value)}
+                    aria-invalid={Boolean(paymentErrors.senderNumber)}
+                    aria-describedby={paymentErrors.senderNumber ? errorId("sender-number") : undefined}
+                    className={`${fieldClass} mt-2`}
+                  />
+                  {paymentErrors.senderNumber ? (
+                    <p id={errorId("sender-number")} className={errorTextClass}>
+                      {paymentErrors.senderNumber}
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <label htmlFor={fieldId("transaction-id")} className={labelClass}>
+                    {registrationForm.transactionIdLabel}
+                  </label>
+                  <input
+                    id={fieldId("transaction-id")}
+                    type="text"
+                    required
+                    placeholder={registrationForm.transactionIdPlaceholder}
+                    disabled={paymentStatus === "submitting"}
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    aria-invalid={Boolean(paymentErrors.transactionId)}
+                    aria-describedby={paymentErrors.transactionId ? errorId("transaction-id") : undefined}
+                    className={`${fieldClass} mt-2`}
+                  />
+                  {paymentErrors.transactionId ? (
+                    <p id={errorId("transaction-id")} className={errorTextClass}>
+                      {paymentErrors.transactionId}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            )}
 
             {paymentError ? (
               <p role="alert" className="text-ink border-hairline bg-canvas font-bengali mt-6 flex items-start gap-2.5 border p-4 text-sm">

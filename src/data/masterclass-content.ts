@@ -294,8 +294,8 @@ export const registration = {
   description:
     "নাম, ইমেইল ও মোবাইল নম্বর দিয়ে রেজিস্ট্রেশন করুন, এরপর bKash/Nagad/Rocket-এর যেকোনো একটি দিয়ে পেমেন্ট সম্পন্ন করুন।",
   priceLabel: "কোর্স ফি",
-  /* No embedded price string — Registration.tsx renders formatBDT(priceBDT), with a small "নিয়মিত মূল্য" note when the current price is the early-bird one. */
-  earlyBirdLabel: "Early Bird",
+  /* No embedded price string — Registration.tsx renders formatBDT(priceBDT), with a small "নিয়মিত মূল্য" note when the current price is the current batch's (discounted) one. */
+  earlyBirdLabel: "প্রথম ব্যাচের মূল্য",
   regularPricePrefix: "নিয়মিত মূল্য",
   dateLabel: "ক্লাসের তারিখ",
   dateValue: `${classDatesLabelBn}, প্রতিদিন রাত ৯টা`,
@@ -322,8 +322,27 @@ export const registration = {
     "Development note: রেজিস্ট্রেশন সিস্টেম এখনও সম্পূর্ণভাবে সংযুক্ত হয়নি। এই ফর্মটি বর্তমানে শুধু preview হিসেবে দেখানো হচ্ছে; জমা দেওয়া সম্ভব নয়।",
 } as const;
 
-/** Bengali labels/instructions per manual channel — numbers themselves come from env (`getManualPaymentEnv()`), never hardcoded here. */
-export const paymentMethods: Record<"BKASH" | "NAGAD" | "ROCKET", ManualPaymentMethodCopy> = {
+/**
+ * The enrollment-section promotional callout. Only rendered while the
+ * current batch's price is the discounted one (`isEarlyBird`, see
+ * `Registration.tsx`) — deliberately not shown once a future batch's price
+ * is manually raised to `regularPriceBDT`, since the "first batch" framing
+ * would no longer be true. The two price lines are built by the component
+ * from `formatBDT()`, never re-typed here as literal ৳ amounts, so this
+ * copy never drifts from `src/lib/masterclass/constants.ts`.
+ */
+export const registrationBatchNotice = {
+  emoji: "🎟️",
+  heading: "প্রথম ব্যাচ, প্রথম সুযোগ",
+  intro: "এটি আমার প্রথম মাস্টার ক্লাস, তাই প্রথম ব্যাচের জন্য বিশেষ মূল্য রাখছি।",
+  regularPriceLabel: "নিয়মিত মূল্য:",
+  firstBatchPriceLabel: "প্রথম ব্যাচের জন্য: মাত্র",
+  closing:
+    "এই প্রথম ব্যাচেই সবচেয়ে কম মূল্যে যুক্ত হওয়ার সুযোগ। পরবর্তী ব্যাচ থেকে ফি বাড়বে।",
+} as const;
+
+/** Bengali labels/instructions per manual channel — numbers/bank details themselves come from env (`getManualPaymentEnv()`), never hardcoded here. */
+export const paymentMethods: Record<"BKASH" | "NAGAD" | "ROCKET" | "BANK", ManualPaymentMethodCopy> = {
   BKASH: {
     label: "bKash",
     instructions: "Send Money অপশন ব্যবহার করে নিচের নম্বরে টাকা পাঠান।",
@@ -335,6 +354,10 @@ export const paymentMethods: Record<"BKASH" | "NAGAD" | "ROCKET", ManualPaymentM
   ROCKET: {
     label: "Rocket",
     instructions: "Send Money অপশন ব্যবহার করে নিচের নম্বরে টাকা পাঠান।",
+  },
+  BANK: {
+    label: "Bank Transfer",
+    instructions: "নিচের ব্যাংক অ্যাকাউন্টে টাকা পাঠিয়ে প্রেরকের নাম ও Transaction/Reference ID জমা দিন।",
   },
 } as const;
 
@@ -379,6 +402,18 @@ export const registrationForm = {
   transactionIdPlaceholder: "যেমন 9G7H2K1XYZ",
   transactionIdError: "Transaction ID সঠিকভাবে লিখুন (কমপক্ষে ৪ অক্ষর)।",
   paymentMethodError: "অনুগ্রহ করে একটি পেমেন্ট মাধ্যম বেছে নিন।",
+  /* Bank-transfer step 2 — destination details (server-controlled, from getManualPaymentEnv().bank) and the two fields the student submits. */
+  bankNameLabel: "ব্যাংক",
+  bankAccountNameLabel: "অ্যাকাউন্টের নাম",
+  bankAccountNumberLabel: "অ্যাকাউন্ট নম্বর",
+  bankBranchLabel: "শাখা",
+  bankRoutingNumberLabel: "রাউটিং নম্বর",
+  payerNameLabel: "প্রেরকের নাম (যে নামে অ্যাকাউন্ট আছে)",
+  payerNamePlaceholder: "আপনার নাম লিখুন",
+  payerNameError: "অনুগ্রহ করে প্রেরকের নাম লিখুন (কমপক্ষে ২ অক্ষর)।",
+  senderBankNameLabel: "আপনার ব্যাংকের নাম (ঐচ্ছিক)",
+  senderBankNamePlaceholder: "যেমন Dutch-Bangla Bank",
+  transactionIdBankLabel: "Transaction/Reference ID",
   submitPaymentLabel: "পেমেন্ট তথ্য জমা দিন",
   changeMethodLabel: "মাধ্যম পরিবর্তন করুন",
   /* DUPLICATE_TRANSACTION_ID — this exact TxID is already recorded against another order. */

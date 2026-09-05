@@ -31,7 +31,7 @@ export type PaymentOrderStatus =
 export type PaymentProvider = "UNASSIGNED" | "MANUAL" | "SSLCOMMERZ" | "BKASH";
 
 /** Which manual channel a `MANUAL`-provider order was paid through. */
-export type ManualPaymentMethod = "BKASH" | "NAGAD" | "ROCKET";
+export type ManualPaymentMethod = "BKASH" | "NAGAD" | "ROCKET" | "BANK";
 
 /**
  * Whitelisted attribution only — never an arbitrary object. `capturedAt` is
@@ -110,11 +110,22 @@ export interface RegistrationDocument {
   updatedAt: Date;
 }
 
-/** Evidence submitted by the student for a manual (bKash/Nagad/Rocket) payment. Never auto-verified — submitting this only moves an order to `REVIEW`. */
+/**
+ * Evidence submitted by the student for a manual (bKash/Nagad/Rocket/bank
+ * transfer) payment. Never auto-verified — submitting this only moves an
+ * order to `REVIEW`. `senderNumber` is populated for the three mobile-wallet
+ * methods and `null` for `BANK`; `payerName`/`senderBankName` are the reverse
+ * (set only for `BANK`) — see `manualPaymentInputSchema` in `validation.ts`
+ * for the discriminated-by-`method` shape that produces this.
+ */
 export interface ManualPaymentSubmission {
-  senderNumber: string;
+  senderNumber: string | null;
+  /** BANK only: the name on the sending bank account. */
+  payerName?: string | null;
+  /** BANK only, optional: the student's own bank, if they chose to share it. */
+  senderBankName?: string | null;
   transactionIdRaw: string;
-  /** Trimmed + uppercased — the form uniqueness is enforced on this. */
+  /** Trimmed + uppercased — the form uniqueness is enforced on this, across every manual method. */
   transactionIdNormalized: string;
   submittedAt: Date;
 }

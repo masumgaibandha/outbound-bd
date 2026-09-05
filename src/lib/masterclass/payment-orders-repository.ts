@@ -296,7 +296,12 @@ export function normalizeTransactionId(raw: string): string {
 export interface SubmitManualPaymentInput {
   publicOrderRef: string;
   method: ManualPaymentMethod;
-  senderNumber: string;
+  /** Mobile-wallet methods only — `null`/omitted for `BANK`. */
+  senderNumber?: string | null;
+  /** `BANK` only — the name on the sending bank account. */
+  payerName?: string | null;
+  /** `BANK` only, optional — the student's own bank, if shared. */
+  senderBankName?: string | null;
   transactionIdRaw: string;
 }
 
@@ -305,7 +310,9 @@ export interface SubmitManualPaymentInput {
  * `REVIEW`. Never sets `PAID`. Allowed from `PENDING` or `REVIEW`; once
  * `PAID`/`REJECTED`/`CANCELLED` this throws `OrderNotEditableError`. A
  * normalized TxID collision with a different order throws
- * `DuplicateTransactionError`.
+ * `DuplicateTransactionError` — enforced by the same `uniq_manual_transaction_id`
+ * index regardless of which manual method (bKash/Nagad/Rocket/bank) the
+ * order used, so duplicate protection is never per-method.
  */
 export async function submitManualPayment(
   input: SubmitManualPaymentInput,
@@ -322,7 +329,9 @@ export async function submitManualPayment(
           status: "REVIEW",
           method: input.method,
           manualPayment: {
-            senderNumber: input.senderNumber,
+            senderNumber: input.senderNumber ?? null,
+            payerName: input.payerName ?? null,
+            senderBankName: input.senderBankName ?? null,
             transactionIdRaw: input.transactionIdRaw,
             transactionIdNormalized,
             submittedAt: now,

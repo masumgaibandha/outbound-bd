@@ -39,17 +39,45 @@ interface ManualPaymentMethodEnv {
   enabled: boolean;
   number: string | null;
 }
+interface ManualPaymentBankEnvProp {
+  enabled: boolean;
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+  branch: string | null;
+  routingNumber: string | null;
+}
 interface ManualPaymentEnvProp {
   bkash: ManualPaymentMethodEnv;
   nagad: ManualPaymentMethodEnv;
   rocket: ManualPaymentMethodEnv;
+  bank: ManualPaymentBankEnvProp;
 }
+
+const BANK_DISABLED: ManualPaymentBankEnvProp = {
+  enabled: false,
+  bankName: null,
+  accountName: null,
+  accountNumber: null,
+  branch: null,
+  routingNumber: null,
+};
+
+const BANK_ENABLED: ManualPaymentBankEnvProp = {
+  enabled: true,
+  bankName: "Dutch-Bangla Bank",
+  accountName: "Outbound BD",
+  accountNumber: "1234567890123",
+  branch: "Gulshan",
+  routingNumber: "090261234",
+};
 
 const PRICE_BDT = 1499;
 const PAYMENT_METHODS_ALL_ENABLED: ManualPaymentEnvProp = {
   bkash: { enabled: true, number: "01711111111" },
   nagad: { enabled: true, number: "01722222222" },
   rocket: { enabled: true, number: "01733333333" },
+  bank: BANK_DISABLED,
 };
 
 function renderForm(overrides: Partial<{ paymentMethods: ManualPaymentEnvProp }> = {}) {
@@ -258,6 +286,7 @@ describe("MasterclassRegistrationForm — enabled state", () => {
         bkash: { enabled: true, number: "01711111111" },
         nagad: { enabled: false, number: "01799999999" }, // configured but disabled — must never render
         rocket: { enabled: false, number: null },
+        bank: BANK_DISABLED,
       },
     });
     await fillValidStep1(user);
@@ -267,7 +296,101 @@ describe("MasterclassRegistrationForm — enabled state", () => {
     expect(screen.getByRole("button", { name: "bKash" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Nagad" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Rocket" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bank Transfer" })).not.toBeInTheDocument();
     expect(screen.queryByText("01799999999")).not.toBeInTheDocument();
+  });
+
+  it("shows the bank option only when its configuration is complete, with server-controlled destination details, and hides it (without disabling anything else) when incomplete", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm({
+      paymentMethods: { ...PAYMENT_METHODS_ALL_ENABLED, bank: BANK_ENABLED },
+    });
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    // bKash/Nagad/Rocket are unaffected by the bank option being present.
+    expect(screen.getByRole("button", { name: "bKash" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nagad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rocket" })).toBeInTheDocument();
+
+    const bankButton = screen.getByRole("button", { name: "Bank Transfer" });
+    await user.click(bankButton);
+
+    expect(screen.getByText(BANK_ENABLED.bankName!)).toBeInTheDocument();
+    expect(screen.getByText(BANK_ENABLED.accountName!)).toBeInTheDocument();
+    expect(screen.getByText(BANK_ENABLED.accountNumber!)).toBeInTheDocument();
+    expect(screen.getByText(BANK_ENABLED.branch!)).toBeInTheDocument();
+    expect(screen.getByText(BANK_ENABLED.routingNumber!)).toBeInTheDocument();
+    // The bank step never asks for a "sender number" — that field is mobile-wallet-only.
+    expect(screen.queryByLabelText(registrationForm.senderNumberLabel)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(registrationForm.payerNameLabel)).toBeInTheDocument();
+  });
+
+  it("an incomplete bank configuration hides only the bank option — bKash/Nagad/Rocket still render", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm({ paymentMethods: PAYMENT_METHODS_ALL_ENABLED }); // bank: BANK_DISABLED
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    expect(screen.getByRole("button", { name: "bKash" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nagad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rocket" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bank Transfer" })).not.toBeInTheDocument();
+  });
+
+  it("submitting a valid bank payment sends payerName/senderBankName/transactionId — never a senderNumber or destination-account field", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201))
+      .mockResolvedValueOnce(mockFetchOnce({ publicOrderRef: "ord_abc", status: "REVIEW" }, 200));
+    const user = userEvent.setup();
+    renderForm({ paymentMethods: { ...PAYMENT_METHODS_ALL_ENABLED, bank: BANK_ENABLED } });
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "Bank Transfer" }));
+    await user.type(screen.getByLabelText(registrationForm.payerNameLabel), "Rafiq Islam");
+    await user.type(screen.getByLabelText(registrationForm.senderBankNameLabel), "City Bank");
+    await user.type(screen.getByLabelText(registrationForm.transactionIdBankLabel), "REF-998877");
+    await user.click(screen.getByRole("button", { name: registrationForm.submitPaymentLabel }));
+
+    expect(await screen.findByText(registrationForm.pendingHeading)).toBeInTheDocument();
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
+    const sentBody = JSON.parse(init.body as string);
+    expect(sentBody).toEqual({
+      method: "BANK",
+      payerName: "Rafiq Islam",
+      senderBankName: "City Bank",
+      transactionId: "REF-998877",
+    });
+    expect(sentBody).not.toHaveProperty("senderNumber");
+    expect(sentBody).not.toHaveProperty("accountNumber");
+  });
+
+  it("rejects a bank payment submission missing the payer name", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockFetchOnce({ publicRegistrationRef: "MC-2026-000001", publicOrderRef: "ord_abc", status: "PENDING_PAYMENT" }, 201),
+    );
+    const user = userEvent.setup();
+    renderForm({ paymentMethods: { ...PAYMENT_METHODS_ALL_ENABLED, bank: BANK_ENABLED } });
+    await fillValidStep1(user);
+    await user.click(screen.getByRole("button", { name: new RegExp(registration.submitEnabledLabel) }));
+    await screen.findByText(registrationForm.paymentStepHeading);
+
+    await user.click(screen.getByRole("button", { name: "Bank Transfer" }));
+    await user.type(screen.getByLabelText(registrationForm.transactionIdBankLabel), "REF-998877");
+    await user.click(screen.getByRole("button", { name: registrationForm.submitPaymentLabel }));
+
+    expect(await screen.findByText(registrationForm.payerNameError)).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledTimes(1); // only the step-1 registration call — payment was never submitted
   });
 
   it("selecting a payment method and submitting valid evidence completes step 2", async () => {
@@ -350,6 +473,7 @@ describe("MasterclassRegistrationForm — enabled state", () => {
         bkash: { enabled: true, number: "01711111111" },
         nagad: { enabled: false, number: "01799999999" },
         rocket: { enabled: false, number: null },
+        bank: BANK_DISABLED,
       },
     });
     const html = container.innerHTML;

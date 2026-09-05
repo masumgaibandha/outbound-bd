@@ -428,6 +428,54 @@ describe("manual payment submission and verification", () => {
     ).rejects.toThrow();
   });
 
+  it("BANK: persists payerName/senderBankName with senderNumber null, and moves the order to REVIEW, never PAID", async () => {
+    const { publicOrderRef } = await createRegistrationAndOrder();
+    const updated = await submitManualPayment({
+      publicOrderRef,
+      method: "BANK",
+      payerName: "Rafiq Islam",
+      senderBankName: "City Bank",
+      transactionIdRaw: "REF-BANK-001",
+    });
+    expect(updated.status).toBe("REVIEW");
+    expect(updated.method).toBe("BANK");
+    expect(updated.manualPayment?.senderNumber).toBeNull();
+    expect(updated.manualPayment?.payerName).toBe("Rafiq Islam");
+    expect(updated.manualPayment?.senderBankName).toBe("City Bank");
+  });
+
+  it("BANK: senderBankName defaults to null when not provided", async () => {
+    const { publicOrderRef } = await createRegistrationAndOrder();
+    const updated = await submitManualPayment({
+      publicOrderRef,
+      method: "BANK",
+      payerName: "Rafiq Islam",
+      transactionIdRaw: "REF-BANK-002",
+    });
+    expect(updated.manualPayment?.senderBankName).toBeNull();
+  });
+
+  it("rejects a transaction ID already recorded against a different order, across different manual methods (bKash vs bank)", async () => {
+    const orderA = await createRegistrationAndOrder();
+    const orderB = await createRegistrationAndOrder();
+
+    await submitManualPayment({
+      publicOrderRef: orderA.publicOrderRef,
+      method: "BKASH",
+      senderNumber: "+8801712345678",
+      transactionIdRaw: "SHARED-TXN-ID",
+    });
+
+    await expect(
+      submitManualPayment({
+        publicOrderRef: orderB.publicOrderRef,
+        method: "BANK",
+        payerName: "Someone Else",
+        transactionIdRaw: "shared-txn-id", // normalized to the same uppercase value
+      }),
+    ).rejects.toThrow();
+  });
+
   it("verifyPayment only transitions an order that is currently in REVIEW — a second call is a no-op (idempotent approval)", async () => {
     const { publicOrderRef } = await createRegistrationAndOrder();
     await submitManualPayment({

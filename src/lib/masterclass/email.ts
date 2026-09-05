@@ -19,7 +19,7 @@ export interface ConfirmationEmailInput {
   studentName: string;
   registrationRef: string;
   amountBDT: number;
-  method: "BKASH" | "NAGAD" | "ROCKET";
+  method: "BKASH" | "NAGAD" | "ROCKET" | "BANK";
   classDateLabel: string;
 }
 
@@ -28,6 +28,7 @@ const METHOD_LABEL: Record<ConfirmationEmailInput["method"], string> = {
   BKASH: "bKash",
   NAGAD: "Nagad",
   ROCKET: "Rocket",
+  BANK: "Bank Transfer",
 };
 
 function buildEmailBody(input: ConfirmationEmailInput): { subject: string; html: string } {

@@ -157,6 +157,63 @@ describe("POST /api/masterclass/registrations/[publicOrderRef]/payment", () => {
     expect(body.error).toBe("DUPLICATE_TRANSACTION_ID");
   });
 
+  const FULL_BANK_ENV = {
+    MASTERCLASS_BANK_NAME: "Dutch-Bangla Bank",
+    MASTERCLASS_BANK_ACCOUNT_NAME: "Outbound BD",
+    MASTERCLASS_BANK_ACCOUNT_NUMBER: "1234567890123",
+    MASTERCLASS_BANK_BRANCH: "Gulshan",
+    MASTERCLASS_BANK_ROUTING_NUMBER: "090261234",
+  };
+
+  it("accepts a valid bank-transfer submission and moves the order to REVIEW, when bank config is complete", async () => {
+    for (const [key, value] of Object.entries(FULL_BANK_ENV)) vi.stubEnv(key, value);
+    const publicOrderRef = await seedDraftOrder();
+    const response = await callRoute(
+      publicOrderRef,
+      validPayload({ method: "BANK", senderNumber: undefined, payerName: "Rafiq Islam", senderBankName: "City Bank" }),
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.status).toBe("REVIEW");
+  });
+
+  it("rejects a bank-transfer submission with 503 when bank config is incomplete, even though the request is otherwise valid", async () => {
+    // Deliberately leaving bank env unconfigured (default beforeEach state).
+    const publicOrderRef = await seedDraftOrder();
+    const response = await callRoute(
+      publicOrderRef,
+      validPayload({ method: "BANK", senderNumber: undefined, payerName: "Rafiq Islam" }),
+    );
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.error).toBe("PAYMENT_METHOD_UNAVAILABLE");
+  });
+
+  it("rejects a bank-transfer submission missing payerName with 422, never touching the order", async () => {
+    for (const [key, value] of Object.entries(FULL_BANK_ENV)) vi.stubEnv(key, value);
+    const publicOrderRef = await seedDraftOrder();
+    const response = await callRoute(publicOrderRef, { method: "BANK", transactionId: "REF-12345" });
+    expect(response.status).toBe(422);
+  });
+
+  it("a bank transaction ID colliding with an existing bKash order's ID is rejected as a duplicate (409)", async () => {
+    for (const [key, value] of Object.entries(FULL_BANK_ENV)) vi.stubEnv(key, value);
+    const orderA = await seedDraftOrder();
+    const orderB = await seedDraftOrder();
+    const sharedTxnId = `TXN-${randomUUID().slice(0, 8)}`;
+
+    const first = await callRoute(orderA, validPayload({ transactionId: sharedTxnId }));
+    expect(first.status).toBe(200);
+
+    const second = await callRoute(
+      orderB,
+      validPayload({ method: "BANK", senderNumber: undefined, payerName: "Rafiq Islam", transactionId: sharedTxnId }),
+    );
+    expect(second.status).toBe(409);
+    const body = await second.json();
+    expect(body.error).toBe("DUPLICATE_TRANSACTION_ID");
+  });
+
   it("never marks an order PAID from this endpoint — client-submitted status/paid fields are ignored since the schema has none", async () => {
     const publicOrderRef = await seedDraftOrder();
     const response = await callRoute(

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getSecurityEnv, isRegistrationOperationallyReady } from "@/lib/masterclass/env";
+import { getManualPaymentEnv, getSecurityEnv, isRegistrationOperationallyReady } from "@/lib/masterclass/env";
 import { DuplicateTransactionError, OrderNotEditableError } from "@/lib/masterclass/errors";
 import { isRequestSameOrigin } from "@/lib/masterclass/origin-validation";
 import {
@@ -95,12 +95,32 @@ export async function POST(
     );
   }
 
-  const senderNumberE164 = normalizeBangladeshPhone(inputResult.data.senderNumber);
-  if (!senderNumberE164) {
-    return noStoreJson(
-      { error: "VALIDATION_ERROR", fields: [{ field: "senderNumber", message: "Enter a valid Bangladeshi mobile number." }] },
-      422,
-    );
+  /*
+   * Branch by method. The bank branch is checked against server-side
+   * configuration before anything else — a visitor can't submit for an
+   * option the payment picker never actually showed (defense-in-depth: the
+   * UI already hides an incompletely-configured bank option, but this route
+   * doesn't trust that alone). bKash/Nagad/Rocket keep their exact prior
+   * behavior — normalize the sender's own mobile number, nothing else.
+   */
+  let senderNumberE164: string | null = null;
+  let payerName: string | null = null;
+  let senderBankName: string | null = null;
+
+  if (inputResult.data.method === "BANK") {
+    if (!getManualPaymentEnv().bank.enabled) {
+      return noStoreJson({ error: "PAYMENT_METHOD_UNAVAILABLE" }, 503);
+    }
+    payerName = inputResult.data.payerName;
+    senderBankName = inputResult.data.senderBankName || null;
+  } else {
+    senderNumberE164 = normalizeBangladeshPhone(inputResult.data.senderNumber);
+    if (!senderNumberE164) {
+      return noStoreJson(
+        { error: "VALIDATION_ERROR", fields: [{ field: "senderNumber", message: "Enter a valid Bangladeshi mobile number." }] },
+        422,
+      );
+    }
   }
 
   const { publicOrderRef } = await context.params;
@@ -114,6 +134,8 @@ export async function POST(
       publicOrderRef,
       method: inputResult.data.method,
       senderNumber: senderNumberE164,
+      payerName,
+      senderBankName,
       transactionIdRaw: inputResult.data.transactionId,
     });
 

@@ -9,7 +9,12 @@ import {
 } from "@/app/masterclass/admin/orders/actions";
 import type { AdminReviewOrder } from "@/lib/masterclass/payment-orders-repository";
 
-const METHOD_LABEL: Record<string, string> = { BKASH: "bKash", NAGAD: "Nagad", ROCKET: "Rocket" };
+const METHOD_LABEL: Record<string, string> = {
+  BKASH: "bKash",
+  NAGAD: "Nagad",
+  ROCKET: "Rocket",
+  BANK: "Bank Transfer",
+};
 
 type PendingAction = "approve" | "reject" | "retry" | null;
 
@@ -72,8 +77,17 @@ export function OrderRow({ order }: { order: AdminReviewOrder }) {
         {order.name} &middot; {order.email} &middot; {order.phone}
       </p>
       <p style={{ margin: "0.4rem 0" }}>
-        <strong>{order.method ? METHOD_LABEL[order.method] : "—"}</strong> &middot; sender{" "}
-        {order.manualPayment?.senderNumber ?? "—"} &middot; TxID{" "}
+        <strong>{order.method ? METHOD_LABEL[order.method] : "—"}</strong>{" "}
+        &middot;{" "}
+        {order.method === "BANK" ? (
+          <>
+            payer {order.manualPayment?.payerName ?? "—"}
+            {order.manualPayment?.senderBankName ? ` (${order.manualPayment.senderBankName})` : ""}
+          </>
+        ) : (
+          <>sender {order.manualPayment?.senderNumber ?? "—"}</>
+        )}{" "}
+        &middot; TxID{" "}
         <code>{order.manualPayment?.transactionIdRaw ?? "—"}</code> &middot; {order.currency} {order.amount}
       </p>
       {order.attributionSource ? (

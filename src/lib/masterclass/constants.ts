@@ -13,13 +13,16 @@ export const batchId = "lead-generation-cold-email-2026-10";
 export const currency = "BDT";
 
 /**
- * Batch 1 pricing. `earlyBirdEndsAt` is `null` by design — there is no real
- * cutoff yet, and the product deliberately never shows a countdown for a
- * deadline that doesn't exist. When a real cutoff is decided, set it here
- * (and only here) and `resolvePriceBDT()` starts honoring it automatically.
+ * Batch 1 pricing. `earlyBirdEndsAt` is `null` by design — there is no
+ * date-based cutoff, and the product deliberately never shows a countdown
+ * for a deadline that doesn't exist. This batch's price (`earlyBirdPriceBDT`)
+ * stays ৳1,499 until manually changed here for a future batch — it is never
+ * automatically raised to `regularPriceBDT` by the passage of time. When a
+ * real cutoff is decided for a future batch, set it here (and only here) and
+ * `resolvePriceBDT()` starts honoring it automatically.
  */
 export const earlyBirdPriceBDT = 1499;
-export const regularPriceBDT = 1999;
+export const regularPriceBDT = 2499;
 export const earlyBirdEndsAt: Date | null = null;
 
 /** No hard registration cutoff yet — `null` means registration stays open until manually disabled. */
