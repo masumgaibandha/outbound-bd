@@ -1,30 +1,64 @@
+import { getMongoClient } from "@/lib/masterclass/db";
 import { getMetaCapiEnv } from "@/lib/masterclass/env";
 import { registration as registrationCopy } from "@/data/masterclass-content";
+import {
+  ApprovalConsistencyError,
+  OrderNotActionableError,
+  PublicStudentIdCollisionError,
+  StudentEmailRaceError,
+  StudentLinkGenerationError,
+} from "@/lib/masterclass/errors";
 import { sendConfirmationEmail, sendRejectionEmail } from "@/lib/masterclass/email";
 import { sendPurchaseEvent } from "@/lib/masterclass/meta-capi";
 import {
   findOrderByPublicRef,
   getRejectionEmailState,
+  linkOrderToStudent,
   rejectPayment,
   updateDeliveryState,
   verifyPayment,
 } from "@/lib/masterclass/payment-orders-repository";
 import {
   findRegistrationById,
+  linkRegistrationToStudent,
   markRegistrationEnrolled,
 } from "@/lib/masterclass/registrations-repository";
-import type { PaymentOrderDocument, RegistrationDocument } from "@/types/masterclass-persistence";
+import { upsertStudentForApproval } from "@/lib/masterclass/students-repository";
+import type {
+  PaymentOrderDocument,
+  RegistrationDocument,
+  StudentDocument,
+} from "@/types/masterclass-persistence";
 
 /**
  * Orchestrates everything that happens at `REVIEW → PAID`, driven by the
- * admin approve Server Action. Ported verbatim from the MasumDev masterclass
- * source. The DB transition itself (`verifyPayment()`) is a single atomic
- * `findOneAndUpdate` guarded on `status: "REVIEW"` — a retried/duplicate
- * approval click matches nothing the second time and this function reports
- * `already_processed` rather than re-running any side effect. Email and
- * Meta CAPI are attempted *after* the transition is durable, never inside
- * it, and a failure in either one is recorded but never rolls back `PAID`.
+ * admin approve Server Action.
+ *
+ * Every state change this produces — the order's own `REVIEW → PAID`
+ * transition, the registration's `→ ENROLLED` transition, the permanent
+ * Student's creation-or-reuse, and both `studentId` links — now happens
+ * inside ONE `session.withTransaction()` call, never as independent
+ * unguarded writes. This closes a real, pre-existing gap: the previous
+ * version of this function performed `verifyPayment()` and
+ * `markRegistrationEnrolled()` as two separate atomic single-document
+ * writes with no shared transaction, so a process crash between them could
+ * leave an order `PAID` with its registration still not `ENROLLED`. Adding
+ * a *third*, more consequential write (the Student link) to that same
+ * unguarded sequence would have made the gap worse instead of closing it.
+ *
+ * Every attempt starts a genuinely fresh `client.startSession()` — the same
+ * empirically-confirmed discipline `registerForMasterclass()` already
+ * uses: any write error inside a multi-document transaction aborts it
+ * entirely, and every later operation on that same session (even a plain
+ * read) then fails with `NoSuchTransaction`. So no step here ever re-reads
+ * on a session a prior step's error may have already poisoned; a collision
+ * always means "start over with a brand-new session," never "read again on
+ * this one." `order`/`registration`/`student` are declared fresh inside
+ * the loop body on every iteration, so a value captured by an attempt that
+ * later aborted can never leak into the post-commit email/CAPI step.
  */
+
+const MAX_STUDENT_LINK_ATTEMPTS = 5;
 
 export type ApprovePaymentResult =
   | { kind: "ok"; order: PaymentOrderDocument }
@@ -82,19 +116,102 @@ export async function approvePayment(
   verifiedBy: string,
   eventSourceUrl: string,
 ): Promise<ApprovePaymentResult> {
-  const order = await verifyPayment({ publicOrderRef, verifiedBy });
-  if (!order) {
-    const existing = await findOrderByPublicRef(publicOrderRef);
-    return existing ? { kind: "already_processed" } : { kind: "not_found" };
+  let studentLinkAttempts = 0;
+
+  // Declared outside the loop only so the winning attempt's values survive
+  // to the post-commit step below — explicitly reset to `undefined` at the
+  // top of every iteration (see the doc comment above this function) so a
+  // value from an aborted attempt can never leak into a later attempt's
+  // post-commit handling.
+  let committedOrder: PaymentOrderDocument | undefined;
+  let committedRegistration: RegistrationDocument | undefined;
+
+  for (;;) {
+    committedOrder = undefined;
+    committedRegistration = undefined;
+
+    const client = await getMongoClient();
+    const session = client.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        const order = await verifyPayment({ publicOrderRef, verifiedBy }, session);
+        // A plain `findOneAndUpdate` returning null is a normal, non-throwing
+        // result (already processed, or never existed) — not a Mongo error,
+        // so it does not abort anything by itself. Thrown as a sentinel here
+        // purely to unwind out of the transaction callback in one place.
+        if (!order) {
+          throw new OrderNotActionableError();
+        }
+
+        const registration = await findRegistrationById(order.registrationId, session);
+        if (!registration) {
+          throw new ApprovalConsistencyError(
+            `registration ${order.registrationId.toHexString()} not found for order ${order.publicOrderRef}`,
+          );
+        }
+        if (!registration._id || !registration._id.equals(order.registrationId)) {
+          throw new ApprovalConsistencyError("registration does not belong to this order");
+        }
+
+        const enrolledResult = await markRegistrationEnrolled(order.registrationId, session);
+        if (enrolledResult.matchedCount !== 1) {
+          throw new ApprovalConsistencyError("registration status transition matched zero documents");
+        }
+
+        const student: StudentDocument = await upsertStudentForApproval(
+          {
+            name: registration.name,
+            email: registration.email,
+            emailNormalized: registration.emailNormalized,
+            phone: registration.phone,
+            phoneE164: registration.phoneE164,
+          },
+          session,
+        );
+        if (!student._id) {
+          throw new ApprovalConsistencyError("Student upsert returned no _id");
+        }
+
+        const registrationLink = await linkRegistrationToStudent(registration._id, student._id, session);
+        if (registrationLink.matchedCount !== 1) {
+          throw new ApprovalConsistencyError("registration.studentId link matched zero documents");
+        }
+
+        const orderLink = await linkOrderToStudent(order._id!, student._id, session);
+        if (orderLink.matchedCount !== 1) {
+          throw new ApprovalConsistencyError("paymentOrder.studentId link matched zero documents");
+        }
+
+        committedOrder = { ...order, studentId: student._id };
+        committedRegistration = { ...registration, status: "ENROLLED", studentId: student._id };
+      });
+
+      // Transaction committed — break out to the post-commit side effects below.
+      break;
+    } catch (error) {
+      if (error instanceof OrderNotActionableError) {
+        const existing = await findOrderByPublicRef(publicOrderRef);
+        return existing ? { kind: "already_processed" } : { kind: "not_found" };
+      }
+      if (error instanceof PublicStudentIdCollisionError || error instanceof StudentEmailRaceError) {
+        studentLinkAttempts++;
+        if (studentLinkAttempts < MAX_STUDENT_LINK_ATTEMPTS) {
+          continue; // fresh session/transaction next iteration
+        }
+        throw new StudentLinkGenerationError();
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
-  const registration = await findRegistrationById(order.registrationId);
-  if (!registration) {
-    /* Should be unreachable (every order has a registration) — but never send an email/CAPI event with no recipient. */
-    return { kind: "ok", order };
-  }
-
-  await markRegistrationEnrolled(order.registrationId);
+  // `committedOrder`/`committedRegistration` are always set here — the loop
+  // only ever reaches this point via `break`, immediately after a
+  // successful commit.
+  const order = committedOrder!;
+  const registration = committedRegistration!;
 
   await Promise.allSettled([
     attemptConfirmationEmail(order, registration),

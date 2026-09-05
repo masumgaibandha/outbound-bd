@@ -106,6 +106,16 @@ export interface RegistrationDocument {
   consent: ConsentRecord;
   firstTouchAttribution: AttributionSnapshot;
   lastTouchAttribution: AttributionSnapshot;
+  /**
+   * Set exactly once, at the moment this registration's order is approved
+   * (`REVIEW → PAID`) — absent on every document created before this field
+   * existed, and absent forever on a registration whose order is never
+   * approved. A plain optional field is safe to read directly (`undefined`
+   * simply means "not linked yet"), unlike `rejectionEmail` below, which
+   * needs a whole default *object* on absence and so gets its own
+   * `getRejectionEmailState()` accessor.
+   */
+  studentId?: ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -185,6 +195,38 @@ export interface PaymentOrderDocument {
    * must also `$unset` this field.
    */
   activeOrderLock?: true;
+  /** Same semantics as `RegistrationDocument.studentId` — set exactly once, at approval, on the order that was actually approved. */
+  studentId?: ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type StudentStatus = "ACTIVE" | "MERGED" | "ARCHIVED";
+
+/**
+ * One permanent record per real person, deduplicated by `emailNormalized`
+ * across every batch and (eventually) every program — created only at the
+ * moment a payment is first successfully approved (never at registration,
+ * never for a rejected/pending registration). `publicStudentId` is
+ * display/search only, never authentication — the same discipline already
+ * documented on `publicRegistrationRef`.
+ */
+export interface StudentDocument {
+  _id?: ObjectId;
+  publicStudentId: string;
+  /** Most recently approved name — the registration's own snapshot stays immutable regardless of later updates here. */
+  name: string;
+  email: string;
+  /** Primary, permanent deduplication key. Never changes after creation in Phase 1 (no self-service email change exists). */
+  emailNormalized: string;
+  /** Most recently approved phone. Deliberately not unique — a phone can legitimately belong to more than one student. */
+  phone: string;
+  phoneE164: string;
+  status: StudentStatus;
+  /** Set only when `status === "MERGED"` — future manual-merge tooling, not built in Phase 1. */
+  mergedIntoStudentId: ObjectId | null;
+  /** Timestamp of the first successful approval that created this record. Immutable after creation. */
+  firstEnrolledAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }

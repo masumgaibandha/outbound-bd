@@ -1,4 +1,4 @@
-import type { ClientSession, Collection } from "mongodb";
+import type { ClientSession, Collection, ObjectId, UpdateResult } from "mongodb";
 
 import { getDb } from "@/lib/masterclass/db";
 import { policyVersions } from "@/lib/masterclass/constants";
@@ -7,6 +7,7 @@ import { generateRandomRegistrationRef } from "@/lib/masterclass/refs";
 import type {
   AttributionSnapshot,
   RegistrationDocument,
+  RegistrationStatus,
 } from "@/types/masterclass-persistence";
 
 /** Ported verbatim (logic unchanged) from the MasumDev masterclass source — only the `getDb()` import path changed. */
@@ -27,6 +28,8 @@ async function ensureIndexes(
         { publicRegistrationRef: 1 },
         { unique: true, name: "uniq_public_registration_ref" },
       ),
+      /* Non-unique — a lookup aid for the admin Enrollments page and the Students repository's enrollment-count aggregation, never a uniqueness guarantee. */
+      collection.createIndex({ studentId: 1 }, { name: "student_id_lookup" }),
     ]);
   })();
   return indexesEnsured;
@@ -211,18 +214,149 @@ export async function findRegistrationByPublicRef(
 
 export async function findRegistrationById(
   registrationId: RegistrationDocument["_id"],
+  session?: ClientSession,
 ): Promise<RegistrationDocument | null> {
   const collection = await getCollection();
-  return collection.findOne({ _id: registrationId });
+  return collection.findOne({ _id: registrationId }, { session });
 }
 
-/** Called only from `verify-service.ts` immediately after an order reaches `PAID`. */
+/**
+ * Called only from `verify-service.ts`'s approval transaction. Returns the
+ * raw `UpdateResult` so the caller can verify `matchedCount === 1` — inside
+ * a transaction, a zero-match here is a real consistency violation
+ * (the registration was already fetched by this same transaction moments
+ * earlier), not a legitimate outcome to swallow.
+ */
 export async function markRegistrationEnrolled(
   registrationId: RegistrationDocument["_id"],
-): Promise<void> {
+  session?: ClientSession,
+): Promise<UpdateResult> {
   const collection = await getCollection();
-  await collection.updateOne(
+  return collection.updateOne(
     { _id: registrationId },
     { $set: { status: "ENROLLED", updatedAt: new Date() } },
+    { session },
   );
+}
+
+/**
+ * Sets `studentId` on exactly the one registration being approved right
+ * now. Returns the raw `UpdateResult` so the caller can verify
+ * `matchedCount === 1` inside the approval transaction.
+ */
+export async function linkRegistrationToStudent(
+  registrationId: RegistrationDocument["_id"],
+  studentId: ObjectId,
+  session?: ClientSession,
+): Promise<UpdateResult> {
+  const collection = await getCollection();
+  return collection.updateOne(
+    { _id: registrationId },
+    { $set: { studentId, updatedAt: new Date() } },
+    { session },
+  );
+}
+
+/** Derived from the collection itself, one exact status at a time — never a raw count of generated IDs. */
+export async function countRegistrationsByStatus(status: RegistrationStatus): Promise<number> {
+  const collection = await getCollection();
+  return collection.countDocuments({ status });
+}
+
+/**
+ * `false` for every registration that never had the marketing checkbox
+ * checked, and for any legacy shape this field might ever be absent
+ * from — a plain, defensive absent-safe read. Phase 1 does not add a
+ * second, richer consent record; `consent.marketingConsent` (set once, at
+ * registration time, never rewritten by an unsubscribe or preference
+ * change) remains the single immutable snapshot.
+ */
+export function getMarketingConsentState(registration: Pick<RegistrationDocument, "consent">): boolean {
+  return registration.consent?.marketingConsent ?? false;
+}
+
+export interface EnrollmentListRow {
+  publicRegistrationRef: string;
+  studentId: ObjectId | null;
+  linkedPublicStudentId: string | null;
+  batchId: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: RegistrationStatus;
+  createdAt: Date;
+}
+
+export interface ListEnrollmentsPageResult {
+  registrations: EnrollmentListRow[];
+  totalCount: number;
+}
+
+/**
+ * Offset-paginated, deterministic order (`createdAt` desc, `_id` desc as a
+ * tiebreaker). `page`/`pageSize` must already be validated/clamped by the
+ * caller. Joins in only the one `publicStudentId` field a linked student
+ * needs to display — never a full student document, and a legacy
+ * registration with no `studentId` at all renders `linkedPublicStudentId:
+ * null` rather than throwing.
+ */
+export async function listEnrollmentsPage(page: number, pageSize: number): Promise<ListEnrollmentsPageResult> {
+  const collection = await getCollection();
+  const skip = (page - 1) * pageSize;
+
+  const [rows, totalCount] = await Promise.all([
+    collection
+      .aggregate<{
+        publicRegistrationRef: string;
+        studentId: ObjectId | null;
+        batchId: string;
+        name: string;
+        email: string;
+        phone: string;
+        status: RegistrationStatus;
+        createdAt: Date;
+        student: { publicStudentId: string }[];
+      }>([
+        { $sort: { createdAt: -1, _id: -1 } },
+        { $skip: skip },
+        { $limit: pageSize },
+        {
+          $lookup: {
+            from: "masterclass_students",
+            localField: "studentId",
+            foreignField: "_id",
+            as: "student",
+          },
+        },
+        {
+          $project: {
+            publicRegistrationRef: 1,
+            studentId: { $ifNull: ["$studentId", null] },
+            batchId: 1,
+            name: 1,
+            email: 1,
+            phone: 1,
+            status: 1,
+            createdAt: 1,
+            "student.publicStudentId": 1,
+          },
+        },
+      ])
+      .toArray(),
+    collection.countDocuments({}),
+  ]);
+
+  const registrations: EnrollmentListRow[] = rows.map((row) => ({
+    publicRegistrationRef: row.publicRegistrationRef,
+    studentId: row.studentId,
+    linkedPublicStudentId: row.student[0]?.publicStudentId ?? null,
+    batchId: row.batchId,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    status: row.status,
+    createdAt: row.createdAt,
+  }));
+
+  return { registrations, totalCount };
 }

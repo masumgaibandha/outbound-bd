@@ -20,7 +20,8 @@ export function generatePublicOrderRef(): string {
  * fixed hyphens in the ref are already enough structure — more symbols only
  * create URL-encoding, copy-paste, and validation friction).
  */
-const REGISTRATION_REF_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+/** Exported so `student-refs.ts` can reuse the exact same unambiguous set for `STU-` IDs — one alphabet, never a second copy that could drift. */
+export const REGISTRATION_REF_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const REGISTRATION_REF_RANDOM_LENGTH = 8;
 
 /**

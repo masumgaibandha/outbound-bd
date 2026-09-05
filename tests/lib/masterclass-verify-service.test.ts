@@ -1,8 +1,12 @@
-// Must be the first import — sets MONGODB_URI to an isolated in-memory
-// instance before env.ts / mongoose.ts / any masterclass module is imported.
-import { mongod } from "../helpers/mongodb-memory-server";
+// Must be the first import — starts a single-node replica set (transaction
+// support) and sets MONGODB_URI before env.ts / mongoose.ts / any
+// masterclass module is imported. Required now that approvePayment() uses
+// a real multi-document transaction (it previously did not, so this file
+// used to import the non-transactional mongodb-memory-server helper).
+import { mongod } from "../helpers/mongodb-memory-replset";
 
 import { randomUUID } from "node:crypto";
+import { ObjectId } from "mongodb";
 import mongoose from "mongoose";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,8 +17,16 @@ vi.mock("resend", () => ({
   },
 }));
 
+const generateRandomStudentIdMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/masterclass/student-refs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/masterclass/student-refs")>();
+  generateRandomStudentIdMock.mockImplementation(actual.generateRandomStudentId);
+  return { ...actual, generateRandomStudentId: generateRandomStudentIdMock };
+});
+
 import { connectToDatabase } from "@/lib/mongoose";
 import * as constants from "@/lib/masterclass/constants";
+import { ApprovalConsistencyError, StudentLinkGenerationError } from "@/lib/masterclass/errors";
 import {
   createDraftOrder,
   findOrderByPublicRef,
@@ -27,15 +39,18 @@ import {
   upsertRegistration,
 } from "@/lib/masterclass/registrations-repository";
 import { COUNTERS_COLLECTION } from "@/lib/masterclass/counters-repository";
+import { PUBLIC_STUDENT_ID_PATTERN } from "@/lib/masterclass/student-refs";
+import { countStudents, STUDENTS_COLLECTION } from "@/lib/masterclass/students-repository";
 import { approvePayment, rejectPaymentOrder, retryDelivery } from "@/lib/masterclass/verify-service";
 
 const EVENT_SOURCE_URL = "https://outboundbd.com/masterclass/lead-generation-cold-email";
 
-async function seedOrderInReview() {
-  const email = `student-${randomUUID()}@example.com`;
+async function seedOrderInReview(overrides: { email?: string; batchId?: string } = {}) {
+  const email = overrides.email ?? `student-${randomUUID()}@example.com`;
+  const batchId = overrides.batchId ?? constants.batchId;
   const registration = await upsertRegistration({
     masterclassSlug: constants.masterclassSlug,
-    batchId: constants.batchId,
+    batchId,
     name: "Test Student",
     email,
     emailNormalized: email,
@@ -47,7 +62,7 @@ async function seedOrderInReview() {
   const { order } = await createDraftOrder({
     registrationId: registration._id!,
     masterclassSlug: constants.masterclassSlug,
-    batchId: constants.batchId,
+    batchId,
     amount: constants.resolvePriceBDT(),
     currency: constants.currency,
     idempotencyKey: randomUUID(),
@@ -61,7 +76,14 @@ async function seedOrderInReview() {
     senderNumber: "+8801712345678",
     transactionIdRaw: `TXN-${randomUUID()}`,
   });
-  return { publicOrderRef: order.publicOrderRef, registrationRef: registration.publicRegistrationRef };
+  return { publicOrderRef: order.publicOrderRef, registrationRef: registration.publicRegistrationRef, email };
+}
+
+async function collections() {
+  const connection = await connectToDatabase();
+  const db = connection.connection.db;
+  if (!db) throw new Error("no db");
+  return db;
 }
 
 beforeAll(async () => {
@@ -69,15 +91,16 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  const connection = await connectToDatabase();
-  const db = connection.connection.db!;
+  const db = await collections();
   await Promise.all([
     db.collection(REGISTRATIONS_COLLECTION).deleteMany({}),
     db.collection(PAYMENT_ORDERS_COLLECTION).deleteMany({}),
     db.collection(COUNTERS_COLLECTION).deleteMany({}),
+    db.collection(STUDENTS_COLLECTION).deleteMany({}),
   ]);
   sendMock.mockReset();
   sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
+  generateRandomStudentIdMock.mockClear();
   vi.unstubAllEnvs();
   vi.stubEnv("RESEND_API_KEY", "test-resend-key");
   vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <hello@outboundbd.com>");
@@ -100,7 +123,7 @@ describe("approvePayment", () => {
     expect(result.kind).toBe("not_found");
   });
 
-  it("moves REVIEW -> PAID, enrolls the registration, and sends a confirmation email (Resend mocked)", async () => {
+  it("moves REVIEW -> PAID, enrolls the registration, creates a Student, links both, and sends a confirmation email (Resend mocked)", async () => {
     const { publicOrderRef, registrationRef } = await seedOrderInReview();
 
     const result = await approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL);
@@ -108,10 +131,14 @@ describe("approvePayment", () => {
     if (result.kind === "ok") {
       expect(result.order.status).toBe("PAID");
       expect(result.order.verifiedBy).toBe("admin");
+      expect(result.order.studentId).toBeInstanceOf(ObjectId);
     }
 
     const registration = await findRegistrationByPublicRef(registrationRef);
     expect(registration?.status).toBe("ENROLLED");
+    expect(registration?.studentId).toBeInstanceOf(ObjectId);
+
+    expect(await countStudents()).toBe(1);
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     const [, options] = sendMock.mock.calls[0];
@@ -124,19 +151,207 @@ describe("approvePayment", () => {
     expect(order?.purchaseCapi.lastErrorCode).toBe("CAPI_NOT_CONFIGURED");
   });
 
-  it("is idempotent: a second approval on an already-PAID order is a no-op and does not re-send the email", async () => {
+  it("the created Student's publicStudentId matches the STU- + 10 char shape", async () => {
+    const { publicOrderRef } = await seedOrderInReview();
+    const result = await approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL);
+    if (result.kind !== "ok") throw new Error("setup failed");
+
+    const db = await collections();
+    const student = await db.collection(STUDENTS_COLLECTION).findOne({ _id: result.order.studentId! });
+    expect(student?.publicStudentId).toMatch(PUBLIC_STUDENT_ID_PATTERN);
+  });
+
+  it("reuses the same Student for a second approved enrollment under the same email in a different batch, updating name/phone but never publicStudentId/emailNormalized/firstEnrolledAt", async () => {
+    const email = `repeat-${randomUUID()}@example.com`;
+    const batchIdA = `${constants.batchId}-batch-a`;
+    const batchIdB = `${constants.batchId}-batch-b`;
+
+    const first = await seedOrderInReview({ email, batchId: batchIdA });
+    const firstApproval = await approvePayment(first.publicOrderRef, "admin", EVENT_SOURCE_URL);
+    if (firstApproval.kind !== "ok") throw new Error("setup failed");
+
+    // A later enrollment for the same person, different batch, arrives with
+    // an updated name/phone (e.g. they changed their number since Batch A).
+    const registrationB = await upsertRegistration({
+      masterclassSlug: constants.masterclassSlug,
+      batchId: batchIdB,
+      name: "Test Student (Updated Name)",
+      email,
+      emailNormalized: email,
+      phone: "01799999999",
+      phoneE164: "+8801799999999",
+      marketingConsent: false,
+      attribution: { capturedAt: new Date() },
+    });
+    const { order: orderB } = await createDraftOrder({
+      registrationId: registrationB._id!,
+      masterclassSlug: constants.masterclassSlug,
+      batchId: batchIdB,
+      amount: constants.resolvePriceBDT(),
+      currency: constants.currency,
+      idempotencyKey: randomUUID(),
+      attribution: { capturedAt: new Date() },
+      clientIpAddress: null,
+      clientUserAgent: null,
+    });
+    await submitManualPayment({
+      publicOrderRef: orderB.publicOrderRef,
+      method: "BKASH",
+      senderNumber: "+8801799999999",
+      transactionIdRaw: `TXN-${randomUUID()}`,
+    });
+
+    const secondApproval = await approvePayment(orderB.publicOrderRef, "admin", EVENT_SOURCE_URL);
+    if (secondApproval.kind !== "ok") throw new Error("second approval failed");
+
+    expect(await countStudents()).toBe(1); // never duplicated across batches
+    expect(secondApproval.order.studentId?.toHexString()).toBe(firstApproval.order.studentId?.toHexString());
+
+    const db = await collections();
+    const student = await db.collection(STUDENTS_COLLECTION).findOne({ _id: firstApproval.order.studentId! });
+    expect(student?.name).toBe("Test Student (Updated Name)"); // most recently approved wins
+    expect(student?.phone).toBe("01799999999");
+    expect(student?.emailNormalized).toBe(email); // never changes
+  });
+
+  it("is idempotent: a second approval on an already-PAID order is a no-op, does not re-send the email, and does not create a second Student", async () => {
     const { publicOrderRef } = await seedOrderInReview();
 
     const first = await approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL);
     expect(first.kind).toBe("ok");
     expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(await countStudents()).toBe(1);
 
     const second = await approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL);
     expect(second.kind).toBe("already_processed");
     expect(sendMock).toHaveBeenCalledTimes(1); // still 1 — no duplicate send
+    expect(await countStudents()).toBe(1); // still 1 — no duplicate Student
   });
 
-  it("a Resend failure is recorded but never rolls back the PAID transition or the enrollment", async () => {
+  it("aborts the whole transaction with ApprovalConsistencyError if the order's registration cannot be found — never a PAID order with an unlinked registration or Student", async () => {
+    const { publicOrderRef } = await seedOrderInReview();
+    const db = await collections();
+
+    // Simulate a data-integrity violation: the registration disappears out
+    // from under a REVIEW order (should never happen in practice — this
+    // is exactly the "zero-match/inconsistent state" case the transaction
+    // must abort on, not silently paper over).
+    const order = await findOrderByPublicRef(publicOrderRef);
+    await db.collection(REGISTRATIONS_COLLECTION).deleteOne({ _id: order!.registrationId });
+
+    await expect(approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL)).rejects.toThrow(
+      ApprovalConsistencyError,
+    );
+
+    const afterAttempt = await findOrderByPublicRef(publicOrderRef);
+    expect(afterAttempt?.status).toBe("REVIEW"); // never transitioned — the abort rolled back the whole transaction
+    expect(await countStudents()).toBe(0);
+    expect(sendMock).not.toHaveBeenCalled(); // email/CAPI never fire when the transaction never commits
+  });
+
+  it("a publicStudentId collision retries with a fresh transaction and still succeeds", async () => {
+    // Pre-seed an unrelated, already-existing student occupying a known ID.
+    const collidingId = "STU-234567892C";
+    const db = await collections();
+    await db.collection(STUDENTS_COLLECTION).insertOne({
+      publicStudentId: collidingId,
+      name: "Someone Else",
+      email: "someone-else@example.com",
+      emailNormalized: "someone-else@example.com",
+      phone: "01711111111",
+      phoneE164: "+8801711111111",
+      status: "ACTIVE",
+      mergedIntoStudentId: null,
+      firstEnrolledAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    generateRandomStudentIdMock.mockImplementationOnce(() => collidingId);
+
+    const { publicOrderRef } = await seedOrderInReview();
+    const result = await approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL);
+
+    expect(result.kind).toBe("ok");
+    expect(generateRandomStudentIdMock).toHaveBeenCalledTimes(2); // one collision, one fresh retry
+    expect(await countStudents()).toBe(2); // the pre-seeded one + the newly created one
+    expect(sendMock).toHaveBeenCalledTimes(1); // exactly one email, from the winning attempt only
+  });
+
+  it("exhausts all 5 attempts with a persistent publicStudentId collision, throws StudentLinkGenerationError, and leaves zero partial state transitions", async () => {
+    const collidingId = "STU-234567892C";
+    const db = await collections();
+    await db.collection(STUDENTS_COLLECTION).insertOne({
+      publicStudentId: collidingId,
+      name: "Someone Else",
+      email: "someone-else@example.com",
+      emailNormalized: "someone-else@example.com",
+      phone: "01711111111",
+      phoneE164: "+8801711111111",
+      status: "ACTIVE",
+      mergedIntoStudentId: null,
+      firstEnrolledAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Every one of the bounded attempts collides — exactly 5 queued `Once`
+    // implementations, so the mock automatically reverts to its real
+    // default afterward, never permanently overridden.
+    for (let i = 0; i < 5; i++) {
+      generateRandomStudentIdMock.mockImplementationOnce(() => collidingId);
+    }
+
+    const { publicOrderRef, registrationRef } = await seedOrderInReview();
+
+    await expect(approvePayment(publicOrderRef, "admin", EVENT_SOURCE_URL)).rejects.toThrow(
+      StudentLinkGenerationError,
+    );
+
+    expect(generateRandomStudentIdMock).toHaveBeenCalledTimes(5); // bounded — never unbounded
+
+    const order = await findOrderByPublicRef(publicOrderRef);
+    expect(order?.status).toBe("REVIEW"); // never transitioned to PAID
+    const registration = await findRegistrationByPublicRef(registrationRef);
+    expect(registration?.status).toBe("PENDING_PAYMENT"); // never transitioned to ENROLLED — every attempt's transaction aborted
+    expect(await countStudents()).toBe(1); // only the pre-seeded one — no new Student, no orphan
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("two concurrent approvals for the same email across different batches both succeed and converge on exactly one Student", async () => {
+    const email = `concurrent-${randomUUID()}@example.com`;
+    const batchIdA = `${constants.batchId}-concurrent-a`;
+    const batchIdB = `${constants.batchId}-concurrent-b`;
+
+    const [a, b] = await Promise.all([
+      seedOrderInReview({ email, batchId: batchIdA }),
+      seedOrderInReview({ email, batchId: batchIdB }),
+    ]);
+
+    const [resultA, resultB] = await Promise.all([
+      approvePayment(a.publicOrderRef, "admin", EVENT_SOURCE_URL),
+      approvePayment(b.publicOrderRef, "admin", EVENT_SOURCE_URL),
+    ]);
+
+    expect(resultA.kind).toBe("ok");
+    expect(resultB.kind).toBe("ok");
+    if (resultA.kind !== "ok" || resultB.kind !== "ok") throw new Error("unreachable");
+
+    expect(await countStudents()).toBe(1);
+    expect(resultA.order.studentId?.toHexString()).toBe(resultB.order.studentId?.toHexString());
+
+    const registrationA = await findRegistrationByPublicRef(a.registrationRef);
+    const registrationB = await findRegistrationByPublicRef(b.registrationRef);
+    expect(registrationA?.studentId?.toHexString()).toBe(resultA.order.studentId?.toHexString());
+    expect(registrationB?.studentId?.toHexString()).toBe(resultA.order.studentId?.toHexString());
+
+    // Each legitimate approval still produced only its own post-commit
+    // side effect — two students approved, two confirmation emails, never
+    // more (no duplicate send from the loser's retry).
+    expect(sendMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("a Resend failure is recorded but never rolls back the PAID transition, the enrollment, or the Student link", async () => {
     sendMock.mockRejectedValue(new Error("network down"));
     const { publicOrderRef, registrationRef } = await seedOrderInReview();
 
@@ -146,6 +361,7 @@ describe("approvePayment", () => {
 
     const registration = await findRegistrationByPublicRef(registrationRef);
     expect(registration?.status).toBe("ENROLLED");
+    expect(registration?.studentId).toBeInstanceOf(ObjectId);
 
     const order = await findOrderByPublicRef(publicOrderRef);
     expect(order?.confirmationEmail.status).toBe("FAILED");
@@ -183,6 +399,12 @@ describe("rejectPaymentOrder", () => {
 
     const second = await rejectPaymentOrder(publicOrderRef, "admin", "irrelevant");
     expect(second.kind).toBe("already_processed");
+  });
+
+  it("never creates a Student for a rejected order", async () => {
+    const { publicOrderRef } = await seedOrderInReview();
+    await rejectPaymentOrder(publicOrderRef, "admin", "not verifiable");
+    expect(await countStudents()).toBe(0);
   });
 
   it("sends exactly one rejection email, to the registrant's own address, keyed by the order's own ref, only on the winning transition", async () => {

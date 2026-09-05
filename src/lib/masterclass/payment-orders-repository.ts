@@ -1,4 +1,4 @@
-import type { ClientSession, Collection, ObjectId } from "mongodb";
+import type { ClientSession, Collection, ObjectId, UpdateResult } from "mongodb";
 
 import {
   DuplicateTransactionError,
@@ -89,6 +89,8 @@ async function ensureIndexes(
         { status: 1, createdAt: 1 },
         { name: "status_created" },
       ),
+      /* Non-unique — a lookup aid, never a uniqueness guarantee (one student can have several orders across batches). */
+      collection.createIndex({ studentId: 1 }, { name: "student_id_lookup" }),
     ]);
   })();
   return indexesEnsured;
@@ -401,13 +403,34 @@ export interface VerifyPaymentInput {
  * same paid order instead of opening a new one — there is no product
  * concept of "buy a second seat" today.
  */
-export async function verifyPayment(input: VerifyPaymentInput): Promise<PaymentOrderDocument | null> {
+export async function verifyPayment(
+  input: VerifyPaymentInput,
+  session?: ClientSession,
+): Promise<PaymentOrderDocument | null> {
   const collection = await getCollection();
   const now = new Date();
   return collection.findOneAndUpdate(
     { publicOrderRef: input.publicOrderRef, status: "REVIEW" },
     { $set: { status: "PAID", verifiedAt: now, verifiedBy: input.verifiedBy, updatedAt: now } },
-    { returnDocument: "after" },
+    { returnDocument: "after", session },
+  );
+}
+
+/**
+ * Sets `studentId` on exactly the one order being approved right now.
+ * Returns the raw `UpdateResult` so the caller can verify
+ * `matchedCount === 1` inside the approval transaction.
+ */
+export async function linkOrderToStudent(
+  orderId: NonNullable<PaymentOrderDocument["_id"]>,
+  studentId: ObjectId,
+  session?: ClientSession,
+): Promise<UpdateResult> {
+  const collection = await getCollection();
+  return collection.updateOne(
+    { _id: orderId },
+    { $set: { studentId, updatedAt: new Date() } },
+    { session },
   );
 }
 
