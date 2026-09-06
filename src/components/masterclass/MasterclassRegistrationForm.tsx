@@ -893,7 +893,8 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
           registrationForm.loadingLabel
         ) : (
           <>
-            {registration.submitEnabledLabel} — <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
+            {registration.submitEnabledLabel} <span aria-hidden="true">•</span>{" "}
+            <span className={numericTextClass}>{formatBDT(priceBDT)}</span>
           </>
         )}
       </button>

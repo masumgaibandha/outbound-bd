@@ -57,7 +57,7 @@ export function MasterclassEvidenceGallery({ assets, enlargeHintLabel }: Masterc
                 <button
                   type="button"
                   onClick={(event) => setOpenState({ index, trigger: event.currentTarget })}
-                  aria-label={`${enlargeHintLabel} — ${asset.alt}`}
+                  aria-label={`${enlargeHintLabel}: ${asset.alt}`}
                   className={cn(
                     "group bg-canvas-alt border-hairline focus-visible:outline-action relative block w-full shrink-0 border-b p-5 focus-visible:outline-2 focus-visible:-outline-offset-2",
                     spanFull && "md:w-1/2 md:border-r md:border-b-0",

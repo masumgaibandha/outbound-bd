@@ -34,7 +34,7 @@ export const masterclassConfig: MasterclassConfig = {
 export const masterclassMeta = {
   seoTitle: "Lead Generation ও Cold Email Outreach মাস্টারক্লাস | Outbound BD",
   metaDescription:
-    "২ দিনের LIVE মাস্টারক্লাসে শিখুন বাস্তব B2B Lead Generation, prospect list building ও Cold Email Outreach workflow — ১১ বছরের অভিজ্ঞতা থেকে।",
+    "২ দিনের LIVE মাস্টারক্লাসে শিখুন বাস্তব B2B Lead Generation, prospect list building ও Cold Email Outreach workflow, ১১ বছরের অভিজ্ঞতা থেকে।",
 } as const;
 
 export const header = {
@@ -45,16 +45,16 @@ export const header = {
 export const hero = {
   eyebrow: "প্রথমবারের মতো ২ দিনের LIVE মাস্টারক্লাস",
   headline:
-    "রাতারাতি লাখ টাকার গল্প নয়—শিখুন বাস্তব Lead Generation ও Cold Email Outreach",
+    "রাতারাতি লাখ টাকার গল্প নয়, হাতে-কলমে শিখুন Lead Generation ও Cold Email Outreach",
   description:
-    "১১ বছরের বাস্তব অভিজ্ঞতা এবং আন্তর্জাতিক ক্লায়েন্টদের সঙ্গে কাজের বাস্তব workflow থেকে শিখুন B2B Lead Generation, prospect list building, cold email infrastructure ও campaign setup।",
+    "১১ বছরের হাতে-কলমে কাজের বাস্তব অভিজ্ঞতা এবং আন্তর্জাতিক ক্লায়েন্টদের সঙ্গে কাজের বাস্তব workflow থেকে শিখুন B2B Lead Generation, prospect list building, cold email infrastructure ও campaign setup।",
   credibilityLine:
     "Top Rated Upwork Freelancer • $100K+ Earnings • ২৪৪টি কাজ • ২২,৩০২+ ঘণ্টা",
   /* No embedded price — components append `formatBDT(resolvePriceBDT())` after this label, so the number is never re-typed here. */
   primaryCtaLabel: "এখনই ভর্তি হোন",
   secondaryCta: "কী কী শিখবেন দেখুন",
   instructorImageAlt:
-    "আব্দুল্লাহ আল মাসুম, Cold Email Outreach ও Lead Generation বিশেষজ্ঞ",
+    "Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ আব্দুল্লাহ আল মাসুম",
 } as const;
 
 /* The date label is derived from `classDates` above; only the (unchanging) 9pm time is a literal here. */
@@ -76,11 +76,15 @@ export const trustMetrics: readonly TrustMetric[] = [
 
 export const expectationStory = {
   label: "শুরুতেই স্পষ্ট কথা",
-  heading: "এটা কোনো “রাতারাতি ধনী হওয়ার” কোর্স নয়",
+  heading: "এটা কোনো “রাতারাতি লাখপতি হওয়ার” কোর্স নয়",
   paragraphs: [
-    "অনলাইনে অনেক বিজ্ঞাপনে বলা হয় দুই দিনেই লাখ টাকা আয় শুরু হয়ে যাবে। বাস্তবতা এমন নয়। Cold Email Outreach ও Lead Generation একটি বাস্তব দক্ষতা—এবং যেকোনো বাস্তব দক্ষতার মতোই এখানে সময়, চর্চা এবং ধৈর্য লাগে।",
-    "এই মাস্টারক্লাসে কোনো income বা client পাওয়ার guarantee দেওয়া হয় না। যা দেওয়া হয় তা হলো একটি সঠিক foundation, একটি সম্পূর্ণ workflow এবং একটি বাস্তব roadmap—যা দিয়ে আপনি নিজে চর্চা করে এগিয়ে যেতে পারবেন।",
-    "Deliverability ঠিক রাখা, সঠিক prospect খুঁজে বের করা এবং campaign optimize করা—এই তিনটি বিষয়ে দক্ষ হতে বাস্তব কাজের অভিজ্ঞতা প্রয়োজন। দুই দিনের ক্লাস আপনাকে সেই পথে সঠিকভাবে শুরু করিয়ে দেবে।",
+    "বর্তমানে অনলাইনে চটকদার বিজ্ঞাপনের ছড়াছড়ি, যেখানে প্রচার করা হয়- “স্বল্প সময়ে লাখ টাকা আয়” করা সম্ভব। কিন্তু এসব দাবির সঙ্গে বাস্তবতার কোনো মিল নেই। বর্তমান AI-এর যুগে অনলাইন থেকে আয় করার কোনো শর্টকাট নেই। অনলাইন থেকে স্থায়ীভাবে আয় করতে হলে নির্দিষ্ট বিষয়ে দক্ষতা অর্জনের পাশাপাশি কাজের প্রতি dedication, নিয়মিত চর্চা এবং ধৈর্য থাকতে হবে।",
+
+    "বর্তমান সময়ের একটি যুগোপযোগী দক্ষতা হলো Cold Email Outreach ও Lead Generation। প্রায় প্রতিটি Product Owner ও Service Provider তার পণ্য বা সেবা সঠিক সম্ভাব্য ক্রেতার কাছে পৌঁছে দিতে চায়। এই বাস্তব চাহিদাকে সামনে রেখেই আমি দুই দিনব্যাপী একটি লাইভ মাস্টারক্লাস আয়োজন করতে যাচ্ছি।",
+
+    "এই মাস্টারক্লাসে আপনি মার্কেটপ্লেস এবং মার্কেটপ্লেসের বাইরে থেকে সরাসরি ক্লায়েন্ট খোঁজার কৌশল শিখবেন। পাশাপাশি, ক্লায়েন্টের জন্য Lead Generation ও Cold Email Outreach সেবা কীভাবে প্রদান করতে হয়, তা হাতে-কলমে শেখানো হবে। অর্জিত দক্ষতা নিয়মিত অনুশীলনের মাধ্যমে কাজে লাগিয়ে আপনি একজন Freelancer হিসেবে নিজের ক্যারিয়ার শুরু বা আরও শক্তিশালী করার প্রস্তুতি নিতে পারবেন।",
+
+    "একজন ক্লায়েন্টের জন্য niche-based targeted prospect list তৈরি, সঠিকভাবে Cold Email Outreach campaign পরিচালনা, email deliverability, inbox placement testing, inbox creation এবং email warm-up-সহ গুরুত্বপূর্ণ বিষয়গুলো বিস্তারিত ও ব্যবহারিকভাবে আলোচনা করা হবে। তবে এই মাস্টারক্লাসে নির্দিষ্ট আয় বা ক্লায়েন্ট পাওয়ার কোনো guarantee দেওয়া হয় না। ফলাফল নির্ভর করবে আপনার শেখা, নিয়মিত চর্চা এবং বাস্তব প্রয়োগের ওপর।",
   ],
 } as const;
 
@@ -88,66 +92,72 @@ export const outcomes = {
   label: "মাস্টারক্লাস শেষে যা বুঝতে পারবেন",
   heading: "দুই দিন শেষে আপনি যা নিয়ে বাড়ি ফিরবেন",
   items: [
-    "B2B Lead Generation আসলে কী এবং ক্লায়েন্টরা কেন এই service-এর জন্য টাকা দেয়",
-    "একটি সঠিক Ideal Customer Profile বা ICP কীভাবে নির্ধারণ করতে হয়",
+    "B2B Lead Generation কী এবং ক্লায়েন্টরা কেন এই service-এর জন্য অর্থ ব্যয় করে",
+    "একটি সঠিক Ideal Customer Profile (ICP) কীভাবে নির্ধারণ করতে হয়",
     "সঠিক decision-maker খুঁজে বের করে একটি client-ready prospect list তৈরির সম্পূর্ণ প্রক্রিয়া",
-    "একটি cold email sending infrastructure—domain, inbox, SPF, DKIM, DMARC—কীভাবে সঠিকভাবে সেট আপ করতে হয়",
-    "Deliverability বজায় রেখে কীভাবে একটি cold email campaign লঞ্চ ও পরিচালনা করতে হয়",
-    "এই পুরো skill set-কে freelance service হিসেবে উপস্থাপন করার একটি বাস্তব roadmap",
+    "Cold email sending infrastructure, inbox তৈরি, email warm-up এবং email sequence কীভাবে সঠিকভাবে setup করতে হয়",
+    "Email deliverability ঠিক রেখে কীভাবে একটি cold email campaign launch, manage এবং optimize করতে হয়",
+    "সম্পূর্ণ skill set-টিকে একটি professional freelance service হিসেবে উপস্থাপন করার বাস্তবসম্মত roadmap",
   ],
 } as const;
 
 export const curriculumNote =
-  "দুই দিনের এই ক্লাস আপনাকে সঠিক foundation ও একটি সম্পূর্ণ roadmap দেবে। কিন্তু deliverability, prospect research এবং campaign optimization-এ দক্ষ হতে চাই ধারাবাহিক চর্চা।";
+  "দুই দিনের এই ক্লাস আপনাকে একটি শক্ত foundation এবং কাজ শুরু করার সুস্পষ্ট roadmap দেবে। তবে deliverability, prospect research এবং campaign optimization-এ দক্ষতা অর্জনের জন্য ধারাবাহিক চর্চা ও বাস্তব প্রয়োগ প্রয়োজন।";
 
 export const curriculumDays: readonly CurriculumDay[] = [
   {
     id: "day-1",
     dayLabel: "প্রথম দিন",
-    heading: "প্রথম দিন—Lead Generation ও Prospect List Building",
+    heading: "প্রথম দিন: B2B Lead Generation ও Prospect List Building",
     items: [
-      "Lead Generation কী এবং ক্লায়েন্ট কেন এই service-এর জন্য টাকা দেয়",
-      "Niche এবং Ideal Customer Profile বা ICP নির্ধারণ",
-      "Target company এবং সঠিক decision-maker খুঁজে বের করা",
-      "Prospect-এর নাম, পদবি, email ও প্রয়োজনীয় তথ্য সংগ্রহ",
-      "Email verification এবং bounce risk কমানো",
-      "একটি পরিচ্ছন্ন client-ready prospect list তৈরি",
-      "হাতে-কলমে একটি বাস্তব lead list তৈরি",
-      "এই দক্ষতাকে freelance service হিসেবে উপস্থাপনের roadmap",
+      "B2B Lead Generation কী এবং ক্লায়েন্টরা কেন এই service-এর জন্য অর্থ ব্যয় করে",
+      "Client-এর business, offer এবং target market বুঝে সঠিক niche নির্বাচন",
+      "Industry, location, company size ও অন্যান্য criteria ব্যবহার করে Ideal Customer Profile (ICP) নির্ধারণ",
+      "LinkedIn Sales Navigator, Apollo, Google ও company website ব্যবহার করে target company research",
+      "সঠিক job title, department এবং decision-maker চিহ্নিত করা",
+      "Prospect-এর নাম, পদবি, company, website, LinkedIn profile, email ও প্রয়োজনীয় তথ্য সংগ্রহ",
+      "Email finding, data enrichment এবং email verification-এর মাধ্যমে bounce risk কমানো",
+      "Duplicate ও অপ্রাসঙ্গিক data বাদ দিয়ে prospect list clean এবং segment করা",
+      "Client-এর requirements অনুযায়ী একটি পরিচ্ছন্ন ও client-ready prospect list তৈরি",
+      "একটি বাস্তব project brief অনুসরণ করে হাতে-কলমে targeted lead list তৈরি",
+      "সম্পূর্ণ কাজটি professional freelance service হিসেবে client-এর কাছে উপস্থাপন ও deliver করার roadmap",
     ],
   },
   {
     id: "day-2",
     dayLabel: "দ্বিতীয় দিন",
-    heading: "দ্বিতীয় দিন—সম্পূর্ণ Cold Email Outreach System",
+    heading: "দ্বিতীয় দিন: সম্পূর্ণ Cold Email Outreach System",
     items: [
-      "Outreach domain ও inbox-এর ভূমিকা",
-      "Google Workspace এবং Microsoft 365 inbox setup process",
-      "SPF, DKIM ও DMARC-এর মৌলিক বিষয়",
-      "Email deliverability এবং spam placement",
-      "Inbox warm-up",
-      "Instantly-তে inbox connection",
-      "Lead upload এবং campaign setup",
-      "Sending schedule, daily limit এবং inbox rotation",
-      "Cold email ও follow-up লেখা",
-      "Campaign launch, monitoring এবং reply management",
+      "Outreach domain নির্বাচন, domain reputation এবং inbox distribution-এর গুরুত্ব",
+      "Google Workspace ও Microsoft 365-এ professional inbox setup করার প্রক্রিয়া",
+      "SPF, DKIM ও DMARC সঠিকভাবে configure এবং verify করা",
+      "Inbox warm-up, health score এবং sending readiness যাচাই করা",
+      "Email deliverability, spam placement এবং inbox placement testing",
+      "Instantly-তে inbox connect করে campaign workspace প্রস্তুত করা",
+      "Verified lead list upload, custom field mapping এবং prospect segmentation",
+      "Personalized cold email copy ও follow-up sequence লেখা",
+      "Sending schedule, daily limit, inbox rotation এবং provider matching নির্ধারণ",
+      "Campaign launch, performance monitoring এবং reply management",
+      "Bounce, reply ও positive response data বিশ্লেষণ করে campaign optimize করা",
+      "একটি complete cold email outreach system হাতে-কলমে setup করার প্রক্রিয়া",
     ],
   },
 ];
 
 export const workflow = {
-  label: "সম্পূর্ণ Workflow",
-  heading: "একটি Offer থেকে একটি বাস্তব Opportunity পর্যন্ত",
+  label: "বাস্তব Workflow",
+  heading: "একটি Offer থেকে Qualified Opportunity তৈরির সম্পূর্ণ প্রক্রিয়া",
   steps: [
     { label: "Offer" },
     { label: "ICP" },
+    { label: "Prospect Research" },
     { label: "Lead List" },
-    { label: "Verification" },
-    { label: "Infrastructure" },
+    { label: "Email Verification" },
+    { label: "Email Infrastructure" },
     { label: "Email Copy" },
-    { label: "Campaign" },
-    { label: "Replies" },
-    { label: "Opportunity" },
+    { label: "Campaign Launch" },
+    { label: "Reply Management" },
+    { label: "Qualified Opportunity" },
   ] satisfies readonly WorkflowStep[],
 } as const;
 
@@ -169,7 +179,7 @@ export const workflow = {
  */
 export const resultsProof = {
   label: "বাস্তব কাজের প্রমাণ",
-  heading: "দাবি নয়—বাস্তব কাজের ফলাফল",
+  heading: "দাবি নয়, বাস্তব কাজের ফলাফল",
   /**
    * Discoverability hint on each of the 5 evidence cards below — they open
    * an in-page lightbox now, not a new tab, so this deliberately carries no
@@ -185,7 +195,7 @@ export const resultsProof = {
       src: instantly20250805,
       alt: "Instantly ক্যাম্পেইন রিপোর্ট: মোট ৫.৬K ইমেইল পাঠানো হয়েছে, platform-reported ৮৩.৯% ওপেন রেট, ২.৭% রিপ্লাই রেট এবং ২৫টি সেলস অপারচুনিটি তৈরি হয়েছে",
       caption:
-        "Instantly-তে একটি ধারাবাহিক ক্যাম্পেইনের ফলাফল — প্রায় তিন মাসে ৫.৬K ইমেইল পাঠানো হয়েছে, platform-reported ৮৩.৯% ওপেন রেট এবং ২.৭% রিপ্লাই রেট, যা থেকে ২৫টি সেলস অপারচুনিটি তৈরি হয়েছে।",
+        "Instantly-তে একটি ধারাবাহিক ক্যাম্পেইনের ফলাফল: প্রায় তিন মাসে ৫.৬K ইমেইল পাঠানো হয়েছে, platform-reported ৮৩.৯% ওপেন রেট এবং ২.৭% রিপ্লাই রেট, যা থেকে ২৫টি সেলস অপারচুনিটি তৈরি হয়েছে।",
       note: "Platform-এর নির্ধারণ করা টাকার অঙ্ক দেখানো হয়নি, কারণ এটি independently verified আয় নয়।",
     },
     {
@@ -193,15 +203,15 @@ export const resultsProof = {
       src: inboxPlacementTestResult2,
       alt: "Instantly ইনবক্স-প্লেসমেন্ট টেস্ট: ৩,৯৮০টি টেস্ট ইমেইলের মধ্যে ৩,৯৭৫টি রিসিভ হয়েছে, যার মধ্যে ৩,৯০৭টি (৯৮.২৯%) ইনবক্সে পৌঁছেছে, প্রোভাইডার-ভিত্তিক বিস্তারিত টেবিলসহ",
       caption:
-        "Instantly-এর একটি ইনবক্স-প্লেসমেন্ট টেস্ট — ৩,৯৮০টি টেস্ট ইমেইল পাঠানো হয়েছিল, এর মধ্যে ৩,৯৭৫টি রিসিভ হয়, এবং রিসিভ হওয়া ইমেইলের মধ্যে ৩,৯০৭টি (৯৮.২৯%) এই নির্দিষ্ট টেস্টে ইনবক্সে পৌঁছেছে (৬৮টি বা ১.৭১% স্প্যামে গিয়েছিল) — সেন্ডার/রিসিপিয়েন্ট প্রোভাইডার অনুযায়ী বিভক্ত।",
-      note: "এটি একটি নির্দিষ্ট টেস্টের ফলাফল — প্রতিটি ক্যাম্পেইন বা প্রোভাইডার সমন্বয়ের জন্য এটি guaranteed বা typical outcome নয়।",
+        "Instantly-এর একটি ইনবক্স-প্লেসমেন্ট টেস্ট: ৩,৯৮০টি টেস্ট ইমেইল পাঠানো হয়েছিল, এর মধ্যে ৩,৯৭৫টি রিসিভ হয়, এবং রিসিভ হওয়া ইমেইলের মধ্যে ৩,৯০৭টি (৯৮.২৯%) এই নির্দিষ্ট টেস্টে ইনবক্সে পৌঁছেছে (৬৮টি বা ১.৭১% স্প্যামে গিয়েছিল), সেন্ডার/রিসিপিয়েন্ট প্রোভাইডার অনুযায়ী বিভক্ত।",
+      note: "এটি একটি নির্দিষ্ট টেস্টের ফলাফল। প্রতিটি ক্যাম্পেইন বা প্রোভাইডার সমন্বয়ের জন্য এটি guaranteed বা typical outcome নয়।",
     },
     {
       id: "instantly-result-98",
       src: instantlyResult98,
       alt: "Instantly ক্যাম্পেইন রিপোর্ট: ৭৫৯টি sequence start, platform-reported ৯৮% ওপেন রেট এবং ১৭টি সেলস অপারচুনিটি",
       caption:
-        "Instantly-তে আরেকটি ছোট ক্যাম্পেইন — ৭৫৯টি sequence start থেকে platform-reported ৯৮% ওপেন রেট এবং ১৭টি সেলস অপারচুনিটি তৈরি হয়েছে।",
+        "Instantly-তে আরেকটি ছোট ক্যাম্পেইন: ৭৫৯টি sequence start থেকে platform-reported ৯৮% ওপেন রেট এবং ১৭টি সেলস অপারচুনিটি তৈরি হয়েছে।",
       note: "Platform-এর নির্ধারণ করা টাকার অঙ্ক দেখানো হয়নি, কারণ এটি independently verified আয় নয়।",
     },
     {
@@ -209,16 +219,16 @@ export const resultsProof = {
       src: instantlyCampaignResult2,
       alt: "Instantly ক্যাম্পেইন রিপোর্ট: ১,২৭,১৪৯টি sequence start, ১৪০টি অপারচুনিটি এবং রিপ্লাইগুলোর মধ্যে ৭৮.৬৫% Positive Reply Rate",
       caption:
-        "১,২৭,১৪৯টি sequence start থেকে ১৪০টি সেলস অপারচুনিটি তৈরি হয়েছে। Instantly রিপোর্ট করেছে রিপ্লাইগুলোর মধ্যে ৭৮.৬৫% Positive Reply Rate — এটি সামগ্রিক ক্যাম্পেইন রিপ্লাই রেট নয়।",
-      note: "এটি একটি ব্যতিক্রমী (exceptional) ফলাফল, সাধারণ বা guaranteed outcome নয় — বেশিরভাগ ক্যাম্পেইনের ফলাফল এখানে দেখানো অন্য উদাহরণগুলোর কাছাকাছি হয়ে থাকে। Platform-এর নির্ধারণ করা টাকার অঙ্কও দেখানো হয়নি, কারণ এটি independently verified আয় নয়।",
+        "১,২৭,১৪৯টি sequence start থেকে ১৪০টি সেলস অপারচুনিটি তৈরি হয়েছে। Instantly রিপোর্ট করেছে রিপ্লাইগুলোর মধ্যে ৭৮.৬৫% Positive Reply Rate। এটি সামগ্রিক ক্যাম্পেইন রিপ্লাই রেট নয়।",
+      note: "এটি একটি ব্যতিক্রমী (exceptional) ফলাফল, সাধারণ বা guaranteed outcome নয়, বেশিরভাগ ক্যাম্পেইনের ফলাফল এখানে দেখানো অন্য উদাহরণগুলোর কাছাকাছি হয়ে থাকে। Platform-এর নির্ধারণ করা টাকার অঙ্কও দেখানো হয়নি, কারণ এটি independently verified আয় নয়।",
     },
     {
       id: "campaign-result-smartlead",
       src: campaignResultSmartlead,
       alt: "Smartlead সেন্ডার ওয়ার্ম-আপ রিপোর্ট: ৪২টির মধ্যে ৪২টি ওয়ার্ম-আপ ইমেইল ইনবক্সে পৌঁছেছে, শূন্যটি স্প্যামে যায়নি",
       caption:
-        "Smartlead-এ সেন্ডার ওয়ার্ম-আপ হেলথ — এই স্ন্যাপশটে ৪২টির মধ্যে ৪২টি ওয়ার্ম-আপ ইমেইল ইনবক্সে পৌঁছেছে, শূন্যটি স্প্যাম হিসেবে চিহ্নিত হয়েছে। প্রতিটি ম্যানেজড ইনবক্সে এই ধরনের চলমান ইনফ্রাস্ট্রাকচার মনিটরিং করা হয়।",
-      note: "এটি একটি নির্দিষ্ট স্ন্যাপশট — কোনো guaranteed deliverability ফলাফল হিসেবে সাধারণীকরণ করা উচিত নয়।",
+        "Smartlead-এ সেন্ডার ওয়ার্ম-আপ হেলথ: এই স্ন্যাপশটে ৪২টির মধ্যে ৪২টি ওয়ার্ম-আপ ইমেইল ইনবক্সে পৌঁছেছে, শূন্যটি স্প্যাম হিসেবে চিহ্নিত হয়েছে। প্রতিটি ম্যানেজড ইনবক্সে এই ধরনের চলমান ইনফ্রাস্ট্রাকচার মনিটরিং করা হয়।",
+      note: "এটি একটি নির্দিষ্ট স্ন্যাপশট, কোনো guaranteed deliverability ফলাফল হিসেবে সাধারণীকরণ করা উচিত নয়।",
     },
   ] satisfies readonly ProofAsset[],
   /**
@@ -243,15 +253,15 @@ export const instructor = {
   role: "Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ",
   portraitAlt: "আব্দুল্লাহ আল মাসুম-এর ছবি",
   paragraphs: [
-    "আমার যাত্রা শুরু হয়েছিল সাধারণ data-entry কাজ দিয়ে। ধীরে ধীরে আমি B2B Lead Generation এবং Cold Email Outreach-এ specialize করি—এবং গত প্রায় ১১ বছর ধরে এটাই আমার মূল কাজ।",
-    "এই সময়ে আমি Upwork, Fiverr এবং direct client engagement-এর মাধ্যমে বিভিন্ন দেশের international client-দের সঙ্গে কাজ করেছি—email infrastructure সেট আপ, deliverability ঠিক রাখা, prospect research এবং campaign management নিয়ে।",
-    "এটি আমার প্রথম public live মাস্টারক্লাস। আমি যা কাজে ব্যবহার করি, ঠিক সেই workflow-টাই এখানে শেখাচ্ছি—কোনো তত্ত্বনির্ভর কোর্স নয়।",
+    "আমার পেশাগত যাত্রা শুরু হয়েছিল Data Entry দিয়ে। কাজ করতে করতেই B2B Lead Generation ও Cold Email Outreach-এর প্রতি আগ্রহ তৈরি হয় এবং ধীরে ধীরে এই ক্ষেত্রেই বিশেষজ্ঞ হিসেবে নিজেকে গড়ে তুলি। গত ১১ বছর ধরে এটিই আমার প্রধান পেশাগত কাজ।",
+    "এই সময়ে Upwork, Fiverr এবং direct client engagement-এর মাধ্যমে বিভিন্ন দেশের ক্লায়েন্টদের সঙ্গে কাজ করেছি। Upwork-এ ২২,০০০ ঘণ্টার বেশি কাজ এবং ২৪০টির বেশি project সম্পন্ন করার অভিজ্ঞতা রয়েছে। আমার কাজের প্রধান ক্ষেত্রগুলোর মধ্যে রয়েছে prospect research, email infrastructure setup, email deliverability, campaign management এবং reply handling।",
+    "এটি আমার প্রথম public live মাস্টারক্লাস। এখানে আমি তত্ত্বনির্ভর আলোচনা নয়, বরং বাস্তব client project-এ নিয়মিত ব্যবহার করা workflow, tools এবং practical process হাতে-কলমে শেখাব। আমার লক্ষ্য হলো আপনাকে একটি পরিষ্কার foundation ও বাস্তবসম্মত roadmap দেওয়া, যাতে নিয়মিত অনুশীলনের মাধ্যমে দক্ষতাগুলো কাজে লাগাতে পারেন।",
   ],
   proof: {
     src: "/masterclass/upwork-profile-proof.png",
     width: 1322,
     height: 898,
-    alt: "আব্দুল্লাহ আল মাসুমের Upwork প্রোফাইল—Top Rated, $100K+ lifetime earnings, ২৪৪টি কাজ, ২২,৩০২ ঘণ্টা",
+    alt: "আব্দুল্লাহ আল মাসুমের Upwork প্রোফাইল: Top Rated, $100K+ lifetime earnings, ২৪৪টি কাজ, ২২,৩০২ ঘণ্টা",
     caption:
       "Upwork প্রোফাইলের public পরিসংখ্যান। $100K+ figure-টি Upwork platform-এর lifetime earnings, ব্যক্তিগত income বা profit নয়।",
   },
@@ -268,39 +278,43 @@ export const instructor = {
 export const audienceFit = {
   join: {
     label: "যাদের জন্য এই মাস্টারক্লাস",
-    heading: "যারা যোগ দেবেন",
+    heading: "এই মাস্টারক্লাস আপনার জন্য উপযুক্ত, যদি",
     items: [
-      "যারা একদম শুরু থেকে B2B Lead Generation ও Cold Email Outreach শিখতে চান",
-      "বিদ্যমান freelancer যারা একটি নতুন, চাহিদাসম্পন্ন service যোগ করতে চান",
-      "যারা সরাসরি client outreach-এর প্রক্রিয়া বুঝতে চান—শুধু marketplace-নির্ভর না থেকে",
-      "যারা চর্চা করার জন্য সময় ও ধৈর্য রাখতে প্রস্তুত",
+      "আপনি একদম শুরু থেকে B2B Lead Generation ও Cold Email Outreach শিখতে চান",
+      "আপনি একজন নতুন বা অভিজ্ঞ freelancer এবং নিজের service list-এ একটি চাহিদাসম্পন্ন skill যোগ করতে চান",
+      "আপনি Lead Generation জানেন, কিন্তু একটি সম্পূর্ণ Cold Email Outreach system তৈরি ও পরিচালনা করতে শিখতে চান",
+      "আপনি শুধু marketplace-এর ওপর নির্ভর না করে সরাসরি সম্ভাব্য client খোঁজার প্রক্রিয়া বুঝতে চান",
+      "আপনি বাস্তব workflow অনুসরণ করে হাতে-কলমে শেখার জন্য প্রস্তুত",
+      "আপনি শেখার পর নিয়মিত চর্চা, বাস্তব প্রয়োগ এবং ধৈর্যের সঙ্গে দক্ষতা গড়ে তুলতে প্রস্তুত",
     ],
   },
   skip: {
-    label: "যাদের জন্য এটি নয়",
-    heading: "যারা যোগ না দিলেই ভালো",
+    label: "শেখার জন্য আপনার প্রস্তুতি",
+    heading: "শুরু করার জন্য যা প্রয়োজন",
     items: [
-      "যারা guaranteed income বা guaranteed client খুঁজছেন",
-      "যারা মনে করেন দুই দিনেই সব শেখা শেষ হয়ে যাবে, চর্চা লাগবে না",
-      "যারা “রাতারাতি ধনী হওয়ার” কোনো shortcut খুঁজছেন",
-      "যারা এখনই বেসিক কম্পিউটার ও internet ব্যবহারে স্বচ্ছন্দ নন",
+      "Basic computer ও internet ব্যবহারে স্বাচ্ছন্দ্য থাকলেই শুরু করতে পারবেন",
+      "আগে Lead Generation বা Cold Email Outreach-এর অভিজ্ঞতা থাকা বাধ্যতামূলক নয়",
+      "Live class-এ মনোযোগ দিয়ে অংশগ্রহণ এবং গুরুত্বপূর্ণ বিষয়গুলো note করার মানসিকতা",
+      "ক্লাসে শেখানো workflow নিজে practice ও বাস্তব project-এ প্রয়োগ করার আগ্রহ",
+      "নিয়মিত চর্চার মাধ্যমে ধাপে ধাপে professional skill তৈরি করার commitment",
+      "দীর্ঘমেয়াদে একটি টেকসই freelance career গড়ে তোলার মানসিকতা",
     ],
   },
 } as const;
 
 export const registration = {
   label: "রেজিস্ট্রেশন",
-  heading: "আপনার সিট নিশ্চিত করুন",
+  heading: "আজই আপনার রেজিস্ট্রেশন সম্পন্ন করুন",
   description:
-    "নাম, ইমেইল ও মোবাইল নম্বর দিয়ে রেজিস্ট্রেশন করুন, এরপর bKash/Nagad/Rocket-এর যেকোনো একটি দিয়ে পেমেন্ট সম্পন্ন করুন।",
-  priceLabel: "কোর্স ফি",
+    "নাম, ইমেইল ও মোবাইল নম্বর দিয়ে রেজিস্ট্রেশন করুন। এরপর আপনার সুবিধামতো bKash, Nagad, Rocket অথবা ব্যাংক ট্রান্সফারের মাধ্যমে পেমেন্ট তথ্য জমা দিন।",
+  priceLabel: "মাস্টারক্লাস ফি",
   /* No embedded price string — Registration.tsx renders formatBDT(priceBDT), with a small "নিয়মিত মূল্য" note when the current price is the current batch's (discounted) one. */
   earlyBirdLabel: "প্রথম ব্যাচের মূল্য",
   regularPricePrefix: "নিয়মিত মূল্য",
   dateLabel: "ক্লাসের তারিখ",
   dateValue: `${classDatesLabelBn}, প্রতিদিন রাত ৯টা`,
   paymentNote:
-    "রেজিস্ট্রেশনের পর bKash, Nagad বা Rocket-এ ম্যানুয়ালি পেমেন্ট পাঠিয়ে Transaction ID জমা দিন। আমরা যাচাই করার পর ইমেইলে কনফার্মেশন পাঠাবো।",
+    "রেজিস্ট্রেশনের পর আপনার পছন্দের payment method ব্যবহার করে পেমেন্ট সম্পন্ন করুন এবং Transaction ID বা reference number জমা দিন। পেমেন্ট যাচাই করার পর ইমেইলে আপনার রেজিস্ট্রেশন confirmation পাঠানো হবে।",
   fields: {
     name: "পুরো নাম",
     namePlaceholder: "আপনার নাম লিখুন",
@@ -314,12 +328,12 @@ export const registration = {
   consentJoiner: "ও",
   consentSuffix: "মেনে নিচ্ছি।",
   marketingConsentLabel:
-    "ভবিষ্যৎ অফার ও আপডেট সম্পর্কে ইমেইল পেতে চাই (ঐচ্ছিক)।",
+    "ভবিষ্যৎ মাস্টারক্লাস, অফার ও গুরুত্বপূর্ণ আপডেট সম্পর্কে ইমেইল পেতে চাই (ঐচ্ছিক)।",
   submitEnabledLabel: "এখনই ভর্তি হোন",
-  submitDisabledLabel: "পেমেন্ট সেটআপ চলছে",
+  submitDisabledLabel: "রেজিস্ট্রেশন সাময়িকভাবে বন্ধ",
   /* Shown only while checkoutEnabled is false. */
   devNotice:
-    "Development note: রেজিস্ট্রেশন সিস্টেম এখনও সম্পূর্ণভাবে সংযুক্ত হয়নি। এই ফর্মটি বর্তমানে শুধু preview হিসেবে দেখানো হচ্ছে; জমা দেওয়া সম্ভব নয়।",
+    "রেজিস্ট্রেশন বর্তমানে সাময়িকভাবে বন্ধ রয়েছে। পুনরায় চালু হলে এই ফর্মের মাধ্যমে রেজিস্ট্রেশন ও পেমেন্ট তথ্য জমা দিতে পারবেন।",
 } as const;
 
 /**
@@ -333,16 +347,20 @@ export const registration = {
  */
 export const registrationBatchNotice = {
   emoji: "🎟️",
-  heading: "প্রথম ব্যাচ, প্রথম সুযোগ",
-  intro: "এটি আমার প্রথম মাস্টার ক্লাস, তাই প্রথম ব্যাচের জন্য বিশেষ মূল্য রাখছি।",
-  regularPriceLabel: "নিয়মিত মূল্য:",
-  firstBatchPriceLabel: "প্রথম ব্যাচের জন্য: মাত্র",
+  heading: "প্রথম ব্যাচের বিশেষ মূল্য",
+  intro:
+    "এটি আমার প্রথম public live মাস্টারক্লাস। তাই আগ্রহীদের অংশগ্রহণের সুযোগ সহজ করতে প্রথম ব্যাচের জন্য বিশেষ মূল্য রাখা হয়েছে।",
+  regularPriceLabel: "পরবর্তী ব্যাচের নিয়মিত মূল্য:",
+  firstBatchPriceLabel: "প্রথম ব্যাচের বিশেষ মূল্য: মাত্র",
   closing:
-    "এই প্রথম ব্যাচেই সবচেয়ে কম মূল্যে যুক্ত হওয়ার সুযোগ। পরবর্তী ব্যাচ থেকে ফি বাড়বে।",
+    "এই বিশেষ মূল্য শুধু প্রথম ব্যাচের জন্য প্রযোজ্য। পরবর্তী ব্যাচ থেকে নিয়মিত ফি কার্যকর হবে।",
 } as const;
 
 /** Bengali labels/instructions per manual channel — numbers/bank details themselves come from env (`getManualPaymentEnv()`), never hardcoded here. */
-export const paymentMethods: Record<"BKASH" | "NAGAD" | "ROCKET" | "BANK", ManualPaymentMethodCopy> = {
+export const paymentMethods: Record<
+  "BKASH" | "NAGAD" | "ROCKET" | "BANK",
+  ManualPaymentMethodCopy
+> = {
   BKASH: {
     label: "bKash",
     instructions: "Send Money অপশন ব্যবহার করে নিচের নম্বরে টাকা পাঠান।",
@@ -357,7 +375,8 @@ export const paymentMethods: Record<"BKASH" | "NAGAD" | "ROCKET" | "BANK", Manua
   },
   BANK: {
     label: "Bank Transfer",
-    instructions: "নিচের ব্যাংক অ্যাকাউন্টে টাকা পাঠিয়ে প্রেরকের নাম ও Transaction/Reference ID জমা দিন।",
+    instructions:
+      "নিচের ব্যাংক অ্যাকাউন্টে টাকা পাঠিয়ে প্রেরকের নাম ও Transaction/Reference ID জমা দিন।",
   },
 } as const;
 
@@ -370,11 +389,14 @@ export const registrationForm = {
   errorSummaryHeading: "ফর্মে কিছু তথ্য ঠিক নেই",
   nameError: "অনুগ্রহ করে আপনার পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)।",
   emailError: "অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা লিখুন।",
-  phoneError: "অনুগ্রহ করে সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন (যেমন 01XXXXXXXXX)।",
+  phoneError:
+    "অনুগ্রহ করে সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন (যেমন 01XXXXXXXXX)।",
   consentError: "রেজিস্ট্রেশন সম্পন্ন করতে শর্তাবলী মেনে নেওয়া আবশ্যক।",
   turnstileMissingError: "অনুগ্রহ করে যাচাইকরণ সম্পন্ন করুন।",
-  turnstileExpiredError: "যাচাইকরণের মেয়াদ শেষ হয়ে গেছে। অনুগ্রহ করে আবার যাচাই করুন।",
-  turnstileWidgetError: "যাচাইকরণ লোড করা যায়নি। অনুগ্রহ করে পেজ রিফ্রেশ করে আবার চেষ্টা করুন।",
+  turnstileExpiredError:
+    "যাচাইকরণের মেয়াদ শেষ হয়ে গেছে। অনুগ্রহ করে আবার যাচাই করুন।",
+  turnstileWidgetError:
+    "যাচাইকরণ লোড করা যায়নি। অনুগ্রহ করে পেজ রিফ্রেশ করে আবার চেষ্টা করুন।",
   genericError:
     "দুঃখিত, অনুরোধটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
   /* REGISTRATION_CONFLICT — the submitted email is already registered under a different phone number. Rotating the idempotency key would not fix this, so the message asks for a data correction or direct contact instead of "try again." */
@@ -382,15 +404,18 @@ export const registrationForm = {
     "এই ইমেইল দিয়ে ভিন্ন তথ্যসহ ইতিমধ্যে একটি রেজিস্ট্রেশন আছে। অনুগ্রহ করে আপনার ইমেইল ও মোবাইল নম্বর যাচাই করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
   /* IDEMPOTENCY_CONFLICT — the previous idempotency key is now invalid; the next submit must use a fresh one, so this explicitly invites a retry. */
   idempotencyConflictError:
-    "একটি সাময়িক সমস্যা হয়েছে। অনুগ্রহ করে আবার \"এখনই ভর্তি হোন\" বাটনে চাপ দিন।",
-  unavailableError: "সিস্টেমটি সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে একটু পর আবার চেষ্টা করুন।",
-  networkError: "নেটওয়ার্ক সমস্যার কারণে অনুরোধ পাঠানো যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    'একটি সাময়িক সমস্যা হয়েছে। অনুগ্রহ করে আবার "এখনই ভর্তি হোন" বাটনে চাপ দিন।',
+  unavailableError:
+    "সিস্টেমটি সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে একটু পর আবার চেষ্টা করুন।",
+  networkError:
+    "নেটওয়ার্ক সমস্যার কারণে অনুরোধ পাঠানো যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
   rateLimitedPrefix: "অনুরোধের সীমা অতিক্রম হয়েছে। অনুগ্রহ করে",
   rateLimitedSuffix: "সেকেন্ড পর আবার চেষ্টা করুন।",
 
   /* Step 2 — choosing a method + entering payment evidence. */
   paymentStepHeading: "পেমেন্ট মাধ্যম বেছে নিন",
-  paymentStepDescription: "নিচের যেকোনো একটি মাধ্যমে টাকা পাঠিয়ে Sender Number ও Transaction ID জমা দিন।",
+  paymentStepDescription:
+    "নিচের যেকোনো একটি মাধ্যমে টাকা পাঠিয়ে Sender Number ও Transaction ID জমা দিন।",
   amountLabel: "পাঠাতে হবে",
   accountNumberLabel: "নম্বর",
   copyLabel: "কপি করুন",
@@ -424,7 +449,8 @@ export const registrationForm = {
   /* Toasts — supplementary to the inline messages above, never a replacement for them. */
   paymentSuccessToast:
     "পেমেন্ট তথ্য সফলভাবে জমা হয়েছে। যাচাই শেষে আপনাকে ইমেইলে জানানো হবে।",
-  paymentErrorToast: "পেমেন্ট তথ্য জমা দেওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+  paymentErrorToast:
+    "পেমেন্ট তথ্য জমা দেওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
 
   /* Step 3 — pending verification. Deliberately never says "registration confirmed." */
   pendingHeading: "পেমেন্ট তথ্য জমা হয়েছে",
@@ -438,18 +464,19 @@ export const faqItems: readonly FaqItem[] = [
     id: "beginners",
     question: "এই মাস্টারক্লাস কি একদম নতুনদের জন্য?",
     answer:
-      "হ্যাঁ। কোনো আগের অভিজ্ঞতা ছাড়াই শুরু করা যায়—তবে বেসিক কম্পিউটার ও internet ব্যবহারে স্বচ্ছন্দ থাকা দরকার।",
+      "হ্যাঁ। কোনো আগের অভিজ্ঞতা ছাড়াই শুরু করা যায়, তবে বেসিক কম্পিউটার ও internet ব্যবহারে স্বচ্ছন্দ থাকা দরকার।",
   },
   {
     id: "two-days-enough",
     question: "দুই দিনে কি পুরো বিষয় শেখা সম্ভব?",
     answer:
-      "দুই দিনে আপনি একটি সঠিক foundation, সম্পূর্ণ workflow এবং একটি বাস্তব roadmap পাবেন। কিন্তু deliverability, prospect research ও campaign optimization-এ দক্ষ হতে চর্চা প্রয়োজন—এটি কোনো এক-লাফে শেষ হওয়ার বিষয় নয়।",
+      "দুই দিনে আপনি একটি সঠিক foundation, সম্পূর্ণ workflow এবং একটি বাস্তব roadmap পাবেন। কিন্তু deliverability, prospect research ও campaign optimization-এ দক্ষ হতে চর্চা প্রয়োজন। এটি কোনো এক-লাফে শেষ হওয়ার বিষয় নয়।",
   },
   {
     id: "live",
     question: "ক্লাস কি লাইভ হবে?",
-    answer: "হ্যাঁ, দুই দিনই সম্পূর্ণ লাইভ অনলাইন ক্লাস, সঙ্গে লাইভ প্রশ্নোত্তর পর্ব।",
+    answer:
+      "হ্যাঁ, দুই দিনই সম্পূর্ণ লাইভ অনলাইন ক্লাস, সঙ্গে লাইভ প্রশ্নোত্তর পর্ব।",
   },
   {
     id: "recording",
@@ -467,7 +494,7 @@ export const faqItems: readonly FaqItem[] = [
     id: "income-guarantee",
     question: "এই মাস্টারক্লাস করলে কি income নিশ্চিত?",
     answer:
-      "না। এখানে কোনো income বা client পাওয়ার guarantee দেওয়া হয় না। আপনি একটি সঠিক foundation ও সম্পূর্ণ workflow শিখবেন—ফলাফল নির্ভর করবে আপনার চর্চা ও প্রয়োগের উপর।",
+      "না। এখানে কোনো income বা client পাওয়ার guarantee দেওয়া হয় না। আপনি একটি সঠিক foundation ও সম্পূর্ণ workflow শিখবেন। ফলাফল নির্ভর করবে আপনার চর্চা ও প্রয়োগের উপর।",
   },
   {
     id: "confirmation",
@@ -484,25 +511,27 @@ export const faqItems: readonly FaqItem[] = [
     id: "live-link-delivery",
     question: "লাইভ ক্লাসের লিংক কীভাবে পাবো?",
     answer:
-      "পেমেন্ট যাচাই সম্পন্ন হওয়ার পর আপনি একটি কনফার্মেশন ইমেইল পাবেন। লাইভ ক্লাসে যোগ দেওয়ার লিংক ক্লাস শুরুর আগে আলাদা ইমেইলে পাঠানো হবে—তাই রেজিস্ট্রেশনের সময় সঠিক ইমেইল ঠিকানা দেওয়া নিশ্চিত করুন।",
+      "পেমেন্ট যাচাই সম্পন্ন হওয়ার পর আপনি একটি কনফার্মেশন ইমেইল পাবেন। লাইভ ক্লাসে যোগ দেওয়ার লিংক ক্লাস শুরুর আগে আলাদা ইমেইলে পাঠানো হবে, তাই রেজিস্ট্রেশনের সময় সঠিক ইমেইল ঠিকানা দেওয়া নিশ্চিত করুন।",
   },
   {
     id: "mobile-join",
     question: "মোবাইল দিয়ে কি ক্লাসে যোগ দেওয়া যাবে?",
-    answer: "হ্যাঁ। Zoom app ইনস্টল করা যেকোনো স্মার্টফোন থেকেই লাইভ ক্লাসে যোগ দেওয়া যাবে।",
+    answer:
+      "হ্যাঁ। Zoom app ইনস্টল করা যেকোনো স্মার্টফোন থেকেই লাইভ ক্লাসে যোগ দেওয়া যাবে।",
   },
 ];
 
 export const finalCta = {
   heading: "সঠিক foundation দিয়ে শুরু করুন",
   description:
-    "কোনো shortcut নয়—একটি বাস্তব workflow শিখুন, যা দিয়ে আপনি নিজে চর্চা করে এগিয়ে যেতে পারবেন।",
+    "কোনো shortcut নয়, একটি বাস্তব workflow শিখুন, যা দিয়ে আপনি নিজে চর্চা করে এগিয়ে যেতে পারবেন।",
   /* No embedded price — FinalCta.tsx appends formatBDT(priceBDT). */
   ctaLabel: "এখনই ভর্তি হোন",
 } as const;
 
 export const footer = {
-  positioning: "Abdullah Al Masum — Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ।",
+  positioning:
+    "Abdullah Al Masum, Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ।",
   copyright: "© ২০২৬ Outbound BD। সর্বস্বত্ব সংরক্ষিত।",
   backToPortfolio: "Outbound BD-এর মূল ওয়েবসাইটে ফিরে যান",
 } as const;

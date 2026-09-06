@@ -17,7 +17,7 @@ import { formatClassDatesEn } from "@/lib/masterclass/format";
  * Outbound BD's palette (`src/app/globals.css`).
  */
 
-export const alt = "Lead Generation & Cold Email Outreach Masterclass — Outbound BD";
+export const alt = "Lead Generation & Cold Email Outreach Masterclass: Outbound BD";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

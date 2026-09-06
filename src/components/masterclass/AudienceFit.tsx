@@ -1,4 +1,4 @@
-import { CheckIcon, XIcon } from "@/components/public/icons";
+import { CheckIcon, CircleCheckIcon } from "@/components/public/icons";
 import { MasterclassSection } from "@/components/masterclass/MasterclassSection";
 import { audienceFit } from "@/data/masterclass-content";
 
@@ -40,7 +40,7 @@ export function AudienceFit() {
           <ul className="mt-5 space-y-3">
             {audienceFit.skip.items.map((item) => (
               <li key={item} className="flex items-start gap-3">
-                <XIcon className="text-ink-muted mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <CircleCheckIcon className="text-ink-muted mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span className="text-ink-muted text-sm leading-relaxed md:text-base">
                   {item}
                 </span>

@@ -138,7 +138,7 @@ describe("MasterclassRegistrationForm — enabled state", () => {
     expect(screen.getByLabelText(registration.fields.phone)).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: new RegExp(registration.consentPrefix) })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: new RegExp(`${registration.submitEnabledLabel} — ${formatBDT(PRICE_BDT)}`) }),
+      screen.getByRole("button", { name: new RegExp(`${registration.submitEnabledLabel}.*${formatBDT(PRICE_BDT)}`) }),
     ).toBeInTheDocument();
   });
 
