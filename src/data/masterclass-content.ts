@@ -54,7 +54,7 @@ export const hero = {
   primaryCtaLabel: "এখনই ভর্তি হোন",
   secondaryCta: "কী কী শিখবেন দেখুন",
   instructorImageAlt:
-    "Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ আব্দুল্লাহ আল মাসুম",
+    "Cold Email Outreach ও B2B Lead Generation Specialist, আব্দুল্লাহ আল মাসুম",
 } as const;
 
 /* The date label is derived from `classDates` above; only the (unchanging) 9pm time is a literal here. */
@@ -250,7 +250,7 @@ export const resultsProof = {
 export const instructor = {
   label: "আপনার ইনস্ট্রাক্টর",
   heading: "আব্দুল্লাহ আল মাসুম",
-  role: "Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ",
+  role: "Cold Email Outreach ও B2B Lead Generation Specialist",
   portraitAlt: "আব্দুল্লাহ আল মাসুম-এর ছবি",
   paragraphs: [
     "আমার পেশাগত যাত্রা শুরু হয়েছিল Data Entry দিয়ে। কাজ করতে করতেই B2B Lead Generation ও Cold Email Outreach-এর প্রতি আগ্রহ তৈরি হয় এবং ধীরে ধীরে এই ক্ষেত্রেই বিশেষজ্ঞ হিসেবে নিজেকে গড়ে তুলি। গত ১১ বছর ধরে এটিই আমার প্রধান পেশাগত কাজ।",
@@ -531,7 +531,7 @@ export const finalCta = {
 
 export const footer = {
   positioning:
-    "Abdullah Al Masum, Cold Email Outreach ও B2B Lead Generation বিশেষজ্ঞ।",
+    "Abdullah Al Masum, Cold Email Outreach ও B2B Lead Generation Specialist",
   copyright: "© ২০২৬ Outbound BD। সর্বস্বত্ব সংরক্ষিত।",
   backToPortfolio: "Outbound BD-এর মূল ওয়েবসাইটে ফিরে যান",
 } as const;
