@@ -53,12 +53,17 @@ export function SiteHeader() {
             className="focus-visible:outline-action rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
           >
             {/*
-             * The source lockup PNG is now cropped tight to its visible
-             * pixels (see src/assets/logos), so these heights map directly
-             * to the actual rendered mark — not a padded canvas — at
-             * roughly 138px/153px/168px wide (~5.1:1 aspect ratio).
+             * The source lockup PNG is cropped tight to its visible pixels
+             * (see src/assets/logos), so these heights map directly to the
+             * actual rendered mark — not a padded canvas — at roughly
+             * 163px/184px/204px wide (~5.1:1 aspect ratio). Sized up from
+             * 27/30/33px so the mark reads clearly against the 44px header
+             * CTA button and nav text, while staying well inside the h-18
+             * (72px) / h-20 (80px) header with room to spare at every
+             * breakpoint (verified: no overflow or overlap with nav, CTA,
+             * menu button, or announcement banner at 390/768/1440).
              */}
-            <Logo className="h-[27px] w-auto sm:h-[30px] lg:h-[33px]" priority />
+            <Logo className="h-8 w-auto sm:h-9 lg:h-10" priority />
           </Link>
 
           <div className="flex items-center gap-2 lg:flex-1 lg:justify-end lg:gap-8">
