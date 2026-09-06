@@ -8,7 +8,7 @@ import { classDates } from "@/lib/masterclass/constants";
 import { formatClassDatesEn } from "@/lib/masterclass/format";
 
 const APPROVED_DATE_LABEL = formatClassDatesEn(classDates.day1, classDates.day2);
-const APPROVED_MESSAGE = `2-Day Live Masterclass: Lead Generation & Cold Email Outreach — ${APPROVED_DATE_LABEL}`;
+const APPROVED_MESSAGE = `2-Day Live Masterclass: Lead Generation & Cold Email Outreach • ${APPROVED_DATE_LABEL}`;
 
 describe("MasterclassAnnouncementBanner", () => {
   it("renders the approved message and CTA, derived from the current classDates source of truth", () => {

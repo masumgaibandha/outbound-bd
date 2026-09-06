@@ -32,7 +32,7 @@ export function MasterclassAnnouncementBanner() {
     >
       <Container className="relative flex items-center justify-center py-2.5 pr-10 sm:pr-12">
         <p className="text-ink text-center text-sm leading-snug text-balance">
-          {`2-Day Live Masterclass: Lead Generation & Cold Email Outreach — ${dateLabel}`}{" "}
+          {`2-Day Live Masterclass: Lead Generation & Cold Email Outreach • ${dateLabel}`}{" "}
           <Link
             href={MASTERCLASS_HREF}
             className="text-action hover:text-action-hover focus-visible:outline-action rounded-sm font-semibold underline decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4"
