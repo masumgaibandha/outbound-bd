@@ -581,7 +581,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
             ) : null}
 
             {method === "BANK" ? (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
                   <label htmlFor={fieldId("payer-name")} className={labelClass}>
                     {registrationForm.payerNameLabel}
@@ -642,7 +642,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
                 </div>
               </div>
             ) : (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
                   <label htmlFor={fieldId("sender-number")} className={labelClass}>
                     {registrationForm.senderNumberLabel}
@@ -718,7 +718,7 @@ export function MasterclassRegistrationForm({ siteKey, priceBDT, paymentMethods 
         {registerStatus === "submitting" ? registrationForm.loadingLabel : ""}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor={fieldId("name")} className={labelClass}>
             {registration.fields.name}

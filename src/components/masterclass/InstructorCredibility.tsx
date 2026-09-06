@@ -17,7 +17,7 @@ export function InstructorCredibility() {
         {instructor.label}
       </p>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div>
           <div className="border-hairline bg-canvas relative aspect-square overflow-hidden rounded-2xl border">
             <Image

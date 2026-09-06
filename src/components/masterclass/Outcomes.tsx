@@ -21,7 +21,7 @@ export function Outcomes() {
         {outcomes.heading}
       </h2>
 
-      <ul className="mt-8 grid gap-4 md:grid-cols-2">
+      <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
         {outcomes.items.map((item) => (
           <li
             key={item}

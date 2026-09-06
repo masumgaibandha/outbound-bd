@@ -21,6 +21,7 @@ interface TurnstileRenderOptions {
   sitekey: string;
   action: string;
   language: string;
+  size: "flexible";
   callback: (token: string) => void;
   "expired-callback": () => void;
   "error-callback": () => void;
@@ -96,6 +97,11 @@ export function TurnstileWidget({ siteKey, onToken, onExpire, onError, ref }: Tu
       sitekey: siteKey,
       action: TURNSTILE_ACTION,
       language: "auto",
+      // Cloudflare's default "normal" size is a fixed 300x65px, wider than
+      // the viewport on narrow phones — "flexible" fills the container's
+      // own width instead, which is what caused the real-device horizontal
+      // overflow this widget's un-sized default render was responsible for.
+      size: "flexible",
       callback: onToken,
       "expired-callback": onExpire,
       "error-callback": onError,
@@ -118,7 +124,7 @@ export function TurnstileWidget({ siteKey, onToken, onExpire, onError, ref }: Tu
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
       />
-      <div ref={containerRef} />
+      <div ref={containerRef} className="w-full max-w-full overflow-hidden" />
     </>
   );
 }

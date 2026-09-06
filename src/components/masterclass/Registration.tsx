@@ -100,7 +100,7 @@ export function Registration({ priceBDT, isEarlyBird, regularPriceBDT }: Registr
         </div>
       ) : null}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
         <div className="border-hairline bg-surface h-fit border p-6 md:p-8">
           <dl className="space-y-5">
             <div>
@@ -146,7 +146,7 @@ export function Registration({ priceBDT, isEarlyBird, regularPriceBDT }: Registr
             aria-describedby="registration-disabled-note"
             className="border-hairline bg-surface border p-6 md:p-8"
           >
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="mc-name" className={labelClass}>
                   {registration.fields.name}

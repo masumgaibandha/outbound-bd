@@ -39,7 +39,7 @@ export function MasterclassEvidenceGallery({ assets, enlargeHintLabel }: Masterc
 
   return (
     <>
-      <ul className="mt-8 grid gap-6 md:grid-cols-2">
+      <ul className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         {assets.map((asset, index) => {
           // An odd number of cards would otherwise leave the last one
           // stranded alone in the left column — instead it spans both

@@ -32,7 +32,7 @@ export function CurriculumDaySection({
         {day.heading}
       </h2>
 
-      <ol className="mt-8 grid gap-3 sm:grid-cols-2">
+      <ol className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {day.items.map((item, index) => (
           <li
             key={item}

@@ -26,7 +26,7 @@ export function Hero({ priceBDT }: HeroProps) {
       />
 
       <Container className="pt-10 pb-14 md:pt-14 md:pb-16">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-12">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-12">
           <div>
             <p className="text-ink-muted font-bengali text-sm font-medium tracking-[0.04em]">
               {hero.eyebrow}

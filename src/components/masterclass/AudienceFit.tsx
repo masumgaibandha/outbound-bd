@@ -10,7 +10,7 @@ export function AudienceFit() {
         কাদের জন্য এই মাস্টারক্লাস
       </h2>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="border-hairline bg-surface border p-6 md:p-8">
           <p className="text-action text-xs font-semibold tracking-[0.14em] uppercase">
             {audienceFit.join.label}
