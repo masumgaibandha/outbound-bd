@@ -33,11 +33,23 @@ const sizeClasses = {
 /*
  * Shared by every button and button-styled link: a visible terracotta focus
  * ring, a 1px press lift, both suppressed under prefers-reduced-motion.
+ *
+ * `focus-visible:outline-solid` is load-bearing, not decorative: HeroUI's own
+ * base button geometry (buttonVariants, applied below) ships an unconditional
+ * `outline-none`, which sets the *shared* `--tw-outline-style` custom
+ * property to `none` — not just this element's `outline-style`. Tailwind's
+ * `outline-2`/`outline-offset-2` utilities only set width/offset; the style
+ * itself is always `outline-style: var(--tw-outline-style)`, so without
+ * re-pinning that variable back to a paintable value under `:focus-visible`,
+ * the ring never renders even though width/color/offset all look correctly
+ * applied in computed styles. `outline-solid` sets exactly that variable
+ * (and nothing else), scoped to `:focus-visible` so ordinary mouse
+ * interaction is unaffected.
  */
 const interactionClasses = cn(
   "rounded-full font-medium",
   "transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out",
-  "focus-visible:outline-action focus-visible:outline-2 focus-visible:outline-offset-2",
+  "focus-visible:outline-solid focus-visible:outline-action focus-visible:outline-2 focus-visible:outline-offset-2",
   "active:translate-y-px",
   "motion-reduce:transition-none motion-reduce:active:translate-y-0",
 );
