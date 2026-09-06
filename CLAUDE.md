@@ -3,11 +3,18 @@
 # Outbound BD
 
 B2B lead generation and cold email outreach agency site. Next.js App Router,
-TypeScript, MongoDB via Mongoose, HeroUI + Tailwind CSS, npm. Consultation-led
-— there is no authentication, no user accounts, no dashboards, and no
-self-serve ordering or payment flow. Every conversion path ends at a Calendly
-booking link or the contact form; agreements and invoicing happen outside the
-website.
+TypeScript, MongoDB via Mongoose, HeroUI + Tailwind CSS, npm. The agency side
+is consultation-led — no client accounts, no client dashboard, and no
+self-serve ordering or automatic payment flow. Every agency conversion path
+ends at a Calendly booking link or the contact form; agreements and
+invoicing happen outside the website.
+
+The one deliberate exception is the masterclass feature (see its own section
+below): a live, one-off paid masterclass with its own registration, manual
+payment verification, and a small protected admin surface. It does not
+change the agency site's own no-account, no-checkout model, and it does not
+mean the previously-removed generic agency dashboard/auth/ordering system is
+coming back — see the note at the end of Architecture.
 
 ## Stack
 
@@ -16,22 +23,31 @@ website.
 - **UI**: HeroUI v3 (`@heroui/react`, `@heroui/styles`) + Tailwind CSS v4
   (CSS-first config — there is no `tailwind.config.js`; theme and plugin
   wiring live in `src/app/globals.css`)
-- **Data**: MongoDB via Mongoose only (no native `mongodb` driver dependency
-  — it's present in `node_modules` solely as Mongoose's own transitive
-  dependency). One collection, `Inquiry`, backs the contact form.
+- **Data**: MongoDB via Mongoose for the agency's `Inquiry` collection; the
+  masterclass feature uses the native `mongodb` driver's `Collection`/
+  `ClientSession` API (via `src/lib/masterclass/db.ts`, reusing the same
+  underlying Mongoose connection) for its own collections — see Masterclass
+  below.
 - **Package manager**: npm
 
 ## Architecture
 
-`src`-based layout. There is exactly one route group — the whole site is
-public:
+`src`-based layout. The public route group is the marketing site; the
+masterclass feature lives in its own top-level `src/app/masterclass` tree,
+outside that group:
 
 - `src/app/(public)` — the marketing site: homepage, `/services` index + 4
   service detail pages, `/about`, `/about/founder`, `/how-it-works`,
   `/results`, `/testimonials`, `/pricing`, `/faq`, `/contact`,
   `/privacy-policy`, `/terms-of-service`
-- `src/app/api/inquiries` — the only API route; validates and persists
-  contact-form submissions
+- `src/app/api/inquiries` — validates and persists contact-form submissions
+- `src/app/masterclass/lead-generation-cold-email` — the masterclass sales
+  page, its own layout (own Bengali font stack, own header/footer), legal
+  pages, and OG image
+- `src/app/masterclass/admin` — protected admin: orders, students,
+  enrollments (see Masterclass below)
+- `src/app/api/masterclass` — registration and payment-evidence submission
+  routes
 - `src/app/sitemap.ts`, `src/app/robots.ts` — SEO metadata routes
 - `src/lib` — `env.ts` (validated `MONGODB_URI`), `public-env.ts` (validated
   `NEXT_PUBLIC_APP_URL`), `mongoose.ts` (connection singleton),
@@ -39,19 +55,41 @@ public:
   `models/inquiry.ts` (Mongoose model), `contact-prefill.ts` (pure function
   resolving `?service=&plan=` query params into form prefill values),
   `pricing-catalog.ts` (managed-plan/one-time-offer data), `normalize-website.ts`
+- `src/lib/masterclass` — registration/payment/admin logic: `env.ts` (the
+  registration gate and all masterclass env accessors), `validation.ts`
+  (Zod schemas), `turnstile.ts`, `rate-limit.ts`, `registrations-repository.ts`
+  / `payment-orders-repository.ts` / `students-repository.ts`,
+  `verify-service.ts` (the atomic approve/reject transaction), `email.ts`,
+  `meta-capi.ts`
 - `src/components/public` — one component per homepage section, the shared
   `Logo`/`Container`/`Section`/`SectionHeading`/`Button` primitives, and
   `site-config.ts` (nav links, Calendly URL, contact email — see Brand below)
+- `src/components/masterclass` — masterclass-only UI: its own
+  `MasterclassHeader`/`MasterclassFooter`, the registration form, the
+  Turnstile widget, evidence gallery, etc. — deliberately not `SiteHeader`/
+  `SiteFooter`, to keep the sales page a single conversion path
 - `src/assets/logos` — brand logo/favicon source files, imported into
   `Logo` via static `next/image` imports
 - `src/assets/founder`, `src/assets/results` — the founder portrait and the
   two real campaign-evidence screenshots used on the homepage and `/results`
 
-There is no `proxy.ts`/`middleware.ts`, no session/role guards, and no
-protected route group — none of that exists in this app. Do not reintroduce
-auth, dashboards, ordering, or payment functionality; if a task seems to
-call for one of those, stop and confirm with the user first, since removing
-that entire system was a deliberate, explicit decision.
+The agency site itself still has no `proxy.ts`/root `middleware.ts`, no
+session/role guards, and no client dashboard, client authentication, or
+self-serve ordering/checkout — do not reintroduce any of that for the agency
+side; if a task seems to call for it, stop and confirm with the user first,
+since removing that entire system was a deliberate, explicit decision. This
+does **not** apply to the masterclass feature, which is a separate, already-
+approved system: it has its own protected admin route (`/masterclass/admin`,
+HTTP Basic Auth checked independently by the route layout and by every
+mutating Server Action — see `src/lib/masterclass/admin-auth.ts`), its own
+registration + manual-payment flow, and its own permanent Student records.
+Do not treat the masterclass's registration/payment/admin/Student system as
+something to remove or as evidence the agency-wide restriction is being
+violated — it is intentional, current, active functionality. Equally, do not
+claim or build a student portal, an automatic payment gateway, Programs/
+Batches/Sessions, bulk email campaigns, or webinar/Zoom management for the
+masterclass — none of that exists; it is explicitly out of scope unless
+requested.
 
 ## Commands
 
