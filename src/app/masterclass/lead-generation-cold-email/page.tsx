@@ -5,10 +5,9 @@ import { Faq } from "@/components/masterclass/Faq";
 import { FinalCta } from "@/components/masterclass/FinalCta";
 import { Hero } from "@/components/masterclass/Hero";
 import { InstructorCredibility } from "@/components/masterclass/InstructorCredibility";
-import { MarketingConsentBanner } from "@/components/masterclass/MarketingConsentBanner";
 import { MasterclassFooter } from "@/components/masterclass/MasterclassFooter";
 import { MasterclassHeader } from "@/components/masterclass/MasterclassHeader";
-import { MetaPixelGate } from "@/components/masterclass/MetaPixelGate";
+import { MetaPixel } from "@/components/masterclass/MetaPixel";
 import { Outcomes } from "@/components/masterclass/Outcomes";
 import { Registration } from "@/components/masterclass/Registration";
 import { ResultsProof } from "@/components/masterclass/ResultsProof";
@@ -50,7 +49,7 @@ export default function MasterclassSalesPage() {
   return (
     <>
       {pixelId ? (
-        <MetaPixelGate
+        <MetaPixel
           pixelId={pixelId}
           contentName={masterclassMeta.seoTitle}
           currency={currency}
@@ -86,7 +85,6 @@ export default function MasterclassSalesPage() {
       <FinalCta priceBDT={priceBDT} />
       <MasterclassFooter />
       <StickyMobileCta priceBDT={priceBDT} />
-      {pixelId ? <MarketingConsentBanner /> : null}
     </>
   );
 }

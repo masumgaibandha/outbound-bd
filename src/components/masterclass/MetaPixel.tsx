@@ -24,13 +24,8 @@ interface MetaPixelProps {
  * dedupes by `id`, so this only ever executes once per page load even if a
  * parent re-renders.
  *
- * Ported from the MasumDev masterclass source with one addition: the source
- * rendered this unconditionally whenever `NEXT_PUBLIC_META_PIXEL_ID` was
- * set. This port never renders `MetaPixel` directly from `page.tsx` — it is
- * only ever mounted by `MetaPixelGate.tsx`, which additionally requires the
- * visitor to have granted marketing consent via
- * `MarketingConsentBanner.tsx` first (task's "respect consent before
- * marketing tracking" requirement; not present in the source).
+ * Rendered directly from `page.tsx` whenever `NEXT_PUBLIC_META_PIXEL_ID` is
+ * set — it fires unconditionally on every page load, with no consent gate.
  *
  * `InitiateCheckout` and the Purchase event are NOT fired from this
  * component — see `MasterclassRegistrationForm.tsx` (`InitiateCheckout`,
