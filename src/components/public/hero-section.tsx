@@ -111,12 +111,12 @@ export function HeroSection() {
         </div>
 
         <p className="text-ink-muted mt-6 text-sm">
-          Run by the founder himself, Abdullah Al Masum:{" "}
+          Run personally by the founder, Abdullah Al Masum.{" "}
           <Link
             href="/about/founder"
             className="text-ink decoration-action hover:text-action focus-visible:outline-action rounded-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
           >
-            more about the founder
+            More about the founder
           </Link>
           .
         </p>

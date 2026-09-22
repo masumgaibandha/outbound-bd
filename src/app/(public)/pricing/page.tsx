@@ -24,7 +24,7 @@ export default function PricingPage() {
   return (
     <>
       <section className="hero-wash relative border-b border-hairline">
-        <Container className="max-w-3xl pt-16 pb-12 text-center sm:pt-20 sm:pb-16">
+        <Container className="max-w-3xl pt-12 pb-8 text-center sm:pt-14 sm:pb-10">
           <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
             Pricing
           </p>
@@ -35,36 +35,36 @@ export default function PricingPage() {
             Choose a fully managed plan for an ongoing program, or a
             one-time service if you only need a specific piece done.
           </p>
-
-          <div className="border-hairline bg-surface mt-8 border p-5 text-left">
-            <p className="text-ink-muted text-sm leading-relaxed">
-              <span className="text-ink font-semibold">
-                Not included in any price below:
-              </span>{" "}
-              domains, mailboxes, sending tools, and other third-party
-              subscriptions. These are billed directly by their providers,
-              not by us. And while we run every program to a high standard,
-              reply and meeting volume depends on your market and offer, so
-              results are never guaranteed.
-            </p>
-          </div>
         </Container>
       </section>
 
-      <Section tone="canvas" labelledBy="managed-plans-heading">
+      <Section tone="canvas" labelledBy="managed-plans-heading" className="pt-10 md:pt-12">
         <SectionHeading
           eyebrow="Managed Outreach"
           title="Fully managed cold email programs"
-          description="Every plan includes the same disciplines end to end: the tiers differ in scope, not in what's covered."
+          description="Every plan includes the same disciplines end to end. The tiers differ in scope, not in what's covered."
         />
 
-        <ul className="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
+        <ul className="mt-10 grid items-stretch gap-6 lg:grid-cols-3">
           {MANAGED_PLANS.map((plan) => (
             <li key={plan.id} className="flex h-full">
               <PricingPlanCard plan={plan} />
             </li>
           ))}
         </ul>
+
+        <div className="border-hairline bg-surface mt-8 border p-5 text-left">
+          <p className="text-ink-muted text-sm leading-relaxed">
+            <span className="text-ink font-semibold">
+              Not included in any price above:
+            </span>{" "}
+            domains, mailboxes, sending tools, and other third-party
+            subscriptions. These are billed directly by their providers,
+            not by us. And while we run every program to a high standard,
+            reply and meeting volume depends on your market and offer, so
+            results are never guaranteed.
+          </p>
+        </div>
 
         <div className="border-hairline mt-14 border-t pt-10">
           <h3 className="text-ink text-xs font-semibold tracking-[0.16em] uppercase">

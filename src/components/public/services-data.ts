@@ -273,7 +273,7 @@ export const SERVICES: ServiceDefinition[] = [
       "Cold email sending infrastructure: dedicated domains and mailboxes, SPF/DKIM/DMARC setup, staged warm-up, and monitored rotation.",
     heroTitle: "Email Infrastructure",
     heroIntro:
-      "Dedicated sending domains and mailboxes, properly authenticated and warmed, isolated from your primary company domain: the technical foundation cold email depends on, set up once and monitored continuously.",
+      "Dedicated sending domains and mailboxes, properly authenticated and warmed, isolated from your primary company domain. This is the technical foundation cold email depends on, set up once and monitored continuously.",
     problems: [
       {
         title: "Your primary domain is at risk",

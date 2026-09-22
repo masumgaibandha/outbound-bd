@@ -15,7 +15,7 @@ export function PricingTeaserSection() {
       <SectionHeading
         eyebrow="Pricing guidance"
         title="Starting points for a managed program"
-        description="Every engagement is scoped on a call: these are transparent starting figures, not instant checkout prices."
+        description="Every engagement is scoped on a call. These are transparent starting prices, not instant checkout prices."
       />
 
       <ul className="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
