@@ -9,6 +9,8 @@ vi.mock("resend", () => ({
 
 import { sendAgencyAutoReply, type AgencyAutoReplyInput } from "@/lib/agency-auto-reply";
 
+const DEFAULT_FROM = "Masum from Outbound BD <masum@updates.outboundbd.com>";
+
 function validInput(overrides: Partial<AgencyAutoReplyInput> = {}): AgencyAutoReplyInput {
   return {
     inquiryId: "64f000000000000000000456",
@@ -23,7 +25,6 @@ beforeEach(() => {
   sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
   vi.unstubAllEnvs();
   vi.stubEnv("RESEND_API_KEY", "test-resend-key");
-  vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
 });
 
 afterEach(() => {
@@ -31,7 +32,7 @@ afterEach(() => {
 });
 
 describe("sendAgencyAutoReply — configuration sourcing", () => {
-  it("sends to the lead's own email, from RESEND_FROM_EMAIL, reply-to RESEND_REPLY_TO_EMAIL", async () => {
+  it("sends to the lead's own email, from the default AGENCY_AUTOREPLY_FROM address, reply-to RESEND_REPLY_TO_EMAIL", async () => {
     vi.stubEnv("RESEND_REPLY_TO_EMAIL", "masum@outboundbd.com");
     const result = await sendAgencyAutoReply(validInput());
     expect(result.ok).toBe(true);
@@ -39,15 +40,31 @@ describe("sendAgencyAutoReply — configuration sourcing", () => {
 
     const [payload] = sendMock.mock.calls[0];
     expect(payload.to).toBe("jordan@agency.com");
-    expect(payload.from).toBe("Outbound BD <notifications@updates.outboundbd.com>");
+    expect(payload.from).toBe(DEFAULT_FROM);
     expect(payload.replyTo).toBe("masum@outboundbd.com");
   });
 
-  it("falls back to RESEND_FROM_EMAIL as reply-to when RESEND_REPLY_TO_EMAIL is unset", async () => {
+  it("uses AGENCY_AUTOREPLY_FROM when set, instead of the default", async () => {
+    vi.stubEnv("AGENCY_AUTOREPLY_FROM", "Masum <masum@othersender.example>");
     const result = await sendAgencyAutoReply(validInput());
     expect(result.ok).toBe(true);
     const [payload] = sendMock.mock.calls[0];
-    expect(payload.replyTo).toBe("Outbound BD <notifications@updates.outboundbd.com>");
+    expect(payload.from).toBe("Masum <masum@othersender.example>");
+  });
+
+  it("is independent of RESEND_FROM_EMAIL — that var is never read for this email", async () => {
+    vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
+    const result = await sendAgencyAutoReply(validInput());
+    expect(result.ok).toBe(true);
+    const [payload] = sendMock.mock.calls[0];
+    expect(payload.from).toBe(DEFAULT_FROM);
+  });
+
+  it("falls back to its own from-address as reply-to when RESEND_REPLY_TO_EMAIL is unset", async () => {
+    const result = await sendAgencyAutoReply(validInput());
+    expect(result.ok).toBe(true);
+    const [payload] = sendMock.mock.calls[0];
+    expect(payload.replyTo).toBe(DEFAULT_FROM);
   });
 
   it("returns EMAIL_NOT_CONFIGURED and sends nothing when RESEND_API_KEY is unset", async () => {
@@ -57,11 +74,10 @@ describe("sendAgencyAutoReply — configuration sourcing", () => {
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("returns SENDER_NOT_CONFIGURED and sends nothing when RESEND_FROM_EMAIL is unset", async () => {
-    vi.stubEnv("RESEND_FROM_EMAIL", "");
+  it("still sends successfully with no other email env configured at all — the from-address always has a working default", async () => {
     const result = await sendAgencyAutoReply(validInput());
-    expect(result).toEqual({ ok: false, errorCode: "SENDER_NOT_CONFIGURED" });
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(sendMock).toHaveBeenCalledTimes(1);
   });
 
   it("importing this module never throws even with no email env configured at all", async () => {
@@ -70,7 +86,13 @@ describe("sendAgencyAutoReply — configuration sourcing", () => {
   });
 });
 
-describe("sendAgencyAutoReply — exact copy", () => {
+describe("sendAgencyAutoReply — plain text only", () => {
+  it("sends no html part at all", async () => {
+    await sendAgencyAutoReply(validInput());
+    const [payload] = sendMock.mock.calls[0];
+    expect(payload).not.toHaveProperty("html");
+  });
+
   it("uses the exact subject and body text, with the first name only (not the full name)", async () => {
     await sendAgencyAutoReply(validInput({ name: "Jordan Rivera" }));
     const [payload] = sendMock.mock.calls[0];
@@ -89,16 +111,12 @@ describe("sendAgencyAutoReply — exact copy", () => {
         "Outbound BD",
       ].join("\n"),
     );
-    expect(payload.html).toContain("Hi Jordan,");
-    expect(payload.html).toContain("Thanks for reaching out about cold email for your agency.");
-    expect(payload.html).toContain("https://calendly.com/almasumbd/discovery-call");
-    expect(payload.html).toContain("Masum");
   });
 
-  it("escapes a visitor-controlled name so it cannot inject markup into the HTML body", async () => {
-    await sendAgencyAutoReply(validInput({ name: "<img src=x onerror=alert(1)>" }));
+  it("uses the visitor-controlled first name in the plain-text body literally (no HTML escaping needed for a text-only email)", async () => {
+    await sendAgencyAutoReply(validInput({ name: "O'Brien Agency" }));
     const [payload] = sendMock.mock.calls[0];
-    expect(payload.html).not.toContain("<img src=x onerror=alert(1)>");
+    expect(payload.text).toContain("Hi O'Brien,");
   });
 });
 

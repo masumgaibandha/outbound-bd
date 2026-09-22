@@ -8,12 +8,20 @@ import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
  * Auto-reply sent to the prospect themselves after a successful
  * /agencies-lead submission — distinct from `contact-notification.ts`,
  * which is the INTERNAL notification sent to CONTACT_NOTIFICATION_EMAIL for
- * both forms. Same lazy-env-check, never-throws contract as that module:
- * every failure path returns `{ ok: false, errorCode }` so the caller can
- * log a non-sensitive diagnostic and still report the lead as saved. Copy
- * is fixed, exact wording from the round's own instructions — do not
- * reword it here.
+ * both forms (untouched by this file). Same lazy-env-check, never-throws
+ * contract as that module: every failure path returns
+ * `{ ok: false, errorCode }` so the caller can log a non-sensitive
+ * diagnostic and still report the lead as saved. Copy is fixed, exact
+ * wording from the round's own instructions — do not reword it here.
+ *
+ * Plain text only, deliberately no HTML part — unlike
+ * `contact-notification.ts`'s internal notification, which stays HTML+text.
+ *
+ * Sent from its own address, independent of RESEND_FROM_EMAIL (the internal
+ * notification's sender) — see `getAutoReplyFromAddress()` below.
  */
+
+const DEFAULT_AUTOREPLY_FROM = "Masum from Outbound BD <masum@updates.outboundbd.com>";
 
 export type SendAgencyAutoReplyResult = { ok: true } | { ok: false; errorCode: string };
 
@@ -29,31 +37,15 @@ function getFirstName(name: string): string {
   return firstToken || trimmed;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+/** `AGENCY_AUTOREPLY_FROM` is optional — unset (or blank) falls back to DEFAULT_AUTOREPLY_FROM, so this is never "not configured": there's always a valid from-address. */
+function getAutoReplyFromAddress(): string {
+  const raw = process.env.AGENCY_AUTOREPLY_FROM;
+  return raw && raw.trim().length > 0 ? raw.trim() : DEFAULT_AUTOREPLY_FROM;
 }
 
-function buildAutoReply(firstName: string): { subject: string; html: string; text: string } {
+function buildAutoReply(firstName: string): { subject: string; text: string } {
   const subject = `Got your details, ${firstName}`;
   const calendlyUrl = STRATEGY_CALL_HREF;
-
-  const html = `
-    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1a1815;">
-      <p>Hi ${escapeHtml(firstName)},</p>
-      <p>Thanks for reaching out about cold email for your agency.</p>
-      <p>
-        I&rsquo;ll look at your site and reply personally within one business day.
-        If you&rsquo;d rather talk it through sooner, you can book a time here:<br />
-        <a href="${escapeHtml(calendlyUrl)}">${escapeHtml(calendlyUrl)}</a>
-      </p>
-      <p>Masum<br />Outbound BD</p>
-    </div>
-  `.trim();
 
   const text = [
     `Hi ${firstName},`,
@@ -67,7 +59,7 @@ function buildAutoReply(firstName: string): { subject: string; html: string; tex
     "Outbound BD",
   ].join("\n");
 
-  return { subject, html, text };
+  return { subject, text };
 }
 
 export async function sendAgencyAutoReply(
@@ -78,26 +70,24 @@ export async function sendAgencyAutoReply(
     return { ok: false, errorCode: "EMAIL_NOT_CONFIGURED" };
   }
 
-  const fromAddress = process.env.RESEND_FROM_EMAIL;
-  if (!fromAddress || fromAddress.trim().length === 0) {
-    return { ok: false, errorCode: "SENDER_NOT_CONFIGURED" };
-  }
+  const fromAddress = getAutoReplyFromAddress();
 
+  // Reply-to still comes from the shared RESEND_REPLY_TO_EMAIL — falls
+  // back to this email's own from-address (not RESEND_FROM_EMAIL) when
+  // unset, same never-omit-Reply-To contract as before.
   const replyToRaw = process.env.RESEND_REPLY_TO_EMAIL;
-  const replyTo =
-    replyToRaw && replyToRaw.trim().length > 0 ? replyToRaw.trim() : fromAddress.trim();
+  const replyTo = replyToRaw && replyToRaw.trim().length > 0 ? replyToRaw.trim() : fromAddress;
 
-  const { subject, html, text } = buildAutoReply(getFirstName(input.name));
+  const { subject, text } = buildAutoReply(getFirstName(input.name));
   const resend = new Resend(apiKey);
 
   try {
     const result = await resend.emails.send(
       {
-        from: fromAddress.trim(),
+        from: fromAddress,
         replyTo,
         to: input.email,
         subject,
-        html,
         text,
       },
       // Deterministic per lead — a retried call for the same inquiry never
