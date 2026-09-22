@@ -135,28 +135,37 @@ export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
         browser's bare default iframe size (150px).
       */}
       {/*
-        lg: 600px verified empirically in-browser (not derived from a spec)
-        as the shortest value that renders the full date picker + time zone
-        selector with no internal Calendly scrollbar, at the ~712px column
-        width this page's desktop two-column layout gives it at a 1366px+
-        viewport (Container caps at max-w-6xl, so 1366px and wider render
-        identically) — now that hide_event_type_details=1 removes the
-        event-description block that previously dominated the card's
-        height. The page itself may still scroll past a 768px viewport to
-        reach the very bottom of the time zone selector; only Calendly's own
+        650px at every breakpoint — re-verified empirically in-browser after
+        600px (this component's previous value) turned out to still show an
+        internal Calendly scrollbar with the time zone row cut off, on a
+        real 1366x768 laptop. That's despite 600px genuinely having no
+        internal scrollbar in this tool's own ~712-2133px-wide test
+        environment: a 1366px-*physical*-resolution laptop very commonly
+        runs at 125%/150% Windows display scaling, which drops the
+        *effective* CSS viewport width well below 1366px — likely below the
+        ~1232px threshold at which this page's Container (max-w-6xl) stops
+        growing, giving Calendly's column meaningfully less width than this
+        tool could reproduce directly. Confirmed the effect by forcibly
+        resizing this container's own element via injected styles (not just
+        relying on the outer window, which this tool's resize_window cannot
+        reliably change): at a forced 600px column width, 600px of height
+        left the calendar mid-render with the time zone row entirely
+        missing and a genuine scroll affordance visible on the card's own
+        right edge (distinguishable from the page's own outer scrollbar,
+        which spans the full page height, not just this card) — 630px was
+        the shortest height with that affordance gone and the time zone row
+        fully visible. Re-tested the same way at a 380px column (mobile
+        width): 650px left a clean ~90px margin below the time zone row
+        with no scroll affordance, more headroom than at 600px width, not
+        less — so unlike the last version of this comment, width doesn't
+        need its own separate, larger number here: one value covers the
+        full range tested. The page itself may still scroll past a 768px
+        viewport to reach the bottom of the calendar; only Calendly's own
         internal scroll is being avoided here.
-        Below lg: 650px, a deliberate margin above the proven 600px rather
-        than an equally-verified number — this tool's browser environment
-        couldn't be resized to a genuine mobile viewport to confirm the
-        tighter value the same way, and the calendar grid/time-zone-selector
-        content this holds doesn't vary with width the way the (now hidden)
-        event description did, so the desktop figure plus headroom for
-        narrower text wrapping is the safer bet. Re-verify on a real device
-        before relying on this being minimal.
       */}
       <div
         ref={containerRef}
-        className="h-[650px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0 lg:h-[600px]"
+        className="h-[650px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
       />
     </>
   );

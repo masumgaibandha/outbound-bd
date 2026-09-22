@@ -25,7 +25,7 @@ export default function AgenciesThankYouPage() {
           two children into narrow-text-left / embed-right via the column
           template alone.
         */}
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr] lg:gap-10">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr] lg:items-center lg:gap-10">
           <div>
             <p className="text-ink-muted flex items-center gap-3 text-xs font-semibold tracking-[0.18em] uppercase">
               <span aria-hidden="true" className="bg-action h-px w-8 shrink-0" />
