@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
 import { getStoredAgencyAttribution } from "@/lib/agency-attribution";
@@ -26,9 +26,20 @@ interface CalendlyGlobal {
         utmContent?: string;
         utmTerm?: string;
       };
+      /** Programmatic equivalent of the class-embed's `data-resize="true"` — asks Calendly to report its real content height via a `calendly.page_height` postMessage as it changes. */
+      resize?: boolean;
     }) => void;
   };
 }
+
+/**
+ * Floor for the wrapper/iframe height — both the initial value (before any
+ * `calendly.page_height` message has arrived) and a lower bound on every
+ * value Calendly ever reports afterward. Verified empirically to already
+ * fit the plain calendar/time-zone view with margin at every width tested,
+ * 380px through 2133px.
+ */
+const MIN_HEIGHT_PX = 700;
 
 const DEFAULT_UTM_SOURCE = "outboundbd";
 const DEFAULT_UTM_MEDIUM = "website";
@@ -73,10 +84,28 @@ interface CalendlyInlineEmbedProps {
  * captured on landing — see src/lib/agency-attribution.ts), which is itself
  * never anything but campaign metadata: no name, email, or other personal
  * data ever flows through this path.
+ *
+ * Height is live, not a fixed guess: `resize: true` (the programmatic
+ * equivalent of the class-embed's `data-resize="true"`) asks Calendly to
+ * report its real content height, and this listens for the
+ * `calendly.page_height` postMessage and applies it directly. Confirmed
+ * live that this genuinely varies a lot by interaction state — the plain
+ * calendar/time-zone view fits well under `MIN_HEIGHT_PX`, but selecting a
+ * date that has many available slots can report over 2000px (Calendly
+ * lists every slot for that day with no internal scroll of its own, so
+ * that's the real height needed to show all of them). The wrapper grows to
+ * match every time, so this page's own scroll is what reaches the rest of
+ * a tall slot list — not a scrollbar inside the Calendly card. An earlier
+ * version of this component used a single fixed height instead; a report
+ * of a scrollbar *inside* the card on a real desktop, which this file's
+ * own scrollHeight/clientHeight diagnostics couldn't reproduce (every
+ * ancestor measured 0px of overflow), is what motivated switching to this
+ * live-height approach instead of guessing a larger fixed number.
  */
 export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const [height, setHeight] = useState(MIN_HEIGHT_PX);
 
   // useCallback (not a plain function) because this closes over the
   // `utmContent` prop — a real reactive dependency, unlike containerRef
@@ -103,6 +132,7 @@ export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
         utmContent,
         ...(attribution.utmTerm ? { utmTerm: attribution.utmTerm } : {}),
       },
+      resize: true,
     });
     initializedRef.current = true;
   }, [utmContent]);
@@ -113,6 +143,35 @@ export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
     // per actual script load, not on every mount.
     initWidget();
   }, [initWidget]);
+
+  useEffect(() => {
+    function handlePageHeight(event: MessageEvent) {
+      const data = event.data as { event?: string; payload?: { height?: unknown } } | undefined;
+      if (data?.event !== "calendly.page_height") return;
+
+      // Confirmed live: Calendly sends this as a numeric-looking *string*
+      // ("2133px"), not a number — parseFloat reads the leading digits and
+      // stops at "px", so this handles both that and a plain number the
+      // same way rather than silently dropping every real message the way
+      // a strict `typeof === "number"` check did during testing.
+      const raw = data.payload?.height;
+      const reported = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+      if (!Number.isFinite(reported)) return;
+
+      const next = Math.max(MIN_HEIGHT_PX, Math.ceil(reported));
+      setHeight(next);
+
+      // Set directly on the iframe too, not just the wrapper — belt and
+      // braces against the `[&>iframe]:h-full` CSS rule losing a
+      // specificity fight with an inline style Calendly's own script might
+      // set on the iframe it controls.
+      const iframe = containerRef.current?.querySelector("iframe");
+      if (iframe) iframe.style.height = `${next}px`;
+    }
+
+    window.addEventListener("message", handlePageHeight);
+    return () => window.removeEventListener("message", handlePageHeight);
+  }, []);
 
   return (
     <>
@@ -135,37 +194,19 @@ export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
         browser's bare default iframe size (150px).
       */}
       {/*
-        650px at every breakpoint — re-verified empirically in-browser after
-        600px (this component's previous value) turned out to still show an
-        internal Calendly scrollbar with the time zone row cut off, on a
-        real 1366x768 laptop. That's despite 600px genuinely having no
-        internal scrollbar in this tool's own ~712-2133px-wide test
-        environment: a 1366px-*physical*-resolution laptop very commonly
-        runs at 125%/150% Windows display scaling, which drops the
-        *effective* CSS viewport width well below 1366px — likely below the
-        ~1232px threshold at which this page's Container (max-w-6xl) stops
-        growing, giving Calendly's column meaningfully less width than this
-        tool could reproduce directly. Confirmed the effect by forcibly
-        resizing this container's own element via injected styles (not just
-        relying on the outer window, which this tool's resize_window cannot
-        reliably change): at a forced 600px column width, 600px of height
-        left the calendar mid-render with the time zone row entirely
-        missing and a genuine scroll affordance visible on the card's own
-        right edge (distinguishable from the page's own outer scrollbar,
-        which spans the full page height, not just this card) — 630px was
-        the shortest height with that affordance gone and the time zone row
-        fully visible. Re-tested the same way at a 380px column (mobile
-        width): 650px left a clean ~90px margin below the time zone row
-        with no scroll affordance, more headroom than at 600px width, not
-        less — so unlike the last version of this comment, width doesn't
-        need its own separate, larger number here: one value covers the
-        full range tested. The page itself may still scroll past a 768px
-        viewport to reach the bottom of the calendar; only Calendly's own
-        internal scroll is being avoided here.
+        `height` (inline style, not a Tailwind class) is intentional — this
+        value now comes from `calendly.page_height` at runtime, so it can't
+        be a static utility class the way the old fixed-height version was.
+        `overflow-hidden` stays as a hard guarantee this element specifically
+        can never show its own scrollbar even in some edge case where a
+        `page_height` message is missed or arrives late — with the resize
+        listener now matching real content, this should never actually have
+        anything to clip, but it costs nothing to keep as a backstop.
       */}
       <div
         ref={containerRef}
-        className="h-[650px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
+        style={{ height }}
+        className="w-full overflow-hidden [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
       />
     </>
   );
