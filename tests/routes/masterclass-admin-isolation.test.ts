@@ -30,13 +30,19 @@ describe("masterclass admin surface stays isolated", () => {
     expect(existsSync(path.join(projectRoot, relPath))).toBe(false);
   });
 
-  it("the only proxy in the project is scoped to /masterclass/admin", async () => {
+  it("the only proxy in the project is scoped to /masterclass/admin (plus the agency region-cookie job, which explicitly excludes masterclass)", async () => {
     const proxyPath = path.join(projectRoot, "src/proxy.ts");
     expect(existsSync(proxyPath)).toBe(true);
     expect(existsSync(path.join(projectRoot, "src/middleware.ts"))).toBe(false);
 
     const { config } = await import("@/proxy");
-    expect(config.matcher).toEqual(["/masterclass/admin/:path*"]);
+    expect(config.matcher).toHaveLength(2);
+    expect(config.matcher[0]).toBe("/masterclass/admin/:path*");
+    // The second entry is the agency region-cookie job's matcher (see
+    // tests/lib/proxy-region-cookie.test.ts for its actual behavior) — it
+    // must negative-match "masterclass" so it never runs on any masterclass
+    // route, admin included.
+    expect(config.matcher[1]).toContain("masterclass");
   });
 
   it("if a masterclass admin route exists on disk, it lives only under src/app/masterclass/admin", () => {

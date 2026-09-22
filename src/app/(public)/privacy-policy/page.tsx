@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const LAST_UPDATED = "August 31, 2026";
+const LAST_UPDATED = "September 22, 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -52,10 +52,14 @@ export default function PrivacyPolicyPage() {
               How we use it
             </h2>
             <p className="mt-2">
-              Submitted information is used only to respond to your inquiry,
+              Submitted information is used to respond to your inquiry,
               evaluate whether we&apos;re a good fit for your project, and
-              follow up by email. We do not use it for advertising, and we
-              do not sell or rent it to third parties.
+              follow up by email. If our advertising tracking is active for
+              you (see &ldquo;Cookies and tracking&rdquo; below), we also
+              share a one-way, cryptographically hashed version of your
+              email address with Meta so we can measure how our own ads
+              perform. We do not sell or rent your information to third
+              parties.
             </p>
           </div>
 
@@ -64,9 +68,27 @@ export default function PrivacyPolicyPage() {
               Cookies and tracking
             </h2>
             <p className="mt-2">
-              This site does not use tracking cookies, third-party
-              advertising pixels, or analytics trackers that follow you
-              across other sites.
+              This site uses the Meta (Facebook) Pixel and Meta Conversions
+              API to measure how our advertising performs. This sends Meta
+              information about your visit, such as which pages you viewed,
+              whether you submitted our contact form, a cryptographically
+              hashed (one-way, not reversible) version of your email address
+              if you submitted the form, and identifiers tied to an ad click
+              that brought you here (commonly known as fbp/fbc). We also set
+              two small first-party cookies of our own: one to remember
+              which region you&apos;re browsing from, and one to remember
+              your tracking choice if you&apos;ve made one.
+            </p>
+            <p className="mt-2">
+              If you&apos;re visiting from the United Kingdom, the European
+              Union, or the European Economic Area, you&apos;ll see a banner
+              letting you accept or decline this tracking before the Pixel
+              ever loads; your choice is remembered so the banner
+              won&apos;t ask again. Visitors elsewhere are tracked by
+              default, consistent with how most sites measure their
+              advertising. You can change your mind at any time by clearing
+              your cookies for this site, and you can block tracking at the
+              browser level regardless of where you&apos;re visiting from.
             </p>
           </div>
 

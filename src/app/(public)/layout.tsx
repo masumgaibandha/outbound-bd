@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { MasterclassAnnouncementBanner } from "@/components/public/masterclass-announcement-banner";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
+import { TrackingGate } from "@/components/public/tracking-gate";
 import { isRegistrationEnabled } from "@/lib/masterclass/env";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
@@ -14,6 +15,8 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
+      {/* Client Component — see its own doc comment for why this stays out of the server render entirely (keeps every public page statically generated). */}
+      <TrackingGate />
       {showMasterclassBanner ? <MasterclassAnnouncementBanner /> : null}
       <SiteHeader />
       <main className="flex-1">{children}</main>

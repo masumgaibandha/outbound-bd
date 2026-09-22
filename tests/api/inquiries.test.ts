@@ -18,6 +18,15 @@ vi.mock("resend", () => ({
   },
 }));
 
+// Real Meta Conversions API is never called in this suite — only the
+// "agency Meta CAPI Lead event" describe block below stubs
+// AGENCY_META_PIXEL_ID/AGENCY_META_CAPI_ACCESS_TOKEN, so this mock only
+// actually matters there.
+const sendLeadEventMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/tracking/capi", () => ({
+  sendLeadEvent: sendLeadEventMock,
+}));
+
 import { POST } from "@/app/api/inquiries/route";
 import { connectToDatabase } from "@/lib/mongoose";
 import { Inquiry } from "@/lib/models/inquiry";
@@ -57,6 +66,8 @@ beforeEach(async () => {
   await Inquiry.deleteMany({});
   sendMock.mockReset();
   sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
+  sendLeadEventMock.mockReset();
+  sendLeadEventMock.mockResolvedValue({ ok: true });
   vi.unstubAllEnvs();
 });
 
@@ -260,5 +271,170 @@ describe("POST /api/inquiries — contact notification", () => {
     expect(loggedText).not.toContain("Sensitive provider detail");
 
     errorSpy.mockRestore();
+  });
+});
+
+describe("POST /api/inquiries — agency Meta CAPI Lead event", () => {
+  function stubCapiEnv() {
+    vi.stubEnv("AGENCY_META_PIXEL_ID", "123456");
+    vi.stubEnv("AGENCY_META_CAPI_ACCESS_TOKEN", "test-capi-token");
+  }
+
+  it("sends exactly one Lead event, after the inquiry is persisted, for a valid non-EEA/UK submission", async () => {
+    stubCapiEnv();
+    let sawPersistedDocWhenSending = false;
+    sendLeadEventMock.mockImplementation(async () => {
+      const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+      sawPersistedDocWhenSending = saved !== null;
+      return { ok: true };
+    });
+
+    const response = await POST(
+      postRequest(validPayload({ eventId: "evt-abc" }), { cookie: "obd_region=other" }),
+    );
+    expect(response.status).toBe(201);
+    expect(sawPersistedDocWhenSending).toBe(true);
+    expect(sendLeadEventMock).toHaveBeenCalledTimes(1);
+
+    const [input] = sendLeadEventMock.mock.calls[0];
+    expect(input.eventId).toBe("evt-abc");
+    expect(input.email).toBe("jordan@acme.com");
+    expect(input.pixelId).toBe("123456");
+    expect(input.accessToken).toBe("test-capi-token");
+  });
+
+  it("sends no Lead event when Meta CAPI config is entirely missing", async () => {
+    // No stubCapiEnv() call.
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(sendLeadEventMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no Lead event for a honeypot-tripped submission", async () => {
+    stubCapiEnv();
+    const response = await POST(
+      postRequest(validPayload({ honeypot: "http://spam.example" })),
+    );
+    expect(response.status).toBe(201);
+    expect(sendLeadEventMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no Lead event for a submission that was too fast to be human", async () => {
+    stubCapiEnv();
+    const response = await POST(postRequest(validPayload({ startedAt: Date.now() })));
+    expect(response.status).toBe(201);
+    expect(sendLeadEventMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no Lead event for an invalid submission", async () => {
+    stubCapiEnv();
+    const response = await POST(postRequest(validPayload({ email: "not-an-email" })));
+    expect(response.status).toBe(400);
+    expect(sendLeadEventMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no Lead event for a duplicate resubmission (idempotent path)", async () => {
+    stubCapiEnv();
+    await POST(postRequest(validPayload()));
+    sendLeadEventMock.mockClear();
+
+    const response = await POST(
+      postRequest(validPayload({ goals: "A slightly different goals text." })),
+    );
+    expect(response.status).toBe(201);
+    expect(sendLeadEventMock).not.toHaveBeenCalled();
+  });
+
+  it("never affects the response when the CAPI call fails, and logs only a non-sensitive diagnostic", async () => {
+    stubCapiEnv();
+    sendLeadEventMock.mockResolvedValueOnce({ ok: false, errorCode: "HTTP_400" });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(postRequest(validPayload(), { cookie: "obd_region=other" }));
+    expect(response.status).toBe(201);
+    const body = (await response.json()) as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    expect(saved).not.toBeNull();
+
+    const failureLog = errorSpy.mock.calls
+      .map(([logged]) => String(logged))
+      .find((logged) => logged.includes("agency_lead_capi_failed"));
+    expect(failureLog).toBeTruthy();
+    const parsed = JSON.parse(failureLog as string) as Record<string, unknown>;
+    expect(parsed.event).toBe("agency_lead_capi_failed");
+    expect(parsed.errorCode).toBe("HTTP_400");
+    expect(typeof parsed.inquiryId).toBe("string");
+    expect(failureLog).not.toContain("Jordan Rivera");
+    expect(failureLog).not.toContain("jordan@acme.com");
+    expect(failureLog).not.toContain("test-capi-token");
+
+    errorSpy.mockRestore();
+  });
+
+  it("also never affects the response when the CAPI call throws unexpectedly", async () => {
+    stubCapiEnv();
+    sendLeadEventMock.mockRejectedValueOnce(new Error("boom"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(postRequest(validPayload(), { cookie: "obd_region=other" }));
+    expect(response.status).toBe(201);
+    expect(sendLeadEventMock).toHaveBeenCalledTimes(1);
+    const body = (await response.json()) as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    expect(saved).not.toBeNull();
+
+    errorSpy.mockRestore();
+  });
+
+  describe("consent gating for UK/EU/EEA visitors", () => {
+    it("sends the Lead event for an EEA/UK visitor who already granted consent", async () => {
+      stubCapiEnv();
+      const response = await POST(
+        postRequest(validPayload(), {
+          "x-vercel-ip-country": "DE",
+          cookie: "obd_region=eea; obd_ad_consent=granted",
+        }),
+      );
+      expect(response.status).toBe(201);
+      expect(sendLeadEventMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends no Lead event for an EEA/UK visitor with no consent decision yet", async () => {
+      stubCapiEnv();
+      const response = await POST(
+        postRequest(validPayload(), { cookie: "obd_region=eea" }),
+      );
+      expect(response.status).toBe(201);
+      expect(sendLeadEventMock).not.toHaveBeenCalled();
+    });
+
+    it("sends no Lead event for an EEA/UK visitor who declined", async () => {
+      stubCapiEnv();
+      const response = await POST(
+        postRequest(validPayload(), { cookie: "obd_region=eea; obd_ad_consent=denied" }),
+      );
+      expect(response.status).toBe(201);
+      expect(sendLeadEventMock).not.toHaveBeenCalled();
+    });
+
+    it("sends no Lead event when the obd_region cookie is entirely missing — the safe default", async () => {
+      stubCapiEnv();
+      const response = await POST(postRequest(validPayload()));
+      expect(response.status).toBe(201);
+      expect(sendLeadEventMock).not.toHaveBeenCalled();
+    });
+
+    it("sends the Lead event for a non-EEA/UK visitor even with no consent cookie at all", async () => {
+      stubCapiEnv();
+      const response = await POST(
+        postRequest(validPayload(), { cookie: "obd_region=other" }),
+      );
+      expect(response.status).toBe(201);
+      expect(sendLeadEventMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

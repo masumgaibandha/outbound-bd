@@ -1,9 +1,19 @@
+import { randomUUID } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import { sendContactNotification } from "@/lib/contact-notification";
 import { connectToDatabase } from "@/lib/mongoose";
 import { inquirySchema } from "@/lib/inquiry-schema";
 import { Inquiry } from "@/lib/models/inquiry";
+import { sendLeadEvent } from "@/lib/tracking/capi";
+import {
+  AGENCY_AD_CONSENT_COOKIE,
+  AGENCY_REGION_COOKIE,
+  isTrackingAllowed,
+  readCookieHeaderValue,
+} from "@/lib/tracking/consent";
+import { getAgencyMetaCapiEnv } from "@/lib/tracking/env";
 
 // Minimum time (ms) a real visitor needs to fill the form. Submissions
 // faster than this are almost certainly scripted.
@@ -142,6 +152,74 @@ export async function POST(request: Request) {
         errorCode: notificationResult.errorCode,
       }),
     );
+  }
+
+  // Meta CAPI "Lead" event — best-effort and strictly after persistence,
+  // same contract as the notification above. Never reached for a
+  // honeypot/timing-tripped, duplicate, or validation-failed submission,
+  // since every one of those returns before this point. Gated on both
+  // config (silently does nothing if AGENCY_META_PIXEL_ID/
+  // AGENCY_META_CAPI_ACCESS_TOKEN are unset) and tracking consent (the
+  // same obd_region/obd_ad_consent cookies TrackingGate itself reads
+  // client-side — a missing obd_region cookie is treated as EEA/UK, the
+  // safe default, so an unconsented visitor's CAPI Lead is never sent even
+  // if the region cookie somehow never reached this request).
+  const agencyCapiEnv = getAgencyMetaCapiEnv();
+  if (agencyCapiEnv) {
+    const cookieHeader = request.headers.get("cookie");
+    const region = readCookieHeaderValue(cookieHeader, AGENCY_REGION_COOKIE);
+    const consent = readCookieHeaderValue(cookieHeader, AGENCY_AD_CONSENT_COOKIE);
+
+    if (isTrackingAllowed({ region, consent })) {
+      const eventId =
+        typeof record.eventId === "string" && record.eventId.trim().length > 0
+          ? record.eventId.trim()
+          : randomUUID();
+      const eventSourceUrl =
+        typeof record.eventSourceUrl === "string" && record.eventSourceUrl.trim().length > 0
+          ? record.eventSourceUrl.trim()
+          : (request.headers.get("referer") ?? "");
+
+      // Wrapped in try/catch, unlike the notification call above —
+      // sendLeadEvent's own contract is to never throw (see
+      // src/lib/tracking/capi.ts), but this call is intentionally more
+      // defensive than that: the explicit requirement is that a CAPI
+      // failure can never affect this response, full stop, even if a
+      // future change to sendLeadEvent ever broke that contract.
+      try {
+        const leadResult = await sendLeadEvent({
+          pixelId: agencyCapiEnv.pixelId,
+          accessToken: agencyCapiEnv.capiAccessToken,
+          eventId,
+          email: parsed.data.email,
+          eventSourceUrl,
+          clientIpAddress: ipAddress !== "unknown" ? ipAddress : null,
+          clientUserAgent: request.headers.get("user-agent"),
+          fbp: typeof record.fbp === "string" ? record.fbp : null,
+          fbc: typeof record.fbc === "string" ? record.fbc : null,
+        });
+
+        if (!leadResult.ok) {
+          // Same non-sensitive-diagnostic-only contract as
+          // contact_notification_failed above.
+          console.error(
+            JSON.stringify({
+              event: "agency_lead_capi_failed",
+              inquiryId: String(created._id),
+              errorCode: leadResult.errorCode,
+            }),
+          );
+        }
+      } catch {
+        console.error(
+          JSON.stringify({
+            event: "agency_lead_capi_failed",
+            inquiryId: String(created._id),
+            errorCode: "UNEXPECTED_THROW",
+          }),
+        );
+      }
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });

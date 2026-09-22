@@ -23,6 +23,8 @@ import {
   inquirySchema,
   type InquiryFieldErrors,
 } from "@/lib/inquiry-schema";
+import { readBrowserCookie } from "@/lib/tracking/browser-cookie";
+import { fireAgencyLeadPixelEvent } from "@/lib/tracking/fire-lead-pixel-event";
 
 const fieldClass =
   "border-hairline bg-canvas text-ink placeholder:text-ink-muted/70 focus-visible:border-ink focus-visible:outline-action w-full rounded-lg border px-4 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2";
@@ -84,6 +86,12 @@ export function ContactForm({ initialService, initialGoals }: ContactFormProps) 
     setFieldErrors({});
     setSubmitState("submitting");
 
+    // Generated once, up front, and reused for both the server-side CAPI
+    // call (only sent after persistence, from /api/inquiries) and the
+    // browser fbq call below — the shared value is what lets Meta dedupe
+    // the two into a single Lead event.
+    const eventId = crypto.randomUUID();
+
     try {
       const response = await fetch("/api/inquiries", {
         method: "POST",
@@ -92,10 +100,17 @@ export function ContactForm({ initialService, initialGoals }: ContactFormProps) 
           ...parsed.data,
           honeypot: String(formData.get("company_phone") ?? ""),
           startedAt: startedAtRef.current ?? Date.now(),
+          eventId,
+          eventSourceUrl: window.location.href,
+          fbp: readBrowserCookie("_fbp"),
+          fbc: readBrowserCookie("_fbc"),
         }),
       });
 
       if (response.ok) {
+        // Only after the API confirms the inquiry was actually saved — never
+        // fired for a client-side validation failure or a network error.
+        fireAgencyLeadPixelEvent(eventId);
         setSubmitState("success");
         form.reset();
         requestAnimationFrame(() => successRef.current?.focus());
