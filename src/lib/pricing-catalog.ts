@@ -18,7 +18,8 @@ export type ManagedPlan = {
   kind: "managed-plan";
   id: ManagedPlanId;
   name: string;
-  monthlyPriceCents: number;
+  /** `null` means "Contact for price" — no public starting number for this tier. */
+  monthlyPriceCents: number | null;
   setupPriceCents: number;
   campaigns: string;
   leadsIncluded: number;
@@ -63,7 +64,7 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     kind: "managed-plan",
     id: "launch",
     name: "Launch",
-    monthlyPriceCents: 39900,
+    monthlyPriceCents: 49900,
     setupPriceCents: 19900,
     campaigns: "1 campaign",
     leadsIncluded: 2500,
@@ -74,7 +75,7 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     kind: "managed-plan",
     id: "growth",
     name: "Growth",
-    monthlyPriceCents: 69900,
+    monthlyPriceCents: 99900,
     setupPriceCents: 34900,
     campaigns: "Up to 3 campaigns",
     leadsIncluded: 5000,
@@ -85,7 +86,8 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     kind: "managed-plan",
     id: "scale",
     name: "Scale",
-    monthlyPriceCents: 99900,
+    // "Contact for price" — no public starting number for this tier.
+    monthlyPriceCents: null,
     setupPriceCents: 59900,
     campaigns: "Up to 5 campaigns",
     leadsIncluded: 10000,
@@ -220,11 +222,29 @@ export function formatPriceCents(cents: number): string {
 /** Short human summary for a catalog entry, used to prefill the contact form. */
 export function getCatalogPrefillNote(entry: CatalogEntry): string {
   if (entry.kind === "managed-plan") {
-    return `Interested in the ${entry.name} plan (${formatPriceCents(
-      entry.monthlyPriceCents,
-    )}/month + ${formatPriceCents(entry.setupPriceCents)} setup).`;
+    const priceDescription =
+      entry.monthlyPriceCents === null
+        ? "custom pricing"
+        : `${formatPriceCents(entry.monthlyPriceCents)}/month + ${formatPriceCents(entry.setupPriceCents)} setup`;
+    return `Interested in the ${entry.name} plan (${priceDescription}).`;
   }
   return `Interested in ${entry.name} (${formatPriceCents(entry.priceCents)}, ${entry.unit}).`;
+}
+
+/**
+ * The lowest numeric monthly price across every managed plan, formatted for
+ * "Plans start at X/month" copy (e.g. the /agencies landing page's pricing
+ * section) — reads from the catalog rather than a hardcoded figure, so a
+ * future price change here doesn't require a second edit elsewhere. A plan
+ * with `monthlyPriceCents: null` ("Contact for price") is excluded from the
+ * comparison, same as it's excluded from display everywhere else.
+ */
+export function getStartingMonthlyPriceLabel(): string {
+  const numericPrices = MANAGED_PLANS.map((plan) => plan.monthlyPriceCents).filter(
+    (cents): cents is number => cents !== null,
+  );
+  const lowestCents = Math.min(...numericPrices);
+  return formatPriceCents(lowestCents);
 }
 
 /** Builds the validated /contact query string for a catalog entry's

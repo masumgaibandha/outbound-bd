@@ -2,41 +2,62 @@ import "server-only";
 
 import { Resend } from "resend";
 
+import { ACTIVE_CLIENTS_OPTIONS, AGENCY_NEED_OPTIONS } from "@/lib/agency-inquiry-schema";
 import { BUDGET_RANGE_OPTIONS, SERVICE_INTEREST_OPTIONS } from "@/lib/inquiry-schema";
+import type { InquirySource } from "@/lib/models/inquiry";
 
 /**
- * Internal "new inquiry" notification for the agency contact form - sent to
- * CONTACT_NOTIFICATION_EMAIL after an Inquiry document is already
- * persisted. Every env var is read lazily, only when
- * sendContactNotification() is actually called, so importing this module
- * (and therefore the API route that calls it) never throws in an
- * environment where notification isn't configured - same lazy-validation
- * contract as src/lib/env.ts and src/lib/masterclass/email.ts. Never
- * throws: every failure path returns { ok: false, errorCode } so a caller
- * can log a non-sensitive diagnostic and still report the inquiry as saved.
+ * Internal "new lead" notification - sent to CONTACT_NOTIFICATION_EMAIL
+ * after an Inquiry document is already persisted, from EITHER form
+ * (`source` says which - see `src/lib/models/inquiry.ts`). Every env var is
+ * read lazily, only when sendContactNotification() is actually called, so
+ * importing this module (and therefore either API route that calls it)
+ * never throws in an environment where notification isn't configured -
+ * same lazy-validation contract as src/lib/env.ts and
+ * src/lib/masterclass/email.ts. Never throws: every failure path returns
+ * { ok: false, errorCode } so a caller can log a non-sensitive diagnostic
+ * and still report the inquiry as saved.
  */
 
 export type SendContactNotificationResult = { ok: true } | { ok: false; errorCode: string };
 
 export interface ContactNotificationInput {
   inquiryId: string;
+  source: InquirySource;
   name: string;
   email: string;
-  company: string;
   website: string;
-  /** Raw `service` slug as stored on the Inquiry document - resolved to its label here. */
-  service: string;
   /** Raw `budgetRange` slug as stored on the Inquiry document - resolved to its label here. */
   budgetRange: string;
-  goals: string;
   createdAt: Date;
+  /** Contact-form only. */
+  company?: string;
+  /** Contact-form only - raw `service` slug, resolved to its label here. */
+  service?: string;
+  /** Contact-form only. */
+  goals?: string;
+  /** Agencies-landing only - raw slug, resolved to its label here. */
+  activeClients?: string;
+  /** Agencies-landing only - raw slug, resolved to its label here. */
+  need?: string;
 }
+
+const SOURCE_LABELS: Record<InquirySource, string> = {
+  contact: "Contact form",
+  "agencies-landing": "Agencies landing page",
+};
 
 const SERVICE_LABELS = new Map<string, string>(
   SERVICE_INTEREST_OPTIONS.map((option) => [option.value, option.label]),
 );
 const BUDGET_LABELS = new Map<string, string>(
   BUDGET_RANGE_OPTIONS.map((option) => [option.value, option.label]),
+);
+const ACTIVE_CLIENTS_LABELS = new Map<string, string>(
+  ACTIVE_CLIENTS_OPTIONS.map((option) => [option.value, option.label]),
+);
+const AGENCY_NEED_LABELS = new Map<string, string>(
+  AGENCY_NEED_OPTIONS.map((option) => [option.value, option.label]),
 );
 
 /** Never renders undefined/null/empty as literal text - falls back to an explicit placeholder. */
@@ -92,29 +113,64 @@ interface NotificationRow {
 }
 
 function buildRows(input: ContactNotificationInput): NotificationRow[] {
-  return [
+  const rows: NotificationRow[] = [
+    { label: "Source", value: SOURCE_LABELS[input.source] },
     { label: "Name", value: displayValue(input.name) },
     { label: "Email", value: displayValue(input.email) },
-    { label: "Company", value: displayValue(input.company) },
-    { label: "Website", value: displayValue(input.website) },
-    { label: "Requested service", value: displayValue(SERVICE_LABELS.get(input.service) ?? input.service) },
-    { label: "Budget", value: displayValue(BUDGET_LABELS.get(input.budgetRange) ?? input.budgetRange) },
-    { label: "Goals", value: displayValue(input.goals) },
+  ];
+
+  if (input.company !== undefined) {
+    rows.push({ label: "Company", value: displayValue(input.company) });
+  }
+
+  rows.push({ label: "Website", value: displayValue(input.website) });
+
+  if (input.service !== undefined) {
+    rows.push({
+      label: "Requested service",
+      value: displayValue(SERVICE_LABELS.get(input.service) ?? input.service),
+    });
+  }
+  if (input.activeClients !== undefined) {
+    rows.push({
+      label: "Active clients",
+      value: displayValue(ACTIVE_CLIENTS_LABELS.get(input.activeClients) ?? input.activeClients),
+    });
+  }
+  if (input.need !== undefined) {
+    rows.push({
+      label: "What they need",
+      value: displayValue(AGENCY_NEED_LABELS.get(input.need) ?? input.need),
+    });
+  }
+
+  rows.push({ label: "Budget", value: displayValue(BUDGET_LABELS.get(input.budgetRange) ?? input.budgetRange) });
+
+  if (input.goals !== undefined) {
+    rows.push({ label: "Goals", value: displayValue(input.goals) });
+  }
+
+  rows.push(
     { label: "Submitted", value: formatSubmittedAt(input.createdAt) },
     { label: "Inquiry ID", value: input.inquiryId },
-  ];
+  );
+
+  return rows;
 }
 
 function buildEmailBody(input: ContactNotificationInput): { subject: string; html: string; text: string } {
   const subject = sanitizeForHeader(
-    `New contact inquiry - ${displayValue(input.name)} (${displayValue(input.company)})`,
+    input.source === "agencies-landing"
+      ? `New agencies landing lead - ${displayValue(input.name)}`
+      : `New contact inquiry - ${displayValue(input.name)} (${displayValue(input.company)})`,
   );
 
   const rows = buildRows(input);
+  const introText = `A new ${SOURCE_LABELS[input.source].toLowerCase()} lead was just saved.`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1815;">
-      <p>A new agency contact inquiry was just saved.</p>
+      <p>${escapeHtml(introText)}</p>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         ${rows
           .map(
@@ -128,7 +184,7 @@ function buildEmailBody(input: ContactNotificationInput): { subject: string; htm
   `.trim();
 
   const text = [
-    "A new agency contact inquiry was just saved.",
+    introText,
     "",
     ...rows.map((row) => `${row.label}: ${row.value}`),
     "",

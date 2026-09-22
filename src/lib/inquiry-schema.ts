@@ -15,11 +15,17 @@ const SERVICE_INTEREST_VALUES = SERVICE_INTEREST_OPTIONS.map(
   (option) => option.value,
 ) as [string, ...string[]];
 
+// Round 2: aligned to the new pricing-catalog.ts figures ($499/$999 tiers).
+// Old stored values ("under-2k", "2k-5k", "5k-10k", "10k-plus") are never
+// re-validated against this list — Mongoose has no enum constraint on
+// budgetRange, and every reader (e.g. contact-notification.ts's
+// BUDGET_LABELS lookup) already falls back to the raw stored string for an
+// unrecognized slug instead of throwing — so existing documents stay
+// readable with no migration needed for this field.
 export const BUDGET_RANGE_OPTIONS = [
-  { value: "under-2k", label: "Under $2,000 / month" },
-  { value: "2k-5k", label: "$2,000 – $5,000 / month" },
-  { value: "5k-10k", label: "$5,000 – $10,000 / month" },
-  { value: "10k-plus", label: "$10,000+ / month" },
+  { value: "under-500", label: "Under $500 / month" },
+  { value: "500-1k", label: "$500 – $1,000 / month" },
+  { value: "1k-plus", label: "$1,000+ / month" },
   { value: "not-sure", label: "Not sure yet" },
 ] as const;
 

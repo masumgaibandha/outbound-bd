@@ -18,7 +18,9 @@ function sha256Lower(value: string): string {
   return createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
 }
 
-export type MetaCapiResult = { ok: true } | { ok: false; errorCode: string };
+export type MetaCapiResult =
+  | { ok: true; eventsReceived: number }
+  | { ok: false; errorCode: string; metaErrorCode?: number; metaErrorSubcode?: number };
 
 export interface SendLeadEventInput {
   pixelId: string;
@@ -31,6 +33,36 @@ export interface SendLeadEventInput {
   clientUserAgent: string | null;
   fbp: string | null;
   fbc: string | null;
+  /** Routes this event into Meta Events Manager's Test Events tool instead of real traffic — see AgencyMetaCapiEnv's doc comment. Omitted from the payload entirely when unset. */
+  testEventCode?: string;
+}
+
+/** `response.json()` can itself throw (non-JSON body) — every caller of this treats that as "no further detail available", never a reason to throw further. */
+async function parseJsonBody(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/** Meta's documented Graph API error shape: `{ error: { message, type, code, error_subcode, fbtrace_id } }`. Only the two numeric codes are ever extracted — `message` can echo back request content and must never be logged. */
+function extractMetaErrorCodes(body: unknown): { metaErrorCode?: number; metaErrorSubcode?: number } {
+  if (typeof body !== "object" || body === null || !("error" in body)) return {};
+  const error = (body as { error?: unknown }).error;
+  if (typeof error !== "object" || error === null) return {};
+  const { code, error_subcode: errorSubcode } = error as { code?: unknown; error_subcode?: unknown };
+  return {
+    metaErrorCode: typeof code === "number" ? code : undefined,
+    metaErrorSubcode: typeof errorSubcode === "number" ? errorSubcode : undefined,
+  };
+}
+
+/** Meta's documented success shape includes `events_received` — defaults to 0 if the body is missing it or isn't shaped as expected, rather than throwing. */
+function extractEventsReceived(body: unknown): number {
+  if (typeof body !== "object" || body === null || !("events_received" in body)) return 0;
+  const eventsReceived = (body as { events_received?: unknown }).events_received;
+  return typeof eventsReceived === "number" ? eventsReceived : 0;
 }
 
 export async function sendLeadEvent(input: SendLeadEventInput): Promise<MetaCapiResult> {
@@ -43,7 +75,7 @@ export async function sendLeadEvent(input: SendLeadEventInput): Promise<MetaCapi
     fbc: input.fbc ?? undefined,
   };
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     data: [
       {
         event_name: "Lead",
@@ -55,6 +87,9 @@ export async function sendLeadEvent(input: SendLeadEventInput): Promise<MetaCapi
       },
     ],
   };
+  if (input.testEventCode) {
+    payload.test_event_code = input.testEventCode;
+  }
 
   const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${input.pixelId}/events?access_token=${encodeURIComponent(input.accessToken)}`;
 
@@ -69,12 +104,14 @@ export async function sendLeadEvent(input: SendLeadEventInput): Promise<MetaCapi
       signal: controller.signal,
     });
 
+    const body = await parseJsonBody(response);
+
     if (!response.ok) {
-      /* Never log the response body — it can echo back the request, including hashed PII and the access token context. */
-      return { ok: false, errorCode: `HTTP_${response.status}` };
+      /* Never log the full response body — it can echo back the request, including hashed PII and the access token context. Only the two numeric error codes below are ever surfaced to the caller. */
+      return { ok: false, errorCode: `HTTP_${response.status}`, ...extractMetaErrorCodes(body) };
     }
 
-    return { ok: true };
+    return { ok: true, eventsReceived: extractEventsReceived(body) };
   } catch (error) {
     const errorCode = error instanceof Error && error.name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR";
     return { ok: false, errorCode };

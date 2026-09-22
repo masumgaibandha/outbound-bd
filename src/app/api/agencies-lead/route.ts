@@ -1,9 +1,9 @@
 import type { HydratedDocument } from "mongoose";
 import { NextResponse } from "next/server";
 
+import { agencyAttributionSchema, agencyInquirySchema } from "@/lib/agency-inquiry-schema";
+import { sendAgencyAutoReply } from "@/lib/agency-auto-reply";
 import { sendContactNotification } from "@/lib/contact-notification";
-import { connectToDatabase } from "@/lib/mongoose";
-import { inquirySchema } from "@/lib/inquiry-schema";
 import {
   dispatchAgencyLeadCapi,
   getClientIp,
@@ -11,11 +11,13 @@ import {
   isRateLimited,
 } from "@/lib/inquiry-submission";
 import { Inquiry, type InquiryDocument } from "@/lib/models/inquiry";
+import { connectToDatabase } from "@/lib/mongoose";
 
-// A resubmit of the same person/company within this window is almost
-// always an accidental double-click or a retried request, not two distinct
-// inquiries — treat it as idempotent rather than creating a duplicate
-// document.
+// A resubmit of the same email within this window is almost always an
+// accidental double-click or a retried request, not two distinct leads —
+// treat it as idempotent rather than creating a duplicate document. Scoped
+// to this source: an agencies-landing lead has no "company" field to key on
+// the way /api/inquiries's duplicate check does.
 const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
 
 export async function POST(request: Request) {
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
-  const parsed = inquirySchema.safeParse(record);
+  const parsed = agencyInquirySchema.safeParse(record);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
@@ -57,16 +59,18 @@ export async function POST(request: Request) {
     );
   }
 
+  // Best-effort, defense-in-depth revalidation of the client-supplied
+  // first-touch attribution (see src/lib/agency-attribution.ts) — a
+  // malformed/oversized value is dropped, never treated as a submission
+  // failure.
+  const attributionParsed = agencyAttributionSchema.safeParse(record.attribution);
+  const attribution = attributionParsed.success ? attributionParsed.data : undefined;
+
   const ipAddress = getClientIp(request);
 
-  // Every database operation for this submission lives in this one block.
-  // A failure here (e.g. a misconfigured MONGODB_URI) previously propagated
-  // as an unhandled throw — Next's default error handler then returned a
-  // non-JSON 500 body, which the client-side form couldn't parse, so it
-  // fell back to a generic "Something went wrong" with no diagnostic in
-  // between. Catching it here instead returns a friendly JSON message and
-  // logs a non-sensitive diagnostic (error name only — never a connection
-  // string, stack trace, or visitor data).
+  // Every database operation for this submission lives in this one block —
+  // same fix as /api/inquiries: a failure here returns a friendly JSON 500
+  // and logs a non-sensitive diagnostic instead of an unhandled throw.
   let created: HydratedDocument<InquiryDocument>;
   try {
     await connectToDatabase();
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
 
     const duplicate = await Inquiry.findOne({
       email: parsed.data.email.toLowerCase(),
-      company: parsed.data.company,
+      source: "agencies-landing",
       createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
     });
 
@@ -94,7 +98,8 @@ export async function POST(request: Request) {
 
     created = await Inquiry.create({
       ...parsed.data,
-      source: "contact",
+      attribution,
+      source: "agencies-landing",
       status: "NEW",
       ipAddress,
     });
@@ -111,27 +116,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // Notification is best-effort and strictly after persistence: its failure
-  // must never affect the response or the fact that the inquiry is safely
-  // stored. Awaited (not fire-and-forget) so a failure is observed and
-  // logged before the serverless invocation ends, but never rethrown.
+  // Internal notification, labeled with the source — best-effort and
+  // strictly after persistence, same contract as /api/inquiries.
   const notificationResult = await sendContactNotification({
     inquiryId: String(created._id),
-    source: "contact",
+    source: "agencies-landing",
     name: parsed.data.name,
     email: parsed.data.email,
-    company: parsed.data.company,
     website: parsed.data.website,
-    service: parsed.data.service,
+    activeClients: parsed.data.activeClients,
+    need: parsed.data.need,
     budgetRange: parsed.data.budgetRange,
-    goals: parsed.data.goals,
     createdAt: created.createdAt,
   });
 
   if (!notificationResult.ok) {
-    // Structured, non-sensitive diagnostic only: inquiry ID + error
-    // classification. Never the visitor's name/email/message, the Resend
-    // key, or a provider response body.
     console.error(
       JSON.stringify({
         event: "contact_notification_failed",
@@ -141,17 +140,34 @@ export async function POST(request: Request) {
     );
   }
 
+  // Auto-reply to the prospect — best-effort, never affects this response.
+  const autoReplyResult = await sendAgencyAutoReply({
+    inquiryId: String(created._id),
+    name: parsed.data.name,
+    email: parsed.data.email,
+  });
+
+  if (!autoReplyResult.ok) {
+    // Same non-sensitive-diagnostic-only contract as every other
+    // best-effort failure log in this route — never the visitor's name or
+    // email.
+    console.error(
+      JSON.stringify({
+        event: "agency_auto_reply_failed",
+        inquiryId: String(created._id),
+        errorCode: autoReplyResult.errorCode,
+      }),
+    );
+  }
+
   // Meta CAPI "Lead" event — best-effort and strictly after persistence.
-  // Never reached for a honeypot/timing-tripped, duplicate, or
-  // validation-failed submission, since every one of those returns before
-  // this point.
   await dispatchAgencyLeadCapi({
     request,
     record,
     email: parsed.data.email,
     ipAddress,
     inquiryId: String(created._id),
-    source: "contact",
+    source: "agencies-landing",
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });

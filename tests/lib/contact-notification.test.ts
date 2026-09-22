@@ -12,12 +12,13 @@ import { sendContactNotification, type ContactNotificationInput } from "@/lib/co
 function validInput(overrides: Partial<ContactNotificationInput> = {}): ContactNotificationInput {
   return {
     inquiryId: "64f000000000000000000123",
+    source: "contact",
     name: "Jordan Rivera",
     email: "jordan@acme.com",
     company: "Acme Inc",
     website: "https://acme.com",
     service: "cold-email-outreach",
-    budgetRange: "5k-10k",
+    budgetRange: "1k-plus",
     goals: "Book 15+ qualified sales calls per month by Q4.",
     createdAt: new Date("2026-09-04T12:34:00.000Z"),
     ...overrides,
@@ -108,8 +109,8 @@ describe("sendContactNotification — email content", () => {
     // not the raw stored slug.
     expect(payload.html).toContain("Cold Email Outreach");
     expect(payload.text).toContain("Cold Email Outreach");
-    expect(payload.html).toContain("$5,000");
-    expect(payload.text).toContain("$5,000");
+    expect(payload.html).toContain("$1,000+");
+    expect(payload.text).toContain("$1,000+");
   });
 
   it("escapes visitor-controlled HTML so it cannot inject markup, while the plain-text body keeps it literal", async () => {
@@ -147,6 +148,53 @@ describe("sendContactNotification — email content", () => {
     const [payload] = sendMock.mock.calls[0];
     expect(payload.html).toContain("some-legacy-slug");
     expect(payload.html).toContain("some-legacy-range");
+  });
+});
+
+describe("sendContactNotification — agencies-landing source", () => {
+  function agencyInput(overrides: Partial<ContactNotificationInput> = {}): ContactNotificationInput {
+    return {
+      inquiryId: "64f000000000000000000789",
+      source: "agencies-landing",
+      name: "Alex Agency",
+      email: "alex@someagency.com",
+      website: "https://someagency.com",
+      activeClients: "16-50",
+      need: "white-label",
+      budgetRange: "1k-plus",
+      createdAt: new Date("2026-09-04T12:34:00.000Z"),
+      ...overrides,
+    };
+  }
+
+  it("labels the subject and body with the agencies landing source, and includes active clients/need instead of company/service/goals", async () => {
+    await sendContactNotification(agencyInput());
+    const [payload] = sendMock.mock.calls[0];
+
+    expect(payload.subject).toContain("agencies landing");
+    expect(payload.html).toContain("Agencies landing page");
+    expect(payload.html).toContain("16 to 50");
+    expect(payload.html).toContain("Cold email for my clients (white-label)");
+    expect(payload.text).toContain("Agencies landing page");
+    expect(payload.text).toContain("16 to 50");
+  });
+
+  it("never renders a Company, Requested service, or Goals row for an agencies-landing lead", async () => {
+    await sendContactNotification(agencyInput());
+    const [payload] = sendMock.mock.calls[0];
+
+    expect(payload.html).not.toContain("Company</td>");
+    expect(payload.html).not.toContain("Requested service</td>");
+    expect(payload.html).not.toContain("Goals</td>");
+  });
+
+  it("a contact-form lead never renders an Active clients or What they need row", async () => {
+    await sendContactNotification(validInput());
+    const [payload] = sendMock.mock.calls[0];
+
+    expect(payload.html).not.toContain("Active clients</td>");
+    expect(payload.html).not.toContain("What they need</td>");
+    expect(payload.html).toContain("Contact form");
   });
 });
 

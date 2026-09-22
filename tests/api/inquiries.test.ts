@@ -40,7 +40,7 @@ function validPayload(overrides: Record<string, unknown> = {}) {
     service: "cold-email-outreach",
     targetMarket: "Mid-market SaaS, US & UK",
     monthlyOutreachVolume: "2000-5000",
-    budgetRange: "5k-10k",
+    budgetRange: "1k-plus",
     currentOutreachSetup: "One shared inbox, no dedicated infra",
     goals: "Book 15+ qualified sales calls per month by Q4.",
     privacyConsent: true,
@@ -209,14 +209,29 @@ describe("POST /api/inquiries — contact notification", () => {
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("sends no notification and preserves the existing failure behavior when MongoDB persistence fails", async () => {
+  it("returns a friendly JSON 500 (not an unhandled throw) and sends no notification when MongoDB persistence fails", async () => {
     stubNotificationEnv();
     const createSpy = vi.spyOn(Inquiry, "create").mockRejectedValueOnce(new Error("connection lost"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(POST(postRequest(validPayload()))).rejects.toThrow("connection lost");
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(500);
+    const body = (await response.json()) as { ok: boolean; message: string };
+    expect(body.ok).toBe(false);
+    expect(body.message).toBeTruthy();
     expect(sendMock).not.toHaveBeenCalled();
 
+    // Logged diagnostic is structured and non-sensitive — never the raw
+    // error message (which could echo a connection string), never PII.
+    const failureLog = errorSpy.mock.calls
+      .map(([logged]) => String(logged))
+      .find((logged) => logged.includes("inquiry_persist_failed"));
+    expect(failureLog).toBeTruthy();
+    expect(failureLog).not.toContain("connection lost");
+    expect(failureLog).not.toContain("jordan@acme.com");
+
     createSpy.mockRestore();
+    errorSpy.mockRestore();
     const count = await Inquiry.countDocuments({ email: "jordan@acme.com" });
     expect(count).toBe(0);
   });

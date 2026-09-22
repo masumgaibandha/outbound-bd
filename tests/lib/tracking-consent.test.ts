@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  categorizeRegionCookie,
   isTrackingAllowed,
   readCookieHeaderValue,
   regionFromCountryCode,
@@ -52,6 +53,22 @@ describe("shouldShowConsentBanner", () => {
 
   it("shows when the region is missing entirely — the safe default", () => {
     expect(shouldShowConsentBanner({ region: undefined, consent: undefined })).toBe(true);
+  });
+});
+
+describe("categorizeRegionCookie", () => {
+  it("categorizes the two real values proxy.ts writes", () => {
+    expect(categorizeRegionCookie("other")).toBe("other");
+    expect(categorizeRegionCookie("eea")).toBe("eea");
+  });
+
+  it("categorizes a missing cookie as missing", () => {
+    expect(categorizeRegionCookie(undefined)).toBe("missing");
+  });
+
+  it("categorizes any unrecognized value as missing, not eea", () => {
+    expect(categorizeRegionCookie("bogus")).toBe("missing");
+    expect(categorizeRegionCookie("")).toBe("missing");
   });
 });
 

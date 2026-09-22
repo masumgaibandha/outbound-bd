@@ -34,15 +34,23 @@ export function PricingPlanCard({ plan }: { plan: ManagedPlan }) {
         <span
           className={`text-4xl font-semibold tracking-tight ${featured ? "text-on-dark" : "text-ink"}`}
         >
-          {formatPriceCents(plan.monthlyPriceCents)}
+          {plan.monthlyPriceCents === null ? "Contact for price" : formatPriceCents(plan.monthlyPriceCents)}
         </span>
-        <span className={featured ? "text-on-dark-muted text-sm" : "text-ink-muted text-sm"}>
-          /month
-        </span>
+        {plan.monthlyPriceCents === null ? null : (
+          <span className={featured ? "text-on-dark-muted text-sm" : "text-ink-muted text-sm"}>
+            /month
+          </span>
+        )}
       </div>
-      <p className={`mt-1 text-sm ${featured ? "text-on-dark-muted" : "text-ink-muted"}`}>
-        + {formatPriceCents(plan.setupPriceCents)} one-time setup
-      </p>
+      {plan.monthlyPriceCents === null ? (
+        <p className={`mt-1 text-sm ${featured ? "text-on-dark-muted" : "text-ink-muted"}`}>
+          Custom setup, scoped on a call
+        </p>
+      ) : (
+        <p className={`mt-1 text-sm ${featured ? "text-on-dark-muted" : "text-ink-muted"}`}>
+          + {formatPriceCents(plan.setupPriceCents)} one-time setup
+        </p>
+      )}
 
       <ul
         className={`mt-6 flex-1 space-y-3 border-t pt-6 ${

@@ -30,10 +30,12 @@ afterEach(() => {
 
 describe("sendLeadEvent", () => {
   it("sends a Lead event with a hashed (not plaintext) email and the given event_id", async () => {
-    fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ events_received: 1, fbtrace_id: "trace-1" }), { status: 200 }),
+    );
 
     const result = await sendLeadEvent(validInput());
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({ ok: true, eventsReceived: 1 });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
@@ -74,11 +76,58 @@ describe("sendLeadEvent", () => {
     expect(result).toEqual({ ok: false, errorCode: "HTTP_400" });
   });
 
+  it("extracts Meta's numeric error.code and error.error_subcode, and never the message body", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: { message: "sensitive detail that must never be logged", code: 190, error_subcode: 463 },
+        }),
+        { status: 401 },
+      ),
+    );
+
+    const result = await sendLeadEvent(validInput());
+    expect(result).toEqual({ ok: false, errorCode: "HTTP_401", metaErrorCode: 190, metaErrorSubcode: 463 });
+    expect(JSON.stringify(result)).not.toContain("sensitive detail");
+  });
+
+  it("returns no Meta error codes when the error response body is missing or unparseable, without throwing", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("not json", { status: 500 }));
+    const result = await sendLeadEvent(validInput());
+    expect(result).toEqual({ ok: false, errorCode: "HTTP_500" });
+  });
+
+  it("returns eventsReceived: 0 when the success response body is missing or unparseable, without throwing", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("not json", { status: 200 }));
+    const result = await sendLeadEvent(validInput());
+    expect(result).toEqual({ ok: true, eventsReceived: 0 });
+  });
+
   it("returns NETWORK_ERROR when fetch rejects, without throwing", async () => {
     fetchMock.mockRejectedValueOnce(new Error("network down"));
     await expect(sendLeadEvent(validInput())).resolves.toEqual({
       ok: false,
       errorCode: "NETWORK_ERROR",
     });
+  });
+});
+
+describe("sendLeadEvent — test_event_code", () => {
+  it("includes test_event_code in the payload when provided", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ events_received: 1 }), { status: 200 }));
+    await sendLeadEvent(validInput({ testEventCode: "TEST12345" }));
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init.body as string);
+    expect(body.test_event_code).toBe("TEST12345");
+  });
+
+  it("omits test_event_code entirely when not provided", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ events_received: 1 }), { status: 200 }));
+    await sendLeadEvent(validInput());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init.body as string);
+    expect(body).not.toHaveProperty("test_event_code");
   });
 });

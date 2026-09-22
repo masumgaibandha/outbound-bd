@@ -15,11 +15,22 @@ import "server-only";
 export interface AgencyMetaCapiEnv {
   pixelId: string;
   capiAccessToken: string;
+  /**
+   * Optional. When set, `dispatchAgencyLeadCapi` includes it as
+   * `test_event_code` in the CAPI payload, which routes the event into
+   * Meta Events Manager's Test Events tool instead of counting it as real
+   * traffic — for verifying CAPI delivery end-to-end without polluting the
+   * dataset. Must be removed from Production once testing is done (see
+   * .env.example) — left set, every real visitor's Lead event would be
+   * diverted into Test Events instead of being counted normally.
+   */
+  testEventCode: string | undefined;
 }
 
 export function getAgencyMetaCapiEnv(): AgencyMetaCapiEnv | null {
   const pixelId = process.env.AGENCY_META_PIXEL_ID;
   const capiAccessToken = process.env.AGENCY_META_CAPI_ACCESS_TOKEN;
   if (!pixelId || !capiAccessToken) return null;
-  return { pixelId, capiAccessToken };
+  const testEventCode = process.env.AGENCY_META_TEST_EVENT_CODE?.trim() || undefined;
+  return { pixelId, capiAccessToken, testEventCode };
 }

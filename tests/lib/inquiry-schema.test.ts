@@ -11,7 +11,7 @@ function validInquiry(overrides: Record<string, unknown> = {}) {
     service: "cold-email-outreach",
     targetMarket: "Mid-market SaaS, US & UK",
     monthlyOutreachVolume: "2000-5000",
-    budgetRange: "5k-10k",
+    budgetRange: "1k-plus",
     currentOutreachSetup: "One shared inbox, no dedicated infra",
     goals: "Book 15+ qualified sales calls per month by Q4.",
     privacyConsent: true,

@@ -36,6 +36,25 @@ function isEeaOrUnknownRegion(region: string | undefined): boolean {
   return region !== "other";
 }
 
+export type RegionCookieCategory = "other" | "eea" | "missing";
+
+/**
+ * Three-way classification of the raw `obd_region` cookie value, used by
+ * CAPI observability logging (`src/lib/inquiry-submission.ts`) to tell
+ * apart "we know this visitor is outside the EEA/UK" (`other`), "we know
+ * they're in the EEA/UK" (`eea`), and "the cookie never reached this
+ * request at all" (`missing`) — the last of which is a distinct, worth-
+ * investigating case (proxy.ts not running, cookie blocked, a direct API
+ * call bypassing it) rather than a normal consent-declined outcome. Any
+ * value other than the two proxy.ts ever actually writes ("other"/"eea")
+ * is treated as `missing` too, since it's equally not a real classification.
+ */
+export function categorizeRegionCookie(region: string | undefined): RegionCookieCategory {
+  if (region === "other") return "other";
+  if (region === "eea") return "eea";
+  return "missing";
+}
+
 export function isTrackingAllowed({ region, consent }: TrackingContext): boolean {
   if (!isEeaOrUnknownRegion(region)) return true;
   return consent === "granted";
