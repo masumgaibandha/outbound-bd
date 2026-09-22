@@ -14,7 +14,7 @@ import { resolveContactPrefill } from "@/lib/contact-prefill";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Tell us about your project and goals. No account required — a real person reads every inquiry and follows up by email.",
+    "Tell us about your project and goals. No account required: a real person reads every inquiry and follows up by email.",
 };
 
 type ContactPageProps = {
@@ -68,7 +68,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 Prefer to talk first?
               </h2>
               <p className="text-ink-muted mt-3 text-sm leading-relaxed">
-                Book a 30-minute discovery call instead — same qualification
+                Book a 30-minute discovery call instead: same qualification
                 conversation, just live.
               </p>
               <a
@@ -85,7 +85,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 What happens next
               </h2>
               <p className="text-ink-muted mt-3 text-sm leading-relaxed">
-                Every inquiry is read personally — not routed through a
+                Every inquiry is read personally, not routed through a
                 ticketing queue. We&apos;ll reply by email to ask any
                 follow-up questions and figure out whether we&apos;re a good
                 fit, then send a proposal and agreement outside the website.

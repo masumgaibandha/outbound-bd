@@ -11,9 +11,11 @@ const basePlan: ManagedPlan = {
   name: "Launch",
   monthlyPriceCents: 49900,
   setupPriceCents: 19900,
-  campaigns: "1 campaign",
-  leadsIncluded: 2500,
-  inboxes: "Up to 15 inboxes",
+  tagline: "For one offer and one target market.",
+  features: [
+    "3 sending domains and up to 9 inboxes, fully set up (DNS, SPF, DKIM, DMARC)",
+    "Up to 1,500 verified leads per month, matched to your ideal customer",
+  ],
   relatedServiceSlug: "cold-email-outreach",
 };
 

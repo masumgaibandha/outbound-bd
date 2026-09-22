@@ -40,7 +40,7 @@ export default function ResultsPage() {
         <SectionHeading
           eyebrow="Available today"
           title="Selected results from Abdullah Al Masum's independent client work"
-          description="The same discipline every Outbound BD engagement is run on — campaign performance, inbox-placement tests, and sender infrastructure, each shown on its own terms."
+          description="The same discipline every Outbound BD engagement is run on: campaign performance, inbox-placement tests, and sender infrastructure, each shown on its own terms."
           align="left"
         />
         <div className="mt-14">

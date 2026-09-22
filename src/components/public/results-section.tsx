@@ -38,7 +38,7 @@ export function ResultsSection() {
               {METRIC_LABELS.map((label) => (
                 <div key={label}>
                   <dt className="text-ink-muted text-xs">{label}</dt>
-                  <dd className="text-ink/30 mt-1 text-2xl font-semibold">—</dd>
+                  <dd className="text-ink/30 mt-1 text-2xl font-semibold">N/A</dd>
                 </div>
               ))}
             </dl>

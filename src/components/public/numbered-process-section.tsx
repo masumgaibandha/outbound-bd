@@ -11,7 +11,7 @@ export function NumberedProcessSection({ items }: NumberedProcessSectionProps) {
       <SectionHeading
         eyebrow="How it works"
         title="Process"
-        description="A disciplined, repeatable sequence for this service — so you always know what's happening and why."
+        description="A disciplined, repeatable sequence for this service, so you always know what's happening and why."
       />
 
       <ol className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">

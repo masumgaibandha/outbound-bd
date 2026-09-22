@@ -8,7 +8,7 @@ import { RequirementsSection } from "@/components/public/requirements-section";
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "How an Outbound BD engagement runs end to end: discovery, targeting, infrastructure, copy, campaign launch, optimization, and reporting — plus what we need from you along the way.",
+    "How an Outbound BD engagement runs end to end: discovery, targeting, infrastructure, copy, campaign launch, optimization, and reporting, plus what we need from you along the way.",
 };
 
 const CLIENT_RESPONSIBILITIES = [

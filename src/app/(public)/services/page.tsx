@@ -11,7 +11,7 @@ import { SERVICES } from "@/components/public/services-data";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Cold email outreach, lead generation, email infrastructure, and email deliverability — managed end to end for B2B revenue teams.",
+    "Cold email outreach, lead generation, email infrastructure, and email deliverability, managed end to end for B2B revenue teams.",
 };
 
 export default function ServicesIndexPage() {
@@ -36,7 +36,7 @@ export default function ServicesIndexPage() {
       <Section tone="canvas" labelledBy="services-index-heading">
         <SectionHeading
           eyebrow="Our services"
-          title="Four disciplines, one team"
+          title="Four disciplines, one specialist"
           align="left"
         />
 

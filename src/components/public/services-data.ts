@@ -31,7 +31,7 @@ export const SERVICES: ServiceDefinition[] = [
       "Fully managed cold email programs that turn a defined ICP into booked sales conversations.",
     metaTitle: "Cold Email Outreach",
     metaDescription:
-      "Managed cold email programs — strategy, copywriting, sending, and reply handling — run end to end by senior operators for B2B teams.",
+      "Managed cold email programs, covering strategy, copywriting, sending, and reply handling, run end to end by one senior operator for B2B teams.",
     heroTitle: "Cold Email Outreach",
     heroIntro:
       "A fully managed cold email program that turns a defined ideal-customer profile into booked sales conversations. We handle targeting, copy, sending infrastructure, and reply triage as one connected system, not four disconnected vendors.",
@@ -60,10 +60,10 @@ export const SERVICES: ServiceDefinition[] = [
     goodFit: [
       "You sell a defined B2B product or service with a clear ideal-customer profile",
       "You have a repeatable sales process ready to receive booked meetings",
-      "You want a managed program run by strategists, not software you operate yourself",
+      "You want a managed program run by Masum, not software you operate yourself",
     ],
     notFit: [
-      "You don't yet have a clear target customer or offer — positioning needs to come first",
+      "You don't yet have a clear target customer or offer: positioning needs to come first",
       "You sell direct to consumers rather than businesses",
       "You're looking for a fixed volume or reply-rate commitment regardless of market fit",
     ],
@@ -76,7 +76,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         title: "Verified prospect list",
         description:
-          "Contacts researched and matched to your ICP — no purchased or recycled data.",
+          "Contacts researched and matched to your ICP (no purchased or recycled data).",
       },
       {
         title: "Dedicated sending infrastructure",
@@ -86,7 +86,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         title: "Multi-step sequences",
         description:
-          "Copy written by senior strategists, reviewed and approved by you before anything sends.",
+          "Copy written by Masum, reviewed and approved by you before anything sends.",
       },
       {
         title: "Reply triage & booking",
@@ -142,13 +142,13 @@ export const SERVICES: ServiceDefinition[] = [
     slug: "lead-generation",
     navLabel: "Lead Generation",
     shortDescription:
-      "ICP definition and verified, enriched prospect lists — sourced and refreshed on an ongoing basis, not a one-time export.",
+      "ICP definition and verified, enriched prospect lists, sourced and refreshed on an ongoing basis, not a one-time export.",
     metaTitle: "Lead Generation",
     metaDescription:
       "B2B lead generation: ICP definition, verified and enriched prospect lists, and ongoing data hygiene, matched to your CRM.",
     heroTitle: "Lead Generation",
     heroIntro:
-      "Verified, enriched prospect lists matched to a clearly defined ideal-customer profile — sourced on an ongoing basis and kept clean as your market shifts, not a one-time export that goes stale in a quarter.",
+      "Verified, enriched prospect lists matched to a clearly defined ideal-customer profile, sourced on an ongoing basis and kept clean as your market shifts, not a one-time export that goes stale in a quarter.",
     problems: [
       {
         title: "Sales wastes time on stale lists",
@@ -194,7 +194,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         title: "Ongoing list refresh",
         description:
-          "Lists updated as your ICP, market, or product shifts — not delivered once and forgotten.",
+          "Lists updated as your ICP, market, or product shifts, not delivered once and forgotten.",
       },
       {
         title: "Data hygiene",
@@ -244,7 +244,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         question: "Where does the data come from?",
         answer:
-          "We research and verify contacts against public and licensed data sources, filtered to your documented ICP — never a single purchased list resold as-is.",
+          "We research and verify contacts against public and licensed data sources, filtered to your documented ICP, never a single purchased list resold as-is.",
       },
       {
         question: "How is data privacy handled?",
@@ -254,12 +254,12 @@ export const SERVICES: ServiceDefinition[] = [
       {
         question: "How often are lists refreshed?",
         answer:
-          "Refresh cadence is agreed with you up front based on how quickly your market and ICP change — this is set per engagement, not fixed.",
+          "Refresh cadence is agreed with you up front based on how quickly your market and ICP change: this is set per engagement, not fixed.",
       },
       {
         question: "Can this feed directly into cold email sending?",
         answer:
-          "Yes — lists built here are the same ones used in our Cold Email Outreach service, or can be handed off to your existing sending setup.",
+          "Yes, lists built here are the same ones used in our Cold Email Outreach service, or can be handed off to your existing sending setup.",
       },
     ],
   },
@@ -267,13 +267,13 @@ export const SERVICES: ServiceDefinition[] = [
     slug: "email-infrastructure",
     navLabel: "Email Infrastructure",
     shortDescription:
-      "Dedicated sending domains, mailboxes, and authentication setup — isolated from your primary domain and warmed before use.",
+      "Dedicated sending domains, mailboxes, and authentication setup, isolated from your primary domain and warmed before use.",
     metaTitle: "Email Infrastructure",
     metaDescription:
       "Cold email sending infrastructure: dedicated domains and mailboxes, SPF/DKIM/DMARC setup, staged warm-up, and monitored rotation.",
     heroTitle: "Email Infrastructure",
     heroIntro:
-      "Dedicated sending domains and mailboxes, properly authenticated and warmed, isolated from your primary company domain — the technical foundation cold email depends on, set up once and monitored continuously.",
+      "Dedicated sending domains and mailboxes, properly authenticated and warmed, isolated from your primary company domain: the technical foundation cold email depends on, set up once and monitored continuously.",
     problems: [
       {
         title: "Your primary domain is at risk",
@@ -302,7 +302,7 @@ export const SERVICES: ServiceDefinition[] = [
       "You need authentication (SPF/DKIM/DMARC) set up correctly from the start",
     ],
     notFit: [
-      "You send only transactional or marketing newsletter email — that's a different discipline",
+      "You send only transactional or marketing newsletter email: that's a different discipline",
       "You want a one-time audit with no ongoing management (see Email Deliverability instead)",
     ],
     deliverables: [
@@ -368,7 +368,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         question: "How long does warm-up take?",
         answer:
-          "Warm-up is staged gradually rather than run to a fixed calendar date — mailboxes move to full volume once sending signals show they're ready.",
+          "Warm-up is staged gradually rather than run to a fixed calendar date. Mailboxes move to full volume once sending signals show they're ready.",
       },
       {
         question: "What happens if a domain gets blocklisted?",
@@ -378,7 +378,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         question: "How many mailboxes do we need?",
         answer:
-          "It depends on your target send volume and list size — we size mailbox and domain counts to your goals rather than a one-size-fits-all number.",
+          "It depends on your target send volume and list size. We size mailbox and domain counts to your goals rather than a one-size-fits-all number.",
       },
     ],
   },
@@ -386,13 +386,13 @@ export const SERVICES: ServiceDefinition[] = [
     slug: "email-deliverability",
     navLabel: "Email Deliverability",
     shortDescription:
-      "Ongoing monitoring and protection of sender reputation for domains already sending — diagnosis, remediation, and continuous tracking.",
+      "Ongoing monitoring and protection of sender reputation for domains already sending: diagnosis, remediation, and continuous tracking.",
     metaTitle: "Email Deliverability",
     metaDescription:
       "Ongoing cold email deliverability monitoring: audits, bounce and spam-complaint tracking, blocklist monitoring, and remediation.",
     heroTitle: "Email Deliverability",
     heroIntro:
-      "Ongoing monitoring and protection of sender reputation for domains that are already sending — so a program that's landing in the inbox today keeps landing there next quarter, not just at launch.",
+      "Ongoing monitoring and protection of sender reputation for domains that are already sending, so a program that's landing in the inbox today keeps landing there next quarter, not just at launch.",
     problems: [
       {
         title: "Sequences that used to land now don't",
@@ -416,12 +416,12 @@ export const SERVICES: ServiceDefinition[] = [
       },
     ],
     goodFit: [
-      "You're already sending cold email — through us or in-house — and need deliverability specifically diagnosed or protected",
+      "You're already sending cold email (through us or in-house) and need deliverability specifically diagnosed or protected",
       "You want continuous monitoring rather than a one-time fix",
       "You're willing to share sending logs and platform access for an accurate audit",
     ],
     notFit: [
-      "You're not yet sending any cold email — see Email Infrastructure to get set up first",
+      "You're not yet sending any cold email: see Email Infrastructure to get set up first",
       "The issue is primarily about copy or targeting rather than technical deliverability",
     ],
     deliverables: [
@@ -500,7 +500,7 @@ export const SERVICES: ServiceDefinition[] = [
       {
         question: "Is monitoring ongoing or a one-time check?",
         answer:
-          "Monitoring runs continuously for the duration of the engagement — bounce, complaint, and blocklist signals are tracked on an ongoing basis, not just at kickoff.",
+          "Monitoring runs continuously for the duration of the engagement: bounce, complaint, and blocklist signals are tracked on an ongoing basis, not just at kickoff.",
       },
     ],
   },

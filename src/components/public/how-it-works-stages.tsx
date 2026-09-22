@@ -9,7 +9,7 @@ const STAGES = [
   {
     title: "Targeting",
     description:
-      "We define firmographic and technographic targeting criteria, then research and verify a prospect list matched to it — no purchased or recycled data. Lists are checked for accuracy and refreshed as your ICP evolves.",
+      "We define firmographic and technographic targeting criteria, then research and verify a prospect list matched to it (no purchased or recycled data). Lists are checked for accuracy and refreshed as your ICP evolves.",
   },
   {
     title: "Infrastructure",
@@ -19,7 +19,7 @@ const STAGES = [
   {
     title: "Copy",
     description:
-      "Multi-step sequences are written by senior strategists, grounded in your positioning, prior customers, and voice. You review and approve messaging before anything goes live — nothing sends without your sign-off.",
+      "Multi-step sequences are written by Masum, grounded in your positioning, prior customers, and voice. You review and approve messaging before anything goes live: nothing sends without your sign-off.",
   },
   {
     title: "Campaign launch",
@@ -34,7 +34,7 @@ const STAGES = [
   {
     title: "Reporting",
     description:
-      "You get a plain-English weekly readout: what went out, what came back, and what's booked on your calendar — not a black-box dashboard of vanity metrics.",
+      "You get a plain-English weekly readout: what went out, what came back, and what's booked on your calendar, not a black-box dashboard of vanity metrics.",
   },
 ] as const;
 

@@ -69,7 +69,7 @@ describe("PublicLayout — masterclass announcement banner gating", () => {
   it("still renders the agency header and footer regardless of flag state", () => {
     vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "false");
     renderLayout();
-    expect(screen.getByRole("link", { name: "Outbound BD — home" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Outbound BD, home" })).toBeInTheDocument();
     expect(screen.getByText("page content")).toBeInTheDocument();
   });
 

@@ -28,7 +28,7 @@ export default function TermsOfServicePage() {
             These terms cover your use of outboundbd.com and, in general
             terms, how an engagement with Outbound BD works. They&apos;re
             written in plain English to accurately describe how the site and
-            business currently operate — they are not a substitute for
+            business currently operate. They are not a substitute for
             independent legal review before you sign an actual services
             agreement.
           </p>
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
               Outbound BD provides cold email outreach and B2B lead
               generation services, including email infrastructure,
               deliverability, campaign management, and prospect list
-              building. This website is informational and consultation-led —
+              building. This website is informational and consultation-led:
               it does not sell or process payment for services directly.
               Submitting a form or booking a call does not create a contract
               or purchase.
@@ -97,7 +97,7 @@ export default function TermsOfServicePage() {
               <a href="/results" className="text-ink decoration-action hover:text-action font-medium underline decoration-2 underline-offset-4 transition-colors">
                 Results
               </a>{" "}
-              page — we do not publish invented figures, names, or
+              page. We do not publish invented figures, names, or
               partnerships.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function TermsOfServicePage() {
           <div>
             <h2 className="text-ink text-base font-semibold">Contact</h2>
             <p className="mt-2">
-              Questions about these terms — write to{" "}
+              Questions about these terms? Write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-ink decoration-action hover:text-action font-medium underline decoration-2 underline-offset-4 transition-colors"

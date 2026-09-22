@@ -42,7 +42,7 @@ export default function PricingPage() {
                 Not included in any price below:
               </span>{" "}
               domains, mailboxes, sending tools, and other third-party
-              subscriptions — these are billed directly by their providers,
+              subscriptions. These are billed directly by their providers,
               not by us. And while we run every program to a high standard,
               reply and meeting volume depends on your market and offer, so
               results are never guaranteed.
@@ -55,7 +55,7 @@ export default function PricingPage() {
         <SectionHeading
           eyebrow="Managed Outreach"
           title="Fully managed cold email programs"
-          description="Every plan includes the same disciplines end to end — the tiers differ in scope, not in what's covered."
+          description="Every plan includes the same disciplines end to end: the tiers differ in scope, not in what's covered."
         />
 
         <ul className="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
@@ -85,7 +85,7 @@ export default function PricingPage() {
         <SectionHeading
           eyebrow="One-time services"
           title="Need just one piece done?"
-          description="No ongoing commitment — pay once for a specific deliverable."
+          description="No ongoing commitment, pay once for a specific deliverable."
         />
 
         <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-2">
@@ -101,7 +101,7 @@ export default function PricingPage() {
 
       <FinalCtaSection
         heading="Not sure which option fits?"
-        description="Tell us about your goals and budget — we'll recommend the right plan or one-time service."
+        description="Tell us about your goals and budget, and we'll recommend the right plan or one-time service."
         secondaryHref="/faq"
         secondaryLabel="Read the FAQ"
       />

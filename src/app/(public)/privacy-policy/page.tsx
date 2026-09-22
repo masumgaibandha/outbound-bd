@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
           <p>
             This policy describes what happens to information you submit
             through outboundbd.com. Outbound BD is a consultation-led
-            agency — this website does not have user accounts, does not
+            agency: this website does not have user accounts, does not
             process payments, and does not require you to create a login to
             use it.
           </p>
@@ -107,7 +107,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-ink text-base font-semibold">Your rights</h2>
             <p className="mt-2">
               You can ask us to access, correct, or delete any information
-              you&apos;ve submitted at any time — email{" "}
+              you&apos;ve submitted at any time. Email{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-ink decoration-action hover:text-action font-medium underline decoration-2 underline-offset-4 transition-colors"
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
           <div>
             <h2 className="text-ink text-base font-semibold">Contact</h2>
             <p className="mt-2">
-              Questions about this policy — write to{" "}
+              Questions about this policy? Write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-ink decoration-action hover:text-action font-medium underline decoration-2 underline-offset-4 transition-colors"

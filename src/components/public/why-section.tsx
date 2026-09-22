@@ -13,11 +13,11 @@ const REASONS = [
     icon: ShieldIcon,
     title: "Deliverability-first infrastructure",
     description:
-      "Dedicated domains and mailboxes per client, warmed and monitored continuously — your sender reputation is never shared.",
+      "Dedicated domains and mailboxes per client, warmed and monitored continuously. Your sender reputation is never shared.",
   },
   {
     icon: UsersIcon,
-    title: "Senior strategists, not junior VAs",
+    title: "A senior strategist, not a junior VA",
     description:
       "Every account is run by an experienced outbound operator who understands your market, not a rotating cast of contractors.",
   },
@@ -25,7 +25,7 @@ const REASONS = [
     icon: ChartIcon,
     title: "Transparent, plain-English reporting",
     description:
-      "You see every send, reply, and booked meeting in a weekly readout — no vanity metrics, no black-box dashboards.",
+      "You see every send, reply, and booked meeting in a weekly readout: no vanity metrics, no black-box dashboards.",
   },
   {
     icon: GlobeIcon,

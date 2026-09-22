@@ -43,14 +43,14 @@ export const FAQS: FaqEntry[] = [
     category: "services",
     question: "Which service should I start with if I'm not sure?",
     answer:
-      "Most clients start with Cold Email Outreach, which bundles targeting, infrastructure, copy, and reply handling into one program. If you already have infrastructure or lists in place, Email Deliverability or Lead Generation alone may fit better — tell us your situation on a discovery call and we'll point you to the right service.",
+      "Most clients start with Cold Email Outreach, which bundles targeting, infrastructure, copy, and reply handling into one program. If you already have infrastructure or lists in place, Email Deliverability or Lead Generation alone may fit better. Tell us your situation on a discovery call and we'll point you to the right service.",
   },
   {
     id: "process-copywriting",
     category: "process",
     question: "Do you write the copy, or do we?",
     answer:
-      "Our strategists write every sequence, working from your positioning, prior customers, and voice. You review and approve messaging before anything goes live.",
+      "Masum writes every sequence, working from your positioning, prior customers, and voice. You review and approve messaging before anything goes live.",
   },
   {
     id: "process-stages",
@@ -64,14 +64,14 @@ export const FAQS: FaqEntry[] = [
     category: "timelines",
     question: "How quickly can we expect results?",
     answer:
-      "Most programs launch within two to three weeks of kickoff, covering ICP definition, list build, and infrastructure warm-up. Reply and meeting volume typically builds over the following weeks as sequences are tested and refined — the exact pace depends on your market and list size.",
+      "Most programs launch within two to three weeks of kickoff, covering ICP definition, list build, and infrastructure warm-up. Reply and meeting volume typically builds over the following weeks as sequences are tested and refined. The exact pace depends on your market and list size.",
   },
   {
     id: "timelines-warmup",
     category: "timelines",
     question: "How long does mailbox warm-up take?",
     answer:
-      "Warm-up is staged gradually rather than run to a fixed calendar date — mailboxes move to full volume once sending signals show they're ready.",
+      "Warm-up is staged gradually rather than run to a fixed calendar date. Mailboxes move to full volume once sending signals show they're ready.",
   },
   {
     id: "deliverability-protect-reputation",
@@ -92,14 +92,14 @@ export const FAQS: FaqEntry[] = [
     category: "data-ownership",
     question: "Who owns the prospect lists and data you build for us?",
     answer:
-      "Lists and data built for your engagement are yours — delivered in your preferred format (CRM export, spreadsheet, or direct integration) so they stay usable even outside our platform relationships.",
+      "Lists and data built for your engagement are yours, delivered in your preferred format (CRM export, spreadsheet, or direct integration) so they stay usable even outside our platform relationships.",
   },
   {
     id: "data-ownership-source",
     category: "data-ownership",
     question: "Where does your prospect data come from?",
     answer:
-      "We research and verify contacts against public and licensed data sources, filtered to your documented ICP — never a single purchased list resold as-is.",
+      "We research and verify contacts against public and licensed data sources, filtered to your documented ICP, never a single purchased list resold as-is.",
   },
   {
     id: "compliance-gdpr-canspam",
@@ -120,42 +120,42 @@ export const FAQS: FaqEntry[] = [
     category: "support",
     question: "Do you work with our existing CRM?",
     answer:
-      "Yes. We integrate with the CRM and calendar tools your team already uses — booked meetings and reply data are pushed to your pipeline, not trapped in a separate dashboard.",
+      "Yes. We integrate with the CRM and calendar tools your team already uses: booked meetings and reply data are pushed to your pipeline, not trapped in a separate dashboard.",
   },
   {
     id: "support-who-runs-account",
     category: "support",
     question: "Who will we be working with day to day?",
     answer:
-      "Every account is run by an experienced outbound operator who understands your market, not a rotating cast of contractors — you have a direct line to the person actually running your program.",
+      "Every account is run by an experienced outbound operator who understands your market, not a rotating cast of contractors. You have a direct line to the person actually running your program.",
   },
   {
     id: "support-pause-adjust",
     category: "support",
     question: "What if we need to pause or adjust the program mid-engagement?",
     answer:
-      "Reach out any time — sending volume and sequences can be paused or adjusted as your priorities change. We'd rather adjust the plan than keep sending on autopilot.",
+      "Reach out any time: sending volume and sequences can be paused or adjusted as your priorities change. We'd rather adjust the plan than keep sending on autopilot.",
   },
   {
     id: "results-qualified-conversation",
     category: "results",
     question: "What counts as a “qualified conversation”?",
     answer:
-      "A reply from someone who matches your ideal-customer profile and has shown real interest — not an auto-reply or a polite decline. We agree on qualification criteria with you before a single email goes out.",
+      "A reply from someone who matches your ideal-customer profile and has shown real interest, not an auto-reply or a polite decline. We agree on qualification criteria with you before a single email goes out.",
   },
   {
     id: "results-guarantee",
     category: "results",
     question: "Can you guarantee a specific number of meetings or replies?",
     answer:
-      "No — reply and meeting volume depends on your market, offer, and list size, and we won't promise a fixed number regardless of fit. What we do commit to is transparent weekly reporting so you always know what's working and why.",
+      "No. Reply and meeting volume depends on your market, offer, and list size, and we won't promise a fixed number regardless of fit. What we do commit to is transparent weekly reporting so you always know what's working and why.",
   },
   {
     id: "results-case-studies",
     category: "results",
     question: "Do you have case studies or client results we can see?",
     answer:
-      "Not yet published — we only share performance figures once a client has reviewed and approved them for release. You can see the format each case study will follow on the homepage's Results section, and we're happy to discuss reference conversations directly on a call.",
+      "Not yet published. We only share performance figures once a client has reviewed and approved them for release. You can see the format each case study will follow on the homepage's Results section, and we're happy to discuss reference conversations directly on a call.",
   },
 ];
 

@@ -13,7 +13,7 @@ export function AboutHero() {
         <p className="text-ink-muted mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty">
           Outbound BD is a founder-led agency built to combine targeting,
           infrastructure, messaging, deliverability, campaign execution, and
-          reporting under one accountable service — not split across separate
+          reporting under one accountable service, not split across separate
           vendors, freelancers, or tools.
         </p>
       </Container>

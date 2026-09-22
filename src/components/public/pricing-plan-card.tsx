@@ -52,41 +52,25 @@ export function PricingPlanCard({ plan }: { plan: ManagedPlan }) {
         </p>
       )}
 
+      <p className={`mt-4 text-sm leading-relaxed ${featured ? "text-on-dark/90" : "text-ink-muted"}`}>
+        {plan.tagline}
+      </p>
+
       <ul
         className={`mt-6 flex-1 space-y-3 border-t pt-6 ${
           featured ? "border-on-dark/15" : "border-hairline"
         }`}
       >
-        <li className="flex items-start gap-2.5 text-sm">
-          <CheckIcon
-            width={16}
-            height={16}
-            className={`mt-0.5 shrink-0 ${featured ? "text-action-dark" : "text-action"}`}
-          />
-          <span className={featured ? "text-on-dark/90" : "text-ink"}>
-            {plan.campaigns}
-          </span>
-        </li>
-        <li className="flex items-start gap-2.5 text-sm">
-          <CheckIcon
-            width={16}
-            height={16}
-            className={`mt-0.5 shrink-0 ${featured ? "text-action-dark" : "text-action"}`}
-          />
-          <span className={featured ? "text-on-dark/90" : "text-ink"}>
-            {plan.leadsIncluded.toLocaleString("en-US")} verified leads
-          </span>
-        </li>
-        <li className="flex items-start gap-2.5 text-sm">
-          <CheckIcon
-            width={16}
-            height={16}
-            className={`mt-0.5 shrink-0 ${featured ? "text-action-dark" : "text-action"}`}
-          />
-          <span className={featured ? "text-on-dark/90" : "text-ink"}>
-            {plan.inboxes}
-          </span>
-        </li>
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2.5 text-sm">
+            <CheckIcon
+              width={16}
+              height={16}
+              className={`mt-0.5 shrink-0 ${featured ? "text-action-dark" : "text-action"}`}
+            />
+            <span className={featured ? "text-on-dark/90" : "text-ink"}>{feature}</span>
+          </li>
+        ))}
       </ul>
 
       <ButtonLink

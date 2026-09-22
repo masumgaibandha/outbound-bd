@@ -21,9 +21,9 @@ export type ManagedPlan = {
   /** `null` means "Contact for price" — no public starting number for this tier. */
   monthlyPriceCents: number | null;
   setupPriceCents: number;
-  campaigns: string;
-  leadsIncluded: number;
-  inboxes: string;
+  tagline: string;
+  /** Rendered as the plan card's bullet list, in order. */
+  features: string[];
   relatedServiceSlug: ServiceInterest;
 };
 
@@ -66,9 +66,16 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     name: "Launch",
     monthlyPriceCents: 49900,
     setupPriceCents: 19900,
-    campaigns: "1 campaign",
-    leadsIncluded: 2500,
-    inboxes: "Up to 15 inboxes",
+    tagline: "For one offer and one target market.",
+    features: [
+      "3 sending domains and up to 9 inboxes, fully set up (DNS, SPF, DKIM, DMARC)",
+      "Inbox warm-up and ongoing deliverability monitoring",
+      "Up to 1,500 verified leads per month, matched to your ideal customer",
+      "1 campaign with a 3-step email sequence",
+      "Copy written and tested for your offer",
+      "Reply handling and lead tagging",
+      "Weekly report",
+    ],
     relatedServiceSlug: "cold-email-outreach",
   },
   {
@@ -77,9 +84,16 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     name: "Growth",
     monthlyPriceCents: 99900,
     setupPriceCents: 34900,
-    campaigns: "Up to 3 campaigns",
-    leadsIncluded: 5000,
-    inboxes: "Up to 30 inboxes",
+    tagline: "For agencies or companies running more than one offer or market.",
+    features: [
+      "6 sending domains and up to 18 inboxes, fully set up, with a custom tracking domain",
+      "Inbox warm-up, deliverability monitoring and blacklist checks",
+      "Up to 4,000 verified leads per month",
+      "Up to 3 campaigns running at once, each with its own sequence",
+      "A/B testing of subject lines and copy",
+      "Reply handling, lead tagging, and interested leads sent to your CRM or inbox",
+      "Weekly report plus a monthly strategy call",
+    ],
     relatedServiceSlug: "cold-email-outreach",
   },
   {
@@ -89,9 +103,15 @@ export const MANAGED_PLANS: ManagedPlan[] = [
     // "Contact for price" — no public starting number for this tier.
     monthlyPriceCents: null,
     setupPriceCents: 59900,
-    campaigns: "Up to 5 campaigns",
-    leadsIncluded: 10000,
-    inboxes: "Up to 60 inboxes",
+    tagline: "For high volume or multiple clients.",
+    features: [
+      "10+ domains and 50 to 100+ inboxes, split across Google Workspace and Microsoft 365",
+      "Lead volume and campaigns scoped to your goals",
+      "Multiple ideal customer profiles and markets",
+      "White-label reporting for agencies",
+      "Priority support and a dedicated Slack or WhatsApp channel",
+      "Weekly strategy calls",
+    ],
     relatedServiceSlug: "cold-email-outreach",
   },
 ];
@@ -108,7 +128,7 @@ export const ONE_TIME_OFFERS: OneTimeOffer[] = [
     kind: "one-time-offer",
     id: "infra-setup-15",
     category: "infrastructure-setup",
-    name: "Infrastructure Setup — up to 15 inboxes",
+    name: "Infrastructure Setup, up to 15 inboxes",
     priceCents: 19900,
     unit: "one-time",
     relatedServiceSlug: "email-infrastructure",
@@ -117,7 +137,7 @@ export const ONE_TIME_OFFERS: OneTimeOffer[] = [
     kind: "one-time-offer",
     id: "infra-setup-30",
     category: "infrastructure-setup",
-    name: "Infrastructure Setup — up to 30 inboxes",
+    name: "Infrastructure Setup, up to 30 inboxes",
     priceCents: 34900,
     unit: "one-time",
     relatedServiceSlug: "email-infrastructure",
@@ -126,7 +146,7 @@ export const ONE_TIME_OFFERS: OneTimeOffer[] = [
     kind: "one-time-offer",
     id: "infra-setup-60",
     category: "infrastructure-setup",
-    name: "Infrastructure Setup — up to 60 inboxes",
+    name: "Infrastructure Setup, up to 60 inboxes",
     priceCents: 59900,
     unit: "one-time",
     relatedServiceSlug: "email-infrastructure",

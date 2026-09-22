@@ -23,7 +23,7 @@ export const testimonialsIntro = {
   eyebrow: "Client Feedback",
   title: "Verified client feedback from Abdullah Al Masum",
   description:
-    "Founder Abdullah Al Masum's individual track record on cold email campaigns, deliverability, and outreach infrastructure — transcribed verbatim from real Upwork and Fiverr reviews.",
+    "Founder Abdullah Al Masum's individual track record on cold email campaigns, deliverability, and outreach infrastructure, transcribed verbatim from real Upwork and Fiverr reviews.",
 } as const;
 
 export const testimonials: readonly Testimonial[] = [
@@ -58,7 +58,7 @@ export const testimonials: readonly Testimonial[] = [
   {
     id: "upwork-sixth-project",
     quote: "This is out 6th project with Masum. Great work and responsiveness as always",
-    context: "AI Email Campaign Specialist — Saleshandy / Instantly",
+    context: "AI Email Campaign Specialist · Saleshandy / Instantly",
     source: "Upwork",
   },
   {

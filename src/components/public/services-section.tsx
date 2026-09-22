@@ -11,7 +11,7 @@ export function ServicesSection() {
       <SectionHeading
         eyebrow="Core services"
         title="Everything cold email needs to work, in one program"
-        description="Four disciplines, run together by one team, so nothing falls through the cracks between strategy and send."
+        description="Four disciplines, handled by one specialist, so nothing falls through the cracks between strategy and send."
       />
 
       <ul className="mt-16 grid gap-6 md:grid-cols-2">

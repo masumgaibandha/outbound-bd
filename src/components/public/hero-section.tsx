@@ -43,7 +43,7 @@ export function HeroSection() {
 
             <p className="text-ink-muted mt-6 max-w-prose text-base leading-relaxed lg:text-[1.0625rem]">
               Outbound BD plans, writes, and runs cold email programs for B2B
-              teams who need a reliable stream of sales conversations — not a
+              teams who need a reliable stream of sales conversations, not a
               list of unopened sends. Strategy, infrastructure, and copy,
               managed end to end by a senior operator.
             </p>
@@ -111,7 +111,7 @@ export function HeroSection() {
         </div>
 
         <p className="text-ink-muted mt-6 text-sm">
-          Run by the founder himself, Abdullah Al Masum —{" "}
+          Run by the founder himself, Abdullah Al Masum:{" "}
           <Link
             href="/about/founder"
             className="text-ink decoration-action hover:text-action focus-visible:outline-action rounded-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"

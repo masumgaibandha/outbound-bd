@@ -64,7 +64,7 @@ export default function FaqPage() {
 
       <FinalCtaSection
         heading="Still have questions?"
-        description="Tell us about your project and we'll answer directly — no account or commitment required."
+        description="Tell us about your project and we'll answer directly. No account or commitment required."
         secondaryHref="/contact"
         secondaryLabel="Request a Proposal"
       />

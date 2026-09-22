@@ -37,9 +37,8 @@ describe("getCatalogPrefillNote — null price handling", () => {
       name: "Scale",
       monthlyPriceCents: null,
       setupPriceCents: 59900,
-      campaigns: "Up to 5 campaigns",
-      leadsIncluded: 10000,
-      inboxes: "Up to 60 inboxes",
+      tagline: "For high volume or multiple clients.",
+      features: ["10+ domains and 50 to 100+ inboxes, split across Google Workspace and Microsoft 365"],
       relatedServiceSlug: "cold-email-outreach",
     };
     const note = getCatalogPrefillNote(contactForPricePlan);

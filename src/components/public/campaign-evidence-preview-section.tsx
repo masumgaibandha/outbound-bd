@@ -17,7 +17,7 @@ export function CampaignEvidencePreviewSection() {
       <SectionHeading
         eyebrow="Results"
         title="Real evidence from real outreach work"
-        description="Selected results from Abdullah Al Masum's independent client work — the same discipline every Outbound BD engagement runs on."
+        description="Selected results from Abdullah Al Masum's independent client work, the same discipline every Outbound BD engagement runs on."
       />
 
       <div className="mt-14">

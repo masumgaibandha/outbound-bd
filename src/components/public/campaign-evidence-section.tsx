@@ -45,7 +45,7 @@ export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps)
                 <button
                   type="button"
                   onClick={(event) => setOpenState({ index, trigger: event.currentTarget })}
-                  aria-label={`Enlarge screenshot — ${item.alt}`}
+                  aria-label={`Enlarge screenshot: ${item.alt}`}
                   className={cn(
                     "group bg-canvas-alt border-hairline focus-visible:outline-action relative flex shrink-0 items-center justify-center border-b p-5 focus-visible:outline-2 focus-visible:-outline-offset-2 md:p-6",
                     spanFull && "md:w-1/2 md:border-r md:border-b-0",

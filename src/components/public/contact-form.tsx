@@ -149,7 +149,7 @@ export function ContactForm({ initialService, initialGoals }: ContactFormProps) 
       >
         <CircleCheckIcon width={32} height={32} className="text-action" aria-hidden="true" />
         <h3 className="font-heading text-ink mt-5 text-2xl tracking-tight">
-          Thanks — we&apos;ve got it
+          Thanks, we&apos;ve got it
         </h3>
         <p className="text-ink-muted mt-3 max-w-prose leading-relaxed">
           Your project inquiry has been received. We&apos;ll follow up by

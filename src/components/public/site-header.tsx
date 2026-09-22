@@ -49,7 +49,7 @@ export function SiteHeader() {
         <Container className="flex h-18 items-center justify-between gap-6 md:h-20">
           <Link
             href="/"
-            aria-label="Outbound BD — home"
+            aria-label="Outbound BD, home"
             className="focus-visible:outline-action rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4"
           >
             {/*

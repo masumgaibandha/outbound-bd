@@ -95,7 +95,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     platform: "Instantly",
     category: "campaign-performance",
     caption:
-      "Sustained campaign performance on Instantly — 5.6K sent, a platform-reported 83.9% open rate, and a 2.7% reply rate over roughly three months, generating 25 sales opportunities.",
+      "Sustained campaign performance on Instantly: 5.6K sent, a platform-reported 83.9% open rate, and a 2.7% reply rate over roughly three months, generating 25 sales opportunities.",
     note: "Platform-assigned monetary value hidden because it is not verified revenue.",
     featured: true,
   },
@@ -106,8 +106,8 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     platform: "Instantly",
     category: "inbox-placement",
     caption:
-      "An Instantly inbox-placement test — 3,980 test emails were sent, and 3,907 of the 3,975 received reached the inbox (98.29%) in this specific test, broken down by sender/recipient provider pairing.",
-    note: "One specific test result — not a guaranteed or typical outcome for every campaign or provider pairing.",
+      "An Instantly inbox-placement test: 3,980 test emails were sent, and 3,907 of the 3,975 received reached the inbox (98.29%) in this specific test, broken down by sender/recipient provider pairing.",
+    note: "One specific test result, not a guaranteed or typical outcome for every campaign or provider pairing.",
     featured: true,
   },
   {
@@ -117,7 +117,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     platform: "Instantly",
     category: "campaign-performance",
     caption:
-      "A second, smaller campaign on Instantly — 759 sequence sends, a platform-reported 98% open rate, and 17 sales opportunities generated.",
+      "A second, smaller campaign on Instantly: 759 sequence sends, a platform-reported 98% open rate, and 17 sales opportunities generated.",
     note: "Platform-assigned monetary value hidden because it is not verified revenue.",
   },
   {
@@ -127,8 +127,8 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     platform: "Instantly",
     category: "campaign-performance",
     caption:
-      "127,149 sequence starts generated 140 opportunities. Instantly reported a 78.65% Positive Reply Rate among replies—not an overall campaign reply rate.",
-    note: "An exceptional individual result, not a typical or guaranteed outcome — most campaigns perform closer to the other examples shown here. Platform-assigned monetary value hidden because it is not verified revenue.",
+      "127,149 sequence starts generated 140 opportunities. Instantly reported a 78.65% Positive Reply Rate among replies, not an overall campaign reply rate.",
+    note: "An exceptional individual result, not a typical or guaranteed outcome. Most campaigns perform closer to the other examples shown here. Platform-assigned monetary value hidden because it is not verified revenue.",
   },
   {
     id: "campaign-result-smartlead",
@@ -137,7 +137,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     platform: "Smartlead",
     category: "infrastructure",
     caption:
-      "Sender warm-up health on Smartlead — 42 of 42 warm-up emails landed in the inbox in this snapshot, with zero flagged as spam, the kind of ongoing infrastructure monitoring every managed inbox gets.",
+      "Sender warm-up health on Smartlead: 42 of 42 warm-up emails landed in the inbox in this snapshot, with zero flagged as spam, the kind of ongoing infrastructure monitoring every managed inbox gets.",
   },
 ];
 

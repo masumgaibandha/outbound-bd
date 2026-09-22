@@ -75,7 +75,7 @@ describe("NotFound (root 404 page)", () => {
 
   it("renders the site header and footer exactly once each, never duplicated", () => {
     render(<NotFound />);
-    expect(screen.getAllByRole("link", { name: "Outbound BD — home" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Outbound BD, home" })).toHaveLength(1);
     expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
   });
 

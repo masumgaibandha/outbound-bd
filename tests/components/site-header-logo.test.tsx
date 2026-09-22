@@ -23,7 +23,7 @@ import { SiteHeader } from "@/components/public/site-header";
 describe("SiteHeader — navigation logo responsive sizing", () => {
   it("renders the logo at the enlarged, responsive heights with aspect ratio preserved (w-auto)", () => {
     render(<SiteHeader />);
-    const logo = screen.getByRole("link", { name: "Outbound BD — home" }).querySelector("img");
+    const logo = screen.getByRole("link", { name: "Outbound BD, home" }).querySelector("img");
     expect(logo).not.toBeNull();
     const classes = logo!.className.split(/\s+/);
 
@@ -47,6 +47,6 @@ describe("SiteHeader — navigation logo responsive sizing", () => {
 
   it("still renders exactly one home-linked logo", () => {
     render(<SiteHeader />);
-    expect(screen.getAllByRole("link", { name: "Outbound BD — home" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Outbound BD, home" })).toHaveLength(1);
   });
 });

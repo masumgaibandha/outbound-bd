@@ -7,16 +7,16 @@ import { UpworkProofLink } from "@/components/public/upwork-proof-link";
 
 export function FounderSection() {
   return (
-    <section className="hero-wash relative border-b border-hairline py-16 sm:py-20">
+    <section className="hero-wash relative border-b border-hairline py-8 sm:py-10">
       <Container>
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
           <div>
             <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
               Founder
             </p>
 
             <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-              <h1 className="font-heading text-ink type-section">
+              <h1 className="font-heading text-ink text-3xl tracking-tight sm:text-4xl">
                 Abdullah Al Masum
               </h1>
               <span className="border-hairline text-ink rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide uppercase">
@@ -24,11 +24,11 @@ export function FounderSection() {
               </span>
             </div>
             <p className="text-ink-muted mt-2 text-sm font-medium">
-              Founder, Outbound BD — based in Bangladesh, serving B2B clients
+              Founder, Outbound BD, based in Bangladesh, serving B2B clients
               globally
             </p>
 
-            <p className="text-ink-muted mt-6 max-w-xl leading-relaxed text-pretty">
+            <p className="text-ink-muted mt-3 max-w-xl leading-relaxed text-pretty">
               Abdullah has spent over a decade in B2B lead generation and
               cold email outreach, working hands-on across prospect
               research, email infrastructure, deliverability, campaign
@@ -38,19 +38,19 @@ export function FounderSection() {
               pieces of it off to separate freelancers or tools.
             </p>
 
-            <div className="border-hairline bg-surface mt-8 max-w-xl border p-6">
+            <div className="border-hairline bg-surface mt-4 max-w-xl border p-4">
               <p className="text-ink-muted text-sm leading-relaxed">
                 <span className="text-ink font-semibold">
                   A technical foundation, not just a marketing one.
                 </span>{" "}
                 A background in full-stack development supports the
                 integrations, tracking, and scalable outbound systems behind
-                every campaign — so infrastructure and reporting are built
+                every campaign, so infrastructure and reporting are built
                 to hold up, not duct-taped together.
               </p>
             </div>
 
-            <dl className="border-hairline mt-10 grid grid-cols-3 gap-x-6 gap-y-8 border-t pt-8">
+            <dl className="border-hairline mt-4 grid grid-cols-3 gap-x-6 gap-y-4 border-t pt-4">
               {founderStats.map((stat) => (
                 <div key={stat.label}>
                   <dt className="font-heading text-ink text-3xl tracking-tight">
@@ -63,7 +63,7 @@ export function FounderSection() {
               ))}
             </dl>
 
-            <div className="mt-6">
+            <div className="mt-3">
               <UpworkProofLink />
             </div>
           </div>
