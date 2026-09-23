@@ -24,8 +24,10 @@ import { getAgencyMetaCapiEnv } from "@/lib/tracking/env";
  */
 
 // Minimum time (ms) a real visitor needs to fill a form. Submissions faster
-// than this are almost certainly scripted.
-const MIN_FILL_TIME_MS = 2500;
+// than this are almost certainly scripted. Lowered from 2500 to 1500 —
+// autofill (browser or password manager) legitimately fills a whole form in
+// under 2 seconds, and 2500 was clipping real, autofilled humans.
+const MIN_FILL_TIME_MS = 1500;
 
 // Simple per-IP throttle: at most this many inquiries within the window,
 // shared across both forms' submissions (same collection, same counter) —
@@ -41,18 +43,48 @@ export function getClientIp(request: Request): string {
   return request.headers.get("x-real-ip") ?? "unknown";
 }
 
-/** Honeypot tripped, or submitted faster than a human could fill the form. */
-export function isBotSubmission(record: Record<string, unknown>): boolean {
+/** Why a submission was silently skipped — see `logLeadSubmissionSkipped()` below. `"duplicate"` is added by each route itself (not detected here). */
+export type LeadSubmissionSkipReason = "honeypot" | "too_fast" | "duplicate";
+
+/**
+ * `null` if the submission looks human. Otherwise the specific reason, so
+ * the caller can log which one — previously this only returned a boolean,
+ * which meant a real visitor silently dropped by a browser-autofilled
+ * honeypot field was indistinguishable from an actual bot in any log, and a
+ * whole class of lost leads (Round 4B's incident) was invisible. See
+ * `logLeadSubmissionSkipped()`.
+ */
+export function getBotSubmissionSkipReason(
+  record: Record<string, unknown>,
+): "honeypot" | "too_fast" | null {
   const honeypot = record.honeypot;
   const isHoneypotTripped =
     typeof honeypot === "string" ? honeypot.trim().length > 0 : false;
+  if (isHoneypotTripped) return "honeypot";
 
   const startedAt = record.startedAt;
   const isTooFast =
     typeof startedAt === "number" &&
     Date.now() - startedAt < MIN_FILL_TIME_MS;
+  if (isTooFast) return "too_fast";
 
-  return isHoneypotTripped || isTooFast;
+  return null;
+}
+
+/**
+ * The one structured log line for every silent skip (honeypot, too-fast, or
+ * a same-email duplicate within the window) — each of these returns a
+ * normal-looking `{ ok: true }` / 201 to the caller by design (so a
+ * scripted bot gets no signal it was caught), which means this log line is
+ * the ONLY place such a skip is ever visible. Deliberately non-sensitive:
+ * `route` and `reason` only, never the submitter's name, email, or any
+ * other field.
+ */
+export function logLeadSubmissionSkipped(
+  route: string,
+  reason: LeadSubmissionSkipReason,
+): void {
+  console.log(JSON.stringify({ event: "lead_submission_skipped", route, reason }));
 }
 
 /** Requires an already-open database connection — call after `connectToDatabase()`. */

@@ -148,23 +148,60 @@ describe("POST /api/agencies-lead", () => {
     expect(await Inquiry.countDocuments({})).toBe(0);
   });
 
-  it("silently discards a honeypot-tripped submission", async () => {
+  it("silently discards a honeypot-tripped submission, and logs the reason", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const response = await POST(postRequest(validPayload({ honeypot: "http://spam.example" })));
     expect(response.status).toBe(201);
     expect(await Inquiry.countDocuments({})).toBe(0);
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(logSpy.mock.calls[0][0] as string);
+    expect(logged).toEqual({
+      event: "lead_submission_skipped",
+      route: "/api/agencies-lead",
+      reason: "honeypot",
+    });
+    logSpy.mockRestore();
   });
 
-  it("silently discards a submission that was too fast to be human", async () => {
+  it("silently discards a submission that was too fast to be human, and logs the reason", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const response = await POST(postRequest(validPayload({ startedAt: Date.now() })));
     expect(response.status).toBe(201);
     expect(await Inquiry.countDocuments({})).toBe(0);
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(logSpy.mock.calls[0][0] as string);
+    expect(logged).toEqual({
+      event: "lead_submission_skipped",
+      route: "/api/agencies-lead",
+      reason: "too_fast",
+    });
+    logSpy.mockRestore();
   });
 
-  it("treats a same-email resubmission within the window as idempotent", async () => {
+  it("saves a normal submission filled in 1.6 seconds (autofill-speed humans are not blocked)", async () => {
+    const response = await POST(postRequest(validPayload({ startedAt: Date.now() - 1600 })));
+    expect(response.status).toBe(201);
+    expect(await Inquiry.countDocuments({ email: "alex@someagency.com" })).toBe(1);
+  });
+
+  it("treats a same-email resubmission within the window as idempotent, and logs the skip", async () => {
     await POST(postRequest(validPayload()));
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const response = await POST(postRequest(validPayload({ activeClients: "50-plus" })));
     expect(response.status).toBe(201);
     expect(await Inquiry.countDocuments({ email: "alex@someagency.com" })).toBe(1);
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(logSpy.mock.calls[0][0] as string);
+    expect(logged).toEqual({
+      event: "lead_submission_skipped",
+      route: "/api/agencies-lead",
+      reason: "duplicate",
+    });
+    logSpy.mockRestore();
   });
 
   it("does not treat a contact-form lead with the same email as a duplicate (source-scoped)", async () => {

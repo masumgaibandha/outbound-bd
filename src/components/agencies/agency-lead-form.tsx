@@ -87,7 +87,7 @@ export function AgencyLeadForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...parsed.data,
-          honeypot: String(formData.get("agency_phone") ?? ""),
+          honeypot: String(formData.get("hp_confirm") ?? ""),
           startedAt: startedAtRef.current ?? Date.now(),
           eventId,
           eventSourceUrl: window.location.href,
@@ -136,18 +136,30 @@ export function AgencyLeadForm() {
       noValidate
       className="border-hairline bg-surface scroll-mt-24 border p-8 md:p-10"
     >
-      {/* Honeypot: hidden from sighted and assistive-tech users, left for bots to fill. */}
+      {/*
+       * Honeypot: hidden from sighted and assistive-tech users, left for
+       * bots to fill. Deliberately named/labeled with no contact-field
+       * word (no phone/email/name/address/company/website) — a prior name
+       * ("agency_phone", labeled "Phone number") got silently autofilled
+       * by Chrome for real visitors with a saved phone number, since
+       * Chrome ignores `autocomplete="off"` for contact-type fields; that
+       * caused real, paid-traffic leads to be dropped without any error
+       * (see the "lead_submission_skipped" log this now also produces).
+       * `autoComplete="new-password"` is the one value Chrome reliably
+       * respects for "never autofill this," regardless of field name/label.
+       */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0"
       >
-        <label htmlFor="agency_phone">Phone number</label>
+        <label htmlFor="hp_confirm">Leave this field empty</label>
         <input
-          id="agency_phone"
-          name="agency_phone"
+          id="hp_confirm"
+          name="hp_confirm"
           type="text"
           tabIndex={-1}
-          autoComplete="off"
+          aria-hidden="true"
+          autoComplete="new-password"
         />
       </div>
 

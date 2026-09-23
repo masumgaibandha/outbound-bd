@@ -6,9 +6,10 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { inquirySchema } from "@/lib/inquiry-schema";
 import {
   dispatchAgencyLeadCapi,
+  getBotSubmissionSkipReason,
   getClientIp,
-  isBotSubmission,
   isRateLimited,
+  logLeadSubmissionSkipped,
 } from "@/lib/inquiry-submission";
 import { Inquiry, type InquiryDocument } from "@/lib/models/inquiry";
 
@@ -17,6 +18,8 @@ import { Inquiry, type InquiryDocument } from "@/lib/models/inquiry";
 // inquiries — treat it as idempotent rather than creating a duplicate
 // document.
 const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
+
+const ROUTE = "/api/inquiries";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -38,9 +41,13 @@ export async function POST(request: Request) {
 
   const record = body as Record<string, unknown>;
 
-  if (isBotSubmission(record)) {
+  const botSkipReason = getBotSubmissionSkipReason(record);
+  if (botSkipReason) {
     // Report success without persisting anything, so scripted submitters
-    // get no signal that they were caught.
+    // get no signal that they were caught — but log the reason, since this
+    // is otherwise the only trace a real visitor caught by a false
+    // positive (e.g. browser-autofilled honeypot) ever leaves.
+    logLeadSubmissionSkipped(ROUTE, botSkipReason);
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -89,6 +96,7 @@ export async function POST(request: Request) {
 
     if (duplicate) {
       // Idempotent: report success without creating a second document.
+      logLeadSubmissionSkipped(ROUTE, "duplicate");
       return NextResponse.json({ ok: true }, { status: 201 });
     }
 

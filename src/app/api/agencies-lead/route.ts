@@ -6,9 +6,10 @@ import { sendAgencyAutoReply } from "@/lib/agency-auto-reply";
 import { sendContactNotification } from "@/lib/contact-notification";
 import {
   dispatchAgencyLeadCapi,
+  getBotSubmissionSkipReason,
   getClientIp,
-  isBotSubmission,
   isRateLimited,
+  logLeadSubmissionSkipped,
 } from "@/lib/inquiry-submission";
 import { Inquiry, type InquiryDocument } from "@/lib/models/inquiry";
 import { connectToDatabase } from "@/lib/mongoose";
@@ -19,6 +20,8 @@ import { connectToDatabase } from "@/lib/mongoose";
 // to this source: an agencies-landing lead has no "company" field to key on
 // the way /api/inquiries's duplicate check does.
 const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
+
+const ROUTE = "/api/agencies-lead";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -40,9 +43,13 @@ export async function POST(request: Request) {
 
   const record = body as Record<string, unknown>;
 
-  if (isBotSubmission(record)) {
+  const botSkipReason = getBotSubmissionSkipReason(record);
+  if (botSkipReason) {
     // Report success without persisting anything, so scripted submitters
-    // get no signal that they were caught.
+    // get no signal that they were caught — but log the reason, since this
+    // is otherwise the only trace a real visitor caught by a false
+    // positive (e.g. browser-autofilled honeypot) ever leaves.
+    logLeadSubmissionSkipped(ROUTE, botSkipReason);
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -93,6 +100,7 @@ export async function POST(request: Request) {
 
     if (duplicate) {
       // Idempotent: report success without creating a second document.
+      logLeadSubmissionSkipped(ROUTE, "duplicate");
       return NextResponse.json({ ok: true }, { status: 201 });
     }
 
