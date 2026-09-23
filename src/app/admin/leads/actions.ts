@@ -5,6 +5,8 @@ import { headers } from "next/headers";
 
 import { UnauthorizedAgencyAdminError, requireAgencyAdmin } from "@/lib/agency-admin/admin-auth";
 import { addLeadNote, changeLeadStatus } from "@/lib/agency-admin/leads-repository";
+import { NOT_AUTHORIZED_MESSAGE, ORIGIN_REJECTED_MESSAGE } from "@/lib/agency-admin/messages";
+import { expectedOriginFromRequestHeaders } from "@/lib/agency-admin/origin";
 import {
   leadIdSchema,
   leadNoteTextSchema,
@@ -12,7 +14,6 @@ import {
 } from "@/lib/agency-admin/validation";
 import { isRequestSameOrigin } from "@/lib/masterclass/origin-validation";
 import type { InquiryStatus } from "@/lib/models/inquiry";
-import { publicEnv } from "@/lib/public-env";
 
 /*
  * Every action here independently calls `requireAgencyAdmin()` first — same
@@ -27,18 +28,40 @@ export interface LeadActionResult {
   message: string;
 }
 
-async function authorizeOrReject(): Promise<boolean> {
+type AuthorizeResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Two independent checks, kept distinguishable in the returned message
+ * (never by revealing a credential or header value) so a real Basic Auth
+ * failure and a same-origin rejection aren't indistinguishable in the UI —
+ * that ambiguity is what made the origin-allowlist bug from the last round
+ * take longer to isolate than it needed to.
+ *
+ * The origin check compares the request's `Origin` header against an
+ * origin DERIVED from the request itself (`expectedOriginFromRequestHeaders`
+ * — `x-forwarded-host`/`host` + `x-forwarded-proto`), not a fixed configured
+ * URL — see that function's doc comment for why a fixed URL can never be
+ * correct for both Production and every Preview deployment.
+ * `isRequestSameOrigin` already rejects (never allows) when the `Origin`
+ * header is missing entirely — see its own doc comment.
+ */
+async function authorizeOrReject(): Promise<AuthorizeResult> {
   try {
     await requireAgencyAdmin();
   } catch (error) {
-    if (error instanceof UnauthorizedAgencyAdminError) return false;
+    if (error instanceof UnauthorizedAgencyAdminError) {
+      return { ok: false, message: NOT_AUTHORIZED_MESSAGE };
+    }
     throw error;
   }
 
   const headerList = await headers();
-  if (!isRequestSameOrigin(headerList, [publicEnv.NEXT_PUBLIC_APP_URL])) return false;
+  const expectedOrigin = expectedOriginFromRequestHeaders(headerList);
+  if (!expectedOrigin || !isRequestSameOrigin(headerList, [expectedOrigin])) {
+    return { ok: false, message: ORIGIN_REJECTED_MESSAGE };
+  }
 
-  return true;
+  return { ok: true };
 }
 
 /**
@@ -52,7 +75,8 @@ export async function changeStatusAction(
   _prevState: LeadActionResult,
   formData: FormData,
 ): Promise<LeadActionResult> {
-  if (!(await authorizeOrReject())) return { ok: false, message: "Not authorized." };
+  const authorized = await authorizeOrReject();
+  if (!authorized.ok) return authorized;
 
   const idResult = leadIdSchema.safeParse(id);
   if (!idResult.success) return { ok: false, message: "Invalid lead." };
@@ -75,7 +99,8 @@ export async function addNoteAction(
   _prevState: LeadActionResult,
   formData: FormData,
 ): Promise<LeadActionResult> {
-  if (!(await authorizeOrReject())) return { ok: false, message: "Not authorized." };
+  const authorized = await authorizeOrReject();
+  if (!authorized.ok) return authorized;
 
   const idResult = leadIdSchema.safeParse(id);
   if (!idResult.success) return { ok: false, message: "Invalid lead." };

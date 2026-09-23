@@ -17,10 +17,16 @@ import { connectToDatabase } from "@/lib/mongoose";
 import { Inquiry } from "@/lib/models/inquiry";
 import { RATE_LIMIT_COLLECTION } from "@/lib/masterclass/rate-limit";
 import { changeStatusAction, addNoteAction } from "@/app/admin/leads/actions";
+import { NOT_AUTHORIZED_MESSAGE, ORIGIN_REJECTED_MESSAGE } from "@/lib/agency-admin/messages";
 
 const ADMIN_USER = "qa-agency-admin";
 const ADMIN_PASSWORD = "qa-correct-horse-battery-staple";
-const ALLOWED_ORIGIN = "http://localhost:3000"; // matches the test helper's NEXT_PUBLIC_APP_URL default
+// The forwarded host/proto stand in for whatever Vercel sets per deployment
+// (Production, or any ephemeral Preview URL) — the action derives its
+// expected origin from these, never from a fixed configured URL. See
+// src/lib/agency-admin/origin.ts.
+const FORWARDED_HOST = "outbound-preview-abc123.vercel.app";
+const MATCHING_ORIGIN = `https://${FORWARDED_HOST}`;
 
 function basicAuthHeader(user: string, password: string): string {
   return `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`;
@@ -31,19 +37,25 @@ function mockRequestHeaders(
     authorization?: string | null;
     origin?: string | null;
     secFetchSite?: string | null;
+    forwardedHost?: string | null;
+    forwardedProto?: string | null;
     ip?: string;
   } = {},
 ) {
   const {
     authorization = basicAuthHeader(ADMIN_USER, ADMIN_PASSWORD),
-    origin = ALLOWED_ORIGIN,
+    origin = MATCHING_ORIGIN,
     secFetchSite = "same-origin",
+    forwardedHost = FORWARDED_HOST,
+    forwardedProto = "https",
     ip = "203.0.113.9",
   } = opts;
   const map = new Map<string, string>();
   if (authorization !== null) map.set("authorization", authorization);
   if (origin !== null) map.set("origin", origin);
   if (secFetchSite !== null) map.set("sec-fetch-site", secFetchSite);
+  if (forwardedHost !== null) map.set("x-forwarded-host", forwardedHost);
+  if (forwardedProto !== null) map.set("x-forwarded-proto", forwardedProto);
   map.set("x-forwarded-for", ip);
   headersMock.mockResolvedValue({ get: (key: string) => map.get(key.toLowerCase()) ?? null });
 }
@@ -116,7 +128,18 @@ describe("changeStatusAction", () => {
     expect(fresh?.status).toBe("NEW");
   });
 
-  it("rejects a cross-origin request even with correct credentials", async () => {
+  it("succeeds when Origin matches the forwarded host (Preview or Production alike)", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ forwardedHost: "outboundbd.com", origin: "https://outboundbd.com" });
+
+    const formData = new FormData();
+    formData.set("status", "CONTACTED");
+    const result = await changeStatusAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a cross-origin request even with correct credentials, with a distinct message from an auth failure", async () => {
     const lead = await createLead();
     mockRequestHeaders({ origin: "https://evil.example.com" });
 
@@ -124,7 +147,47 @@ describe("changeStatusAction", () => {
     formData.set("status", "CONTACTED");
     const result = await changeStatusAction(String(lead._id), { ok: true, message: "" }, formData);
 
-    expect(result.ok).toBe(false);
+    expect(result).toEqual({ ok: false, message: ORIGIN_REJECTED_MESSAGE });
+    expect(result.message).not.toBe(NOT_AUTHORIZED_MESSAGE);
+    const fresh = await Inquiry.findById(lead._id);
+    expect(fresh?.status).toBe("NEW");
+  });
+
+  it("rejects when the Origin header is missing entirely, even with correct credentials and a matching forwarded host", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ origin: null });
+
+    const formData = new FormData();
+    formData.set("status", "CONTACTED");
+    const result = await changeStatusAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result).toEqual({ ok: false, message: ORIGIN_REJECTED_MESSAGE });
+    const fresh = await Inquiry.findById(lead._id);
+    expect(fresh?.status).toBe("NEW");
+  });
+
+  it("rejects on auth failure with the auth message, even when the origin would otherwise match", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ authorization: null });
+
+    const formData = new FormData();
+    formData.set("status", "CONTACTED");
+    const result = await changeStatusAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result).toEqual({ ok: false, message: NOT_AUTHORIZED_MESSAGE });
+  });
+
+  it("rejects on auth failure even when the origin is ALSO mismatched — the auth message wins, never the origin one", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ authorization: null, origin: "https://evil.example.com" });
+
+    const formData = new FormData();
+    formData.set("status", "CONTACTED");
+    const result = await changeStatusAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result).toEqual({ ok: false, message: NOT_AUTHORIZED_MESSAGE });
+    const fresh = await Inquiry.findById(lead._id);
+    expect(fresh?.status).toBe("NEW");
   });
 
   it("rejects an invalid status value", async () => {
@@ -185,7 +248,44 @@ describe("addNoteAction", () => {
     formData.set("text", "Should not be saved.");
     const result = await addNoteAction(String(lead._id), { ok: true, message: "" }, formData);
 
-    expect(result.ok).toBe(false);
+    expect(result).toEqual({ ok: false, message: NOT_AUTHORIZED_MESSAGE });
+    const fresh = await Inquiry.findById(lead._id);
+    expect(fresh?.notes).toHaveLength(0);
+  });
+
+  it("succeeds when Origin matches the forwarded host", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ forwardedHost: "outboundbd.com", origin: "https://outboundbd.com" });
+
+    const formData = new FormData();
+    formData.set("text", "Left voicemail.");
+    const result = await addNoteAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a mismatched origin with a distinct message from an auth failure, and never mutates the document", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ origin: "https://evil.example.com" });
+
+    const formData = new FormData();
+    formData.set("text", "Should not be saved.");
+    const result = await addNoteAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result).toEqual({ ok: false, message: ORIGIN_REJECTED_MESSAGE });
+    const fresh = await Inquiry.findById(lead._id);
+    expect(fresh?.notes).toHaveLength(0);
+  });
+
+  it("rejects when the Origin header is missing entirely, even with correct credentials", async () => {
+    const lead = await createLead();
+    mockRequestHeaders({ origin: null });
+
+    const formData = new FormData();
+    formData.set("text", "Should not be saved.");
+    const result = await addNoteAction(String(lead._id), { ok: true, message: "" }, formData);
+
+    expect(result).toEqual({ ok: false, message: ORIGIN_REJECTED_MESSAGE });
     const fresh = await Inquiry.findById(lead._id);
     expect(fresh?.notes).toHaveLength(0);
   });
