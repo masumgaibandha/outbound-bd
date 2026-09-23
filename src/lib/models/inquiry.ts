@@ -2,7 +2,19 @@ import "server-only";
 
 import { Schema, model, models } from "mongoose";
 
-export type InquiryStatus = "NEW";
+/**
+ * The agency admin pipeline (Round 4A, `/admin/leads`). Every document
+ * created before this pipeline existed stored the literal string "NEW" and
+ * keeps working unchanged — this is a superset of the old single-value type,
+ * not a migration.
+ */
+export type InquiryStatus =
+  | "NEW"
+  | "CONTACTED"
+  | "CALL_BOOKED"
+  | "PROPOSAL_SENT"
+  | "WON"
+  | "LOST";
 
 /**
  * "contact" is every submission through the original `/contact` form;
@@ -27,6 +39,18 @@ export interface InquiryAttribution {
   utmTerm?: string;
   fbclid?: string;
   landingPath?: string;
+}
+
+/** One entry per status transition, oldest first as stored — `/admin/leads` reads them newest-first. Never rewritten or removed once appended. */
+export interface InquiryStatusHistoryEntry {
+  status: InquiryStatus;
+  changedAt: Date;
+}
+
+/** Append-only private admin note — no edit/delete in this round (see CLAUDE.md's Round 4A note). */
+export interface InquiryNote {
+  text: string;
+  createdAt: Date;
 }
 
 export interface InquiryDocument {
@@ -56,6 +80,9 @@ export interface InquiryDocument {
   attribution?: InquiryAttribution;
   privacyConsent: boolean;
   status: InquiryStatus;
+  /** Empty for every document created before Round 4A, including legacy ones with no `source` at all — the admin UI shows "No status changes yet" rather than treating that as an error. */
+  statusHistory: InquiryStatusHistoryEntry[];
+  notes: InquiryNote[];
   ipAddress?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -70,6 +97,22 @@ const attributionSchema = new Schema<InquiryAttribution>(
     utmTerm: { type: String, trim: true },
     fbclid: { type: String, trim: true },
     landingPath: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
+const statusHistorySchema = new Schema<InquiryStatusHistoryEntry>(
+  {
+    status: { type: String, required: true },
+    changedAt: { type: Date, required: true, default: () => new Date() },
+  },
+  { _id: false },
+);
+
+const noteSchema = new Schema<InquiryNote>(
+  {
+    text: { type: String, required: true, trim: true },
+    createdAt: { type: Date, required: true, default: () => new Date() },
   },
   { _id: false },
 );
@@ -92,6 +135,8 @@ const inquirySchema = new Schema<InquiryDocument>(
     attribution: { type: attributionSchema },
     privacyConsent: { type: Boolean, required: true },
     status: { type: String, required: true, default: "NEW" },
+    statusHistory: { type: [statusHistorySchema], default: [] },
+    notes: { type: [noteSchema], default: [] },
     ipAddress: { type: String },
   },
   { timestamps: true },
@@ -104,6 +149,10 @@ inquirySchema.index({ email: 1, company: 1, createdAt: -1 });
 // that source (an agencies lead has no `company` to key on the way the
 // contact form's index above does).
 inquirySchema.index({ email: 1, source: 1, createdAt: -1 });
+// /admin/leads filters (Round 4A).
+inquirySchema.index({ createdAt: -1 });
+inquirySchema.index({ status: 1, createdAt: -1 });
+inquirySchema.index({ source: 1, createdAt: -1 });
 
 export const Inquiry =
   models.Inquiry ?? model<InquiryDocument>("Inquiry", inquirySchema);

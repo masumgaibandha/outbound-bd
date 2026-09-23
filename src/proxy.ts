@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getAgencyAdminAuthEnv } from "@/lib/agency-admin/env";
 import { getAdminAuthEnv } from "@/lib/masterclass/env";
 import { timingSafeStringEqual } from "@/lib/masterclass/timing-safe-equal";
 import { AGENCY_REGION_COOKIE, regionFromCountryCode } from "@/lib/tracking/consent";
@@ -7,17 +8,25 @@ import { AGENCY_REGION_COOKIE, regionFromCountryCode } from "@/lib/tracking/cons
 /*
  * The only proxy (formerly "middleware" — Next.js 16 renamed the file
  * convention; see node_modules/next/dist/docs/.../file-conventions/proxy.md)
- * in this project. It does two independent jobs, gated by two separate
+ * in this project. It does three independent jobs, gated by three separate
  * `config.matcher` entries below:
  *
  * 1. HTTP Basic Auth for `/masterclass/admin/**` — unchanged from before
- *    this file grew a second job (see `handleMasterclassAdminAuth` below,
+ *    this file grew more jobs (see `handleMasterclassAdminAuth` below,
  *    moved verbatim out of the old top-level `proxy()` body). This does NOT
  *    reintroduce the general agency dashboard/auth system that was
  *    deliberately removed — it protects only this one, small,
  *    masterclass-specific admin surface.
  *
- * 2. A first-party `obd_region` cookie ("eea" | "other") on every other
+ * 2. HTTP Basic Auth for `/admin/**` — the Round 4A agency leads admin (see
+ *    `handleAgencyAdminAuth` below and CLAUDE.md's "Round 4A" note). Same
+ *    category as job 1 (an internal, Basic-Auth-gated staff tool, not a
+ *    client-facing account/dashboard system), but with its own env vars
+ *    (`AGENCY_ADMIN_USER`/`AGENCY_ADMIN_PASSWORD`) and completely
+ *    independent from job 1 — neither admin surface's credentials work for
+ *    the other.
+ *
+ * 3. A first-party `obd_region` cookie ("eea" | "other") on every other
  *    public agency page (see `handleAgencyRegionCookie`), read by the
  *    client-side agency Meta Pixel consent gate
  *    (`src/components/public/tracking-gate.tsx`) to decide whether a
@@ -26,48 +35,50 @@ import { AGENCY_REGION_COOKIE, regionFromCountryCode } from "@/lib/tracking/cons
  *    Component, which would force the whole public site out of static
  *    generation. Deliberately just a cookie write: no redirect, no
  *    response-body change, so this runs in front of the cache rather than
- *    disabling it. `/masterclass/**` (the sales page included) is excluded
- *    from this job — that route has its own, separate, unconditional Meta
- *    Pixel (`src/components/masterclass/MetaPixel.tsx`), untouched by this
- *    file.
+ *    disabling it. `/masterclass/**` (the sales page included) and
+ *    `/admin/**` are excluded from this job — masterclass has its own,
+ *    separate, unconditional Meta Pixel
+ *    (`src/components/masterclass/MetaPixel.tsx`), and `/admin` must never
+ *    load the Pixel or a consent banner at all (it's a staff tool, not a
+ *    tracked marketing page) — untouched by this file either way.
  *
- * IMPORTANT: job 1 is defense-in-depth, not the only authorization layer.
- * Next.js Server Actions are independently reachable endpoints — every
- * admin Server Action independently re-verifies the same credentials via
- * `requireMasterclassAdmin()` (`src/lib/masterclass/admin-auth.ts`), which
- * is the layer that actually gates any database mutation, email send, or
- * Meta CAPI call — not this file. Job 1's logic was ported verbatim from
- * the MasumDev masterclass source.
+ * IMPORTANT: jobs 1 and 2 are defense-in-depth, not the only authorization
+ * layer. Next.js Server Actions are independently reachable endpoints —
+ * every admin Server Action independently re-verifies the same credentials
+ * via `requireMasterclassAdmin()` (`src/lib/masterclass/admin-auth.ts`) or
+ * `requireAgencyAdmin()` (`src/lib/agency-admin/admin-auth.ts`), which are
+ * the layers that actually gate any database mutation — not this file. Job
+ * 1's logic was ported verbatim from the MasumDev masterclass source; job 2
+ * mirrors its structure for the agency admin.
  */
 
-function unauthorized(): NextResponse {
+function unauthorized(realm: string): NextResponse {
   return new NextResponse("Authentication required.", {
     status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Masterclass Admin"' },
+    headers: { "WWW-Authenticate": `Basic realm="${realm}"` },
   });
 }
 
-function handleMasterclassAdminAuth(request: NextRequest): NextResponse {
-  const adminAuthEnv = getAdminAuthEnv();
-  if (!adminAuthEnv) {
-    return unauthorized();
-  }
-  const { username: expectedUser, password: expectedPassword } = adminAuthEnv;
-
+function checkBasicAuth(
+  request: NextRequest,
+  expectedUser: string,
+  expectedPassword: string,
+  realm: string,
+): NextResponse {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Basic ")) {
-    return unauthorized();
+    return unauthorized(realm);
   }
 
   let decoded: string;
   try {
     decoded = Buffer.from(authHeader.slice("Basic ".length), "base64").toString("utf-8");
   } catch {
-    return unauthorized();
+    return unauthorized(realm);
   }
 
   const separatorIndex = decoded.indexOf(":");
-  if (separatorIndex === -1) return unauthorized();
+  if (separatorIndex === -1) return unauthorized(realm);
 
   const suppliedUser = decoded.slice(0, separatorIndex);
   const suppliedPassword = decoded.slice(separatorIndex + 1);
@@ -76,10 +87,26 @@ function handleMasterclassAdminAuth(request: NextRequest): NextResponse {
     !timingSafeStringEqual(suppliedUser, expectedUser) ||
     !timingSafeStringEqual(suppliedPassword, expectedPassword)
   ) {
-    return unauthorized();
+    return unauthorized(realm);
   }
 
   return NextResponse.next();
+}
+
+function handleMasterclassAdminAuth(request: NextRequest): NextResponse {
+  const adminAuthEnv = getAdminAuthEnv();
+  if (!adminAuthEnv) {
+    return unauthorized("Masterclass Admin");
+  }
+  return checkBasicAuth(request, adminAuthEnv.username, adminAuthEnv.password, "Masterclass Admin");
+}
+
+function handleAgencyAdminAuth(request: NextRequest): NextResponse {
+  const adminAuthEnv = getAgencyAdminAuthEnv();
+  if (!adminAuthEnv) {
+    return unauthorized("Agency Admin");
+  }
+  return checkBasicAuth(request, adminAuthEnv.username, adminAuthEnv.password, "Agency Admin");
 }
 
 const REGION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 180;
@@ -107,15 +134,19 @@ export function proxy(request: NextRequest): NextResponse {
   if (request.nextUrl.pathname.startsWith("/masterclass/admin")) {
     return handleMasterclassAdminAuth(request);
   }
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    return handleAgencyAdminAuth(request);
+  }
   return handleAgencyRegionCookie(request);
 }
 
 export const config = {
   matcher: [
     "/masterclass/admin/:path*",
+    "/admin/:path*",
     // Every public agency page except API routes, Next's own static/image
-    // assets, the masterclass tree (job 2 is agency-only — see doc comment
-    // above), and well-known static metadata files.
-    "/((?!api|_next/static|_next/image|masterclass|favicon.ico|sitemap.xml|robots.txt).*)",
+    // assets, the masterclass tree and /admin (job 3 is agency-marketing-page-only
+    // — see doc comment above), and well-known static metadata files.
+    "/((?!api|_next/static|_next/image|masterclass|admin|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

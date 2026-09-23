@@ -17,21 +17,30 @@ export const RATE_LIMIT_COLLECTION = "masterclass_rate_limits";
 /** Documents stay around this much longer than their window before TTL deletion — a debugging/safety margin, not part of the limit logic. */
 const SAFETY_BUFFER_MS = 5 * 60 * 1000;
 
-/** `"admin-auth"` is a deliberate addition (not in the MasumDev source) — see `requireMasterclassAdmin()`'s use of it in `admin-auth.ts`. */
-export type RateLimitScope = "ip" | "email" | "admin-auth";
+/**
+ * `"admin-auth"` is a deliberate addition (not in the MasumDev source) — see
+ * `requireMasterclassAdmin()`'s use of it in `admin-auth.ts`. `"agency-admin-auth"`
+ * is the Round 4A `/admin` (agency leads) equivalent, kept as its own scope
+ * (and keyed against its own `AGENCY_ADMIN_RATE_LIMIT_SECRET`, not
+ * `MASTERCLASS_RATE_LIMIT_SECRET`) so the two admin surfaces' rate-limit
+ * buckets never share state — this file's storage/counting logic is a
+ * generic, feature-agnostic utility despite living under `masterclass/`.
+ */
+export type RateLimitScope = "ip" | "email" | "admin-auth" | "agency-admin-auth";
 
 /**
  * IP: 30 attempts / 10 minutes — kept generous since shared mobile/carrier
  * NAT can place many unrelated, legitimate students behind one public IP.
  * Email: 5 attempts / 60 minutes — a tighter, identity-scoped limit.
- * admin-auth: 20 attempts / 15 minutes, keyed by IP — generous enough for a
- * single operator's normal burst of approve/reject clicks on the order
- * queue, tight enough to slow Basic Auth credential guessing.
+ * admin-auth / agency-admin-auth: 20 attempts / 15 minutes, keyed by IP —
+ * generous enough for a single operator's normal burst of clicks, tight
+ * enough to slow Basic Auth credential guessing.
  */
 export const RATE_LIMIT_RULES: Record<RateLimitScope, { limit: number; windowMs: number }> = {
   ip: { limit: 30, windowMs: 10 * 60 * 1000 },
   email: { limit: 5, windowMs: 60 * 60 * 1000 },
   "admin-auth": { limit: 20, windowMs: 15 * 60 * 1000 },
+  "agency-admin-auth": { limit: 20, windowMs: 15 * 60 * 1000 },
 };
 
 /**

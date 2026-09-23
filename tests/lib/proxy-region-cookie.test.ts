@@ -91,3 +91,37 @@ describe("proxy — masterclass admin auth is unaffected by the region-cookie lo
     expect(response.cookies.get(AGENCY_REGION_COOKIE)).toBeUndefined();
   });
 });
+
+describe("proxy — agency admin (/admin) auth, independent of the masterclass admin", () => {
+  it("gates /admin/** with 401 + WWW-Authenticate when agency admin credentials are unconfigured", () => {
+    const response = proxy(makeRequest("/admin/leads"));
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toContain("Basic");
+  });
+
+  it("accepts correct AGENCY_ADMIN_* Basic Auth credentials for /admin/**", () => {
+    vi.stubEnv("AGENCY_ADMIN_USER", "agency-admin");
+    vi.stubEnv("AGENCY_ADMIN_PASSWORD", "another-correct-horse");
+    const credentials = Buffer.from("agency-admin:another-correct-horse").toString("base64");
+    const response = proxy(makeRequest("/admin/leads", { authorization: `Basic ${credentials}` }));
+    expect(response.status).toBe(200);
+  });
+
+  it("rejects masterclass admin credentials on /admin/** — the two admin surfaces never share credentials", () => {
+    vi.stubEnv("AGENCY_ADMIN_USER", "agency-admin");
+    vi.stubEnv("AGENCY_ADMIN_PASSWORD", "another-correct-horse");
+    const credentials = Buffer.from("admin:correct-horse-battery-staple").toString("base64");
+    const response = proxy(makeRequest("/admin/leads", { authorization: `Basic ${credentials}` }));
+    expect(response.status).toBe(401);
+  });
+
+  it("never sets the agency region cookie on an /admin request", () => {
+    vi.stubEnv("AGENCY_ADMIN_USER", "agency-admin");
+    vi.stubEnv("AGENCY_ADMIN_PASSWORD", "another-correct-horse");
+    const credentials = Buffer.from("agency-admin:another-correct-horse").toString("base64");
+    const response = proxy(
+      makeRequest("/admin/leads", { authorization: `Basic ${credentials}`, "x-vercel-ip-country": "DE" }),
+    );
+    expect(response.cookies.get(AGENCY_REGION_COOKIE)).toBeUndefined();
+  });
+});

@@ -16,6 +16,15 @@ change the agency site's own no-account, no-checkout model, and it does not
 mean the previously-removed generic agency dashboard/auth/ordering system is
 coming back — see the note at the end of Architecture.
 
+A second, narrower exception, added in Round 4A: an internal, Basic-Auth-gated
+staff tool at `/admin` for managing inbound leads (the agency's own
+`Inquiry` documents) — dashboard, filterable/paginated leads list, lead
+detail with a status pipeline and private notes, CSV export. This is **not**
+the previously-removed client-facing dashboard/account/ordering system; it
+has no client accounts, nothing a prospect or client ever logs into, and no
+payment flow. See the note at the end of Architecture for how it relates to
+`/masterclass/admin` and to the removed system.
+
 ## Stack
 
 - **Framework**: Next.js 16 (App Router, React 19, React Compiler on)
@@ -48,6 +57,8 @@ outside that group:
   enrollments (see Masterclass below)
 - `src/app/api/masterclass` — registration and payment-evidence submission
   routes
+- `src/app/admin` — the Round 4A agency leads admin: dashboard, leads list,
+  lead detail, CSV export (see the note at the end of this section)
 - `src/app/sitemap.ts`, `src/app/robots.ts` — SEO metadata routes
 - `src/lib` — `env.ts` (validated `MONGODB_URI`), `public-env.ts` (validated
   `NEXT_PUBLIC_APP_URL`), `mongoose.ts` (connection singleton),
@@ -61,6 +72,12 @@ outside that group:
   / `payment-orders-repository.ts` / `students-repository.ts`,
   `verify-service.ts` (the atomic approve/reject transaction), `email.ts`,
   `meta-capi.ts`
+- `src/lib/agency-admin` — the `/admin` leads admin's own logic: `env.ts` /
+  `admin-auth.ts` (its own Basic Auth + rate limiting, entirely independent
+  of the masterclass admin's), `validation.ts` (Zod schemas for filters,
+  status, notes, ids), `timezone.ts` (Asia/Dhaka date-range math),
+  `leads-repository.ts` (Mongoose queries against `Inquiry`), `csv.ts`,
+  `labels.ts`, `query.ts`
 - `src/components/public` — one component per homepage section, the shared
   `Logo`/`Container`/`Section`/`SectionHeading`/`Button` primitives, and
   `site-config.ts` (nav links, Calendly URL, contact email — see Brand below)
@@ -90,6 +107,28 @@ claim or build a student portal, an automatic payment gateway, Programs/
 Batches/Sessions, bulk email campaigns, or webinar/Zoom management for the
 masterclass — none of that exists; it is explicitly out of scope unless
 requested.
+
+**Round 4A decision (agency leads admin at `/admin`).** The same "stop and
+confirm first" rule above was deliberately invoked for this one: `/admin`
+is a second, independent internal staff tool, in the same category as
+`/masterclass/admin` — Basic Auth (its own `AGENCY_ADMIN_USER`/
+`AGENCY_ADMIN_PASSWORD`/`AGENCY_ADMIN_RATE_LIMIT_SECRET`, never shared with
+the masterclass admin's credentials), checked independently by
+`src/proxy.ts`, by the `/admin` route layout, and by every mutating Server
+Action and the CSV export route handler (see
+`src/lib/agency-admin/admin-auth.ts`). It manages the agency's own
+`Inquiry` leads (status pipeline, private notes, CSV export, a dashboard) —
+it is explicitly **not** a revival of the removed client-facing
+dashboard/account/self-serve-ordering system: no client ever logs into it,
+it has no payment flow, and it doesn't touch the masterclass's Student/
+payment-order data at all. `tests/routes/masterclass-admin-isolation.test.ts`
+was updated accordingly — it now asserts two independently-gated admin
+surfaces exist (separate credentials, separate rate-limit scopes) rather
+than asserting only one may exist, while still asserting neither
+`(public)/admin` nor `src/app/api/admin` exists (see
+`tests/routes/removed-routes.test.ts`, unchanged). Revenue, payments, and
+client records are still out of scope for `/admin` until Round 4B; bulk
+email/automation is out of scope until Round 4C.
 
 ## Commands
 
