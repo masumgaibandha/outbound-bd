@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
+import { getClientCounts, getCurrentMrrCents } from "@/lib/agency-admin/clients-repository";
 import { getDashboardStats } from "@/lib/agency-admin/leads-repository";
 import { SOURCE_LABELS, STATUS_LABELS } from "@/lib/agency-admin/labels";
+import { averageCents, formatCents } from "@/lib/agency-admin/money";
+import { getMonthlyCollectedSeries, getRevenueByType } from "@/lib/agency-admin/payments-repository";
 import { defaultDhakaDateRange } from "@/lib/agency-admin/timezone";
 import { parseLeadFilters, type RawSearchParams } from "@/lib/agency-admin/validation";
 import type { InquirySource, InquiryStatus } from "@/lib/models/inquiry";
@@ -29,7 +32,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const from = parsed.from ?? defaultRange.from;
   const to = parsed.to ?? defaultRange.to;
 
-  const stats = await getDashboardStats({ from, to });
+  const [stats, revenueByType, mrrCents, clientCounts, monthlySeries] = await Promise.all([
+    getDashboardStats({ from, to }),
+    getRevenueByType({ from, to }),
+    getCurrentMrrCents(),
+    getClientCounts(),
+    getMonthlyCollectedSeries(6),
+  ]);
+  const averageRevenuePerActiveClientCents = averageCents(mrrCents, clientCounts.active);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -76,13 +86,60 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
           value={`${stats.toCallBookedOrBeyond} (${formatRate(stats.toCallBookedOrBeyond, stats.totalLeads)})`}
         />
         <StatCard label="To won" value={`${stats.toWon} (${formatRate(stats.toWon, stats.totalLeads)})`} />
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-400">Coming soon</div>
-          <div className="mt-1 text-xs text-gray-500">Revenue (Round 4B)</div>
-        </div>
+        <StatCard label="Average revenue per active client" value={formatCents(averageRevenuePerActiveClientCents)} />
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+      <h2 className="mt-8 text-lg font-semibold">Revenue</h2>
+      <p className="mt-1 text-sm text-gray-600">
+        Collected is real cash received (from payments); MRR is committed recurring revenue from active clients, not
+        cash in hand. The two are never the same number and should not be read as interchangeable.
+      </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          label="Collected in range (setup)"
+          value={formatCents(revenueByType.setupCents)}
+          testId="collected-setup"
+        />
+        <StatCard
+          label="Collected in range (monthly)"
+          value={formatCents(revenueByType.monthlyCents)}
+          testId="collected-monthly"
+        />
+        <StatCard
+          label="Collected in range (total)"
+          value={formatCents(revenueByType.totalCents)}
+          testId="collected-total"
+        />
+        <StatCard
+          label="Current MRR (committed, not collected)"
+          value={formatCents(mrrCents)}
+          testId="current-mrr"
+        />
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <StatCard label="Active clients" value={String(clientCounts.active)} testId="clients-active" />
+        <StatCard label="Paused clients" value={String(clientCounts.paused)} testId="clients-paused" />
+        <StatCard label="Ended clients" value={String(clientCounts.ended)} testId="clients-ended" />
+      </div>
+
+      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-gray-900">Collected revenue, last 6 months</h3>
+        <p className="mt-1 text-xs text-gray-500">Always the last 6 calendar months (Asia/Dhaka), independent of the date range above.</p>
+        <ul className="mt-2 divide-y divide-gray-100 text-sm">
+          {monthlySeries.map((row) => (
+            <li key={row.month} className="flex items-center justify-between py-1.5">
+              <span className="text-gray-700">{row.month}</span>
+              <span className="font-medium text-gray-900">{formatCents(row.collectedCents)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <h2 className="mt-8 text-lg font-semibold">Leads</h2>
+
+      <div className="mt-3 grid gap-6 sm:grid-cols-2">
         <BreakdownTable
           title="Leads by source"
           rows={stats.bySource.map((row) => ({

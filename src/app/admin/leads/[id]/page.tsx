@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { ClientLinkOrCreateForm } from "@/components/admin/client-link-or-create-form";
 import { LeadNoteForm } from "@/components/admin/lead-note-form";
 import { LeadStatusForm } from "@/components/admin/lead-status-form";
+import { findClientBySourceInquiryId } from "@/lib/agency-admin/clients-repository";
 import {
   SOURCE_LABELS,
   STATUS_LABELS,
@@ -44,6 +46,8 @@ export default async function AdminLeadDetailPage({ params }: AdminLeadDetailPag
 
   const lead = await findLeadById(idResult.data);
   if (!lead) notFound();
+
+  const existingClient = await findClientBySourceInquiryId(idResult.data);
 
   const statusHistory = [...lead.statusHistory].reverse();
   const notes = [...lead.notes].reverse();
@@ -133,6 +137,19 @@ export default async function AdminLeadDetailPage({ params }: AdminLeadDetailPag
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-gray-900">Client</h2>
+        <ClientLinkOrCreateForm
+          leadId={lead.id}
+          leadStatus={lead.status}
+          existingClientId={existingClient?.id ?? null}
+          defaultName={lead.name}
+          defaultCompany={lead.company ?? ""}
+          defaultEmail={lead.email}
+          defaultWebsite={lead.website}
+        />
       </section>
 
       <section className="mt-4 rounded-lg border border-gray-200 bg-white p-4">

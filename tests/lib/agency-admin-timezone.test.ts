@@ -5,6 +5,7 @@ import {
   dhakaDateOnlyToUtcEndExclusive,
   dhakaDateOnlyToUtcStart,
   isValidDateOnly,
+  lastNDhakaMonthKeys,
   utcInstantToDhakaDateOnly,
 } from "@/lib/agency-admin/timezone";
 
@@ -64,5 +65,42 @@ describe("defaultDhakaDateRange", () => {
     const range = defaultDhakaDateRange(now);
     expect(range.to).toBe("2026-09-23");
     expect(range.from).toBe("2026-08-25");
+  });
+});
+
+describe("lastNDhakaMonthKeys", () => {
+  it("returns the last 6 months ending at the given instant's Dhaka month, oldest first", () => {
+    const now = new Date("2026-09-23T10:00:00.000Z"); // Dhaka September
+    expect(lastNDhakaMonthKeys(6, now)).toEqual([
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+    ]);
+  });
+
+  it("rolls over the year boundary correctly", () => {
+    const now = new Date("2026-02-10T10:00:00.000Z"); // Dhaka February
+    expect(lastNDhakaMonthKeys(6, now)).toEqual([
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+    ]);
+  });
+
+  it("supports a count of 1 (just the current month)", () => {
+    const now = new Date("2026-09-23T10:00:00.000Z");
+    expect(lastNDhakaMonthKeys(1, now)).toEqual(["2026-09"]);
+  });
+
+  it("uses the Dhaka-shifted month, not the raw UTC month, near a month boundary", () => {
+    // 2026-08-31T18:00:00Z is exactly 2026-09-01T00:00 in Dhaka.
+    const now = new Date("2026-08-31T18:00:00.000Z");
+    expect(lastNDhakaMonthKeys(1, now)).toEqual(["2026-09"]);
   });
 });

@@ -16,13 +16,18 @@ change the agency site's own no-account, no-checkout model, and it does not
 mean the previously-removed generic agency dashboard/auth/ordering system is
 coming back — see the note at the end of Architecture.
 
-A second, narrower exception, added in Round 4A: an internal, Basic-Auth-gated
-staff tool at `/admin` for managing inbound leads (the agency's own
-`Inquiry` documents) — dashboard, filterable/paginated leads list, lead
-detail with a status pipeline and private notes, CSV export. This is **not**
-the previously-removed client-facing dashboard/account/ordering system; it
-has no client accounts, nothing a prospect or client ever logs into, and no
-payment flow. See the note at the end of Architecture for how it relates to
+A second, narrower exception, added in Round 4A and extended in Round 4B: an
+internal, Basic-Auth-gated staff tool at `/admin` for managing inbound leads
+(the agency's own `Inquiry` documents), paying clients (`Client` documents),
+and their payments (`Payment` documents) — dashboards, filterable/paginated
+lists, detail pages with status pipelines and private notes, CSV exports.
+This is **not** the previously-removed client-facing dashboard/account/
+ordering system: a `Client` document is a staff-facing business record
+(company, plan, billing terms, notes), never a login — no client, prospect,
+or lead ever authenticates against the site anywhere, and there is still no
+self-serve payment flow (every `Payment` is manually recorded by staff after
+money is actually received elsewhere, e.g. Wise/Payoneer/bank transfer).
+See the note at the end of Architecture for how `/admin` relates to
 `/masterclass/admin` and to the removed system.
 
 ## Stack
@@ -32,11 +37,11 @@ payment flow. See the note at the end of Architecture for how it relates to
 - **UI**: HeroUI v3 (`@heroui/react`, `@heroui/styles`) + Tailwind CSS v4
   (CSS-first config — there is no `tailwind.config.js`; theme and plugin
   wiring live in `src/app/globals.css`)
-- **Data**: MongoDB via Mongoose for the agency's `Inquiry` collection; the
-  masterclass feature uses the native `mongodb` driver's `Collection`/
-  `ClientSession` API (via `src/lib/masterclass/db.ts`, reusing the same
-  underlying Mongoose connection) for its own collections — see Masterclass
-  below.
+- **Data**: MongoDB via Mongoose for the agency's `Inquiry`, `Client`, and
+  `Payment` collections; the masterclass feature uses the native `mongodb`
+  driver's `Collection`/`ClientSession` API (via `src/lib/masterclass/db.ts`,
+  reusing the same underlying Mongoose connection) for its own collections —
+  see Masterclass below.
 - **Package manager**: npm
 
 ## Architecture
@@ -57,27 +62,46 @@ outside that group:
   enrollments (see Masterclass below)
 - `src/app/api/masterclass` — registration and payment-evidence submission
   routes
-- `src/app/admin` — the Round 4A agency leads admin: dashboard, leads list,
-  lead detail, CSV export (see the note at the end of this section)
+- `src/app/admin` — the agency admin (Round 4A: leads; Round 4B: clients,
+  payments, revenue): dashboard, `leads`, `clients` (+ `clients/new` for a
+  standalone "Add client" not linked to a lead), `payments`, each with a
+  list/detail/CSV-export shape (see the note at the end of this section)
 - `src/app/sitemap.ts`, `src/app/robots.ts` — SEO metadata routes
 - `src/lib` — `env.ts` (validated `MONGODB_URI`), `public-env.ts` (validated
   `NEXT_PUBLIC_APP_URL`), `mongoose.ts` (connection singleton),
   `inquiry-schema.ts` (Zod schema, shared by the form and the API route),
-  `models/inquiry.ts` (Mongoose model), `contact-prefill.ts` (pure function
-  resolving `?service=&plan=` query params into form prefill values),
-  `pricing-catalog.ts` (managed-plan/one-time-offer data), `normalize-website.ts`
+  `models/inquiry.ts` / `models/client.ts` / `models/payment.ts` (Mongoose
+  models), `contact-prefill.ts` (pure function resolving `?service=&plan=`
+  query params into form prefill values), `pricing-catalog.ts`
+  (managed-plan/one-time-offer data, independent from a `Client`'s own
+  `plan`/pricing — see below), `normalize-website.ts`
 - `src/lib/masterclass` — registration/payment/admin logic: `env.ts` (the
   registration gate and all masterclass env accessors), `validation.ts`
   (Zod schemas), `turnstile.ts`, `rate-limit.ts`, `registrations-repository.ts`
   / `payment-orders-repository.ts` / `students-repository.ts`,
   `verify-service.ts` (the atomic approve/reject transaction), `email.ts`,
   `meta-capi.ts`
-- `src/lib/agency-admin` — the `/admin` leads admin's own logic: `env.ts` /
+- `src/lib/agency-admin` — the `/admin` agency admin's own logic: `env.ts` /
   `admin-auth.ts` (its own Basic Auth + rate limiting, entirely independent
-  of the masterclass admin's), `validation.ts` (Zod schemas for filters,
-  status, notes, ids), `timezone.ts` (Asia/Dhaka date-range math),
-  `leads-repository.ts` (Mongoose queries against `Inquiry`), `csv.ts`,
-  `labels.ts`, `query.ts`
+  of the masterclass admin's), `authorize.ts` (the shared Basic-Auth-plus-
+  origin-check every mutating Server Action calls first — leads, clients,
+  and payments actions all reuse this one implementation), `origin.ts`
+  (derives the expected request origin from `x-forwarded-host`/`host` +
+  `x-forwarded-proto`, never from a fixed configured URL — see its own doc
+  comment for why a fixed URL breaks on Preview deployments), `messages.ts`
+  (shared action-result message strings, kept out of `actions.ts` files
+  since a `"use server"` file may only export async functions),
+  `validation.ts` / `clients-validation.ts` / `payments-validation.ts` (Zod
+  schemas for filters, status, notes, ids, one file per domain),
+  `timezone.ts` (Asia/Dhaka date-range math, including
+  `lastNDhakaMonthKeys()` for the dashboard's 6-month revenue series),
+  `billing.ts` (`nextBillingDateInDhaka()`), `money.ts` (the one shared
+  `formatCents()`/`averageCents()`/`dollarsStringToCents()` — every money
+  amount is an integer number of cents end to end; see its own doc comment
+  and Money below), `leads-repository.ts` / `clients-repository.ts` /
+  `payments-repository.ts` (Mongoose queries), `csv-core.ts` (shared BOM +
+  formula-injection-safe CSV primitives) with `csv.ts` / `clients-csv.ts` /
+  `payments-csv.ts` on top, `labels.ts` / `clients-labels.ts`, `query.ts`
 - `src/components/public` — one component per homepage section, the shared
   `Logo`/`Container`/`Section`/`SectionHeading`/`Button` primitives, and
   `site-config.ts` (nav links, Calendly URL, contact email — see Brand below)
@@ -115,20 +139,50 @@ is a second, independent internal staff tool, in the same category as
 `AGENCY_ADMIN_PASSWORD`/`AGENCY_ADMIN_RATE_LIMIT_SECRET`, never shared with
 the masterclass admin's credentials), checked independently by
 `src/proxy.ts`, by the `/admin` route layout, and by every mutating Server
-Action and the CSV export route handler (see
-`src/lib/agency-admin/admin-auth.ts`). It manages the agency's own
-`Inquiry` leads (status pipeline, private notes, CSV export, a dashboard) —
-it is explicitly **not** a revival of the removed client-facing
-dashboard/account/self-serve-ordering system: no client ever logs into it,
-it has no payment flow, and it doesn't touch the masterclass's Student/
-payment-order data at all. `tests/routes/masterclass-admin-isolation.test.ts`
-was updated accordingly — it now asserts two independently-gated admin
-surfaces exist (separate credentials, separate rate-limit scopes) rather
-than asserting only one may exist, while still asserting neither
-`(public)/admin` nor `src/app/api/admin` exists (see
-`tests/routes/removed-routes.test.ts`, unchanged). Revenue, payments, and
-client records are still out of scope for `/admin` until Round 4B; bulk
-email/automation is out of scope until Round 4C.
+Action and every CSV export route handler (see
+`src/lib/agency-admin/admin-auth.ts`). It is explicitly **not** a revival of
+the removed client-facing dashboard/account/self-serve-ordering system: no
+client, prospect, or lead ever logs into it, and it doesn't touch the
+masterclass's Student/payment-order data at all.
+`tests/routes/masterclass-admin-isolation.test.ts` was updated accordingly —
+it now asserts two independently-gated admin surfaces exist (separate
+credentials, separate rate-limit scopes) rather than asserting only one may
+exist, while still asserting neither `(public)/admin` nor `src/app/api/admin`
+exists (see `tests/routes/removed-routes.test.ts`, unchanged).
+
+**Round 4B (clients, payments, revenue).** Extended `/admin` with `Client`
+and `Payment` records and real dashboard revenue figures, under the exact
+same auth model as 4A — no new policy exception, since these are still
+staff-only business records, not client accounts or a checkout flow. A
+`Client` is created only two ways: converting a WON `Inquiry` (from that
+lead's own detail page, which also enforces "never a duplicate client for
+the same lead" — both in application logic and via a partial unique index
+on `Client.sourceInquiryId`), or the standalone "Add client" form at
+`/admin/clients/new` for a client who never came through a lead (referral,
+LinkedIn, cold email). Every mutating Server Action across leads, clients,
+and payments now shares one authorization implementation
+(`src/lib/agency-admin/authorize.ts`) rather than three separate copies.
+Payments are the one exception to the "notes are append-only" pattern the
+rest of `/admin` uses — they can be edited and deleted (manual entry means
+typos), with a `window.confirm()` step before delete; the underlying Server
+Action still independently re-verifies auth/origin regardless of that
+client-side confirmation. Bulk email/automation is out of scope until
+Round 4C.
+
+**Money.** Every amount anywhere under `/admin` is stored and handled as an
+integer number of cents — never a float. `src/lib/agency-admin/money.ts` is
+the one place a dollars-string form input becomes cents
+(`dollarsStringToCents()`, via exact string splitting and `BigInt`, never
+`Number(dollars) * 100` — that misrounds real values, e.g.
+`19.99 * 100 === 1998.9999999999998` in JS) and the one place cents become a
+display string (`formatCents()`). Sums (collected revenue, MRR) are plain
+integer addition; an average (e.g. revenue per active client) is rounded
+exactly once, at display time (`averageCents()`), never earlier. The
+dashboard is careful to distinguish **collected** revenue (from actual
+`Payment` records within the selected date range) from **MRR** (the sum of
+`Client.monthlyAmountCents` across `ACTIVE` clients right now — committed
+recurring revenue, not cash in hand) — the two are never the same number and
+the UI labels them accordingly.
 
 ## Commands
 

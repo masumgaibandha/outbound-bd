@@ -54,6 +54,12 @@ export default async function AgencyAdminLayout({ children }: { children: ReactN
         <Link href="/admin/leads" className="text-gray-700 hover:text-blue-600">
           Leads
         </Link>
+        <Link href="/admin/clients" className="text-gray-700 hover:text-blue-600">
+          Clients
+        </Link>
+        <Link href="/admin/payments" className="text-gray-700 hover:text-blue-600">
+          Payments
+        </Link>
       </nav>
       {children}
     </div>

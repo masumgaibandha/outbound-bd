@@ -59,3 +59,30 @@ export function defaultDhakaDateRange(now: Date = new Date()): DhakaDateRange {
   const from = utcInstantToDhakaDateOnly(fromInstant);
   return { from, to };
 }
+
+/** The fixed-offset equivalent of `"Asia/Dhaka"` accepted by MongoDB's `$dateToString`/`$dateTrunc` `timezone` option — kept as a UTC-offset string (not the IANA name) so the aggregation pipeline uses the exact same "always +6, no DST" assumption as every function above, rather than depending on the MongoDB server's own timezone database. */
+export const DHAKA_UTC_OFFSET_STRING = "+06:00";
+
+/**
+ * The last `count` calendar months in Asia/Dhaka, as `"YYYY-MM"` keys,
+ * oldest first, ending at `now`'s own Dhaka month (inclusive) — e.g.
+ * `count: 6` on a Dhaka-September `now` returns April through September.
+ * Pure and independent of any date-range filter the caller might also have
+ * selected — the dashboard's "last 6 months" series is always the last 6
+ * real months, not scoped to whatever range is showing elsewhere on the
+ * page.
+ */
+export function lastNDhakaMonthKeys(count: number, now: Date = new Date()): string[] {
+  const [year, month] = utcInstantToDhakaDateOnly(now).split("-").map(Number);
+  const keys: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    let y = year;
+    let m = month - i;
+    while (m <= 0) {
+      m += 12;
+      y -= 1;
+    }
+    keys.push(`${y}-${String(m).padStart(2, "0")}`);
+  }
+  return keys;
+}

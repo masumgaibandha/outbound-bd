@@ -11,11 +11,13 @@ import mongoose from "mongoose";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { connectToDatabase } from "@/lib/mongoose";
+import { Client } from "@/lib/models/client";
 import { Inquiry } from "@/lib/models/inquiry";
+import { Payment } from "@/lib/models/payment";
 import AdminDashboardPage from "@/app/admin/page";
 
 afterEach(async () => {
-  await Inquiry.deleteMany({});
+  await Promise.all([Inquiry.deleteMany({}), Client.deleteMany({}), Payment.deleteMany({})]);
 });
 
 afterAll(async () => {
@@ -37,13 +39,15 @@ async function createLead(overrides: Partial<Record<string, unknown>> = {}) {
 }
 
 describe("AdminDashboardPage", () => {
-  it("shows a revenue placeholder, never a fabricated figure", async () => {
+  it("shows real (zero) revenue figures, never a placeholder, when there are no clients or payments", async () => {
     await connectToDatabase();
     const element = await AdminDashboardPage({ searchParams: Promise.resolve({}) });
     render(element);
 
-    expect(screen.getByText("Coming soon")).toBeInTheDocument();
-    expect(screen.getByText("Revenue (Round 4B)")).toBeInTheDocument();
+    expect(screen.queryByText("Coming soon")).not.toBeInTheDocument();
+    expect(screen.getByTestId("collected-total")).toHaveTextContent("$0.00");
+    expect(screen.getByTestId("current-mrr")).toHaveTextContent("$0.00");
+    expect(screen.getByTestId("clients-active")).toHaveTextContent("0");
   });
 
   it("shows totals, by-source, and by-status breakdowns for leads inside the default range", async () => {
@@ -70,5 +74,77 @@ describe("AdminDashboardPage", () => {
     render(element);
 
     expect(screen.getByTestId("total-leads")).toHaveTextContent("1");
+  });
+
+  it("shows collected revenue and committed MRR as distinct figures, never confused with each other", async () => {
+    await connectToDatabase();
+    const client = await Client.create({
+      name: "Alex Founder",
+      company: "Acme Inc",
+      email: "alex@acme.com",
+      website: "https://acme.com",
+      plan: "LAUNCH",
+      monthlyAmountCents: 49900,
+      currency: "USD",
+      billingDayOfMonth: 1,
+      startDate: new Date("2026-09-01"),
+      status: "ACTIVE",
+    });
+    // Collected (a payment) and committed MRR (the client's monthly rate)
+    // are deliberately different amounts here, to prove the dashboard never
+    // conflates the two.
+    await Payment.create({
+      clientId: client._id,
+      amountCents: 19900,
+      currency: "USD",
+      paidAt: new Date("2026-09-10"),
+      method: "STRIPE",
+      type: "SETUP",
+    });
+
+    const element = await AdminDashboardPage({
+      searchParams: Promise.resolve({ from: "2026-09-01", to: "2026-09-30" }),
+    });
+    render(element);
+
+    expect(screen.getByTestId("collected-setup")).toHaveTextContent("$199.00");
+    expect(screen.getByTestId("collected-monthly")).toHaveTextContent("$0.00");
+    expect(screen.getByTestId("collected-total")).toHaveTextContent("$199.00");
+    expect(screen.getByTestId("current-mrr")).toHaveTextContent("$499.00");
+    expect(screen.getByTestId("clients-active")).toHaveTextContent("1");
+  });
+
+  it("computes average revenue per active client from MRR, rounded once at display time", async () => {
+    await connectToDatabase();
+    await Client.create({
+      name: "A",
+      company: "A Co",
+      email: "a@example.com",
+      website: "https://a.example.com",
+      plan: "CUSTOM",
+      monthlyAmountCents: 10000,
+      currency: "USD",
+      billingDayOfMonth: 1,
+      startDate: new Date("2026-09-01"),
+      status: "ACTIVE",
+    });
+    await Client.create({
+      name: "B",
+      company: "B Co",
+      email: "b@example.com",
+      website: "https://b.example.com",
+      plan: "CUSTOM",
+      monthlyAmountCents: 10001,
+      currency: "USD",
+      billingDayOfMonth: 1,
+      startDate: new Date("2026-09-01"),
+      status: "ACTIVE",
+    });
+
+    const element = await AdminDashboardPage({ searchParams: Promise.resolve({}) });
+    render(element);
+
+    // (10000 + 10001) / 2 = 10000.5 -> rounds to 10001 cents = $100.01.
+    expect(screen.getByText("$100.01")).toBeInTheDocument();
   });
 });
