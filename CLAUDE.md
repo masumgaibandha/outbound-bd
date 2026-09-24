@@ -230,6 +230,14 @@ constant is the single place the real booking link lives. Never hardcode a
 booking URL or CTA label anywhere else; if `CALENDLY_URL` is ever cleared it
 correctly falls back to `/contact` instead of a placeholder/`#`.
 
+**One deliberate exception: `/agencies`.** That landing page's hero
+booking button (`src/components/agencies/agency-book-a-call-button.tsx`)
+uses the shorter label "Book a call" instead of `STRATEGY_CALL_LABEL`,
+because it fits the page's sales tone. This was the user's explicit
+decision, so don't "fix" it back to the shared label. It still reads
+`STRATEGY_CALL_HREF` / `STRATEGY_CALL_LINK_PROPS`, so the booking URL
+itself is never hardcoded there either.
+
 ## Conventions
 
 - Server-only modules (`src/lib/env.ts`, `src/lib/mongoose.ts`,

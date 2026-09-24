@@ -341,7 +341,7 @@ export function AgencyLeadForm() {
           className: "mt-8 disabled:cursor-not-allowed disabled:opacity-60",
         })}
       >
-        {submitState === "submitting" ? "Sending…" : "See if it's a fit"}
+        {submitState === "submitting" ? "Sending…" : "Send my details"}
       </button>
     </form>
   );

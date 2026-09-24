@@ -252,19 +252,23 @@ export function getCatalogPrefillNote(entry: CatalogEntry): string {
 }
 
 /**
- * The lowest numeric monthly price across every managed plan, formatted for
- * "Plans start at X/month" copy (e.g. the /agencies landing page's pricing
- * section) — reads from the catalog rather than a hardcoded figure, so a
- * future price change here doesn't require a second edit elsewhere. A plan
- * with `monthlyPriceCents: null` ("Contact for price") is excluded from the
+ * The lowest numeric monthly price across every managed plan, in integer
+ * cents (e.g. the /agencies landing page's margin math) — reads from the
+ * catalog rather than a hardcoded figure, so a future price change here
+ * doesn't require a second edit elsewhere. A plan with
+ * `monthlyPriceCents: null` ("Contact for price") is excluded from the
  * comparison, same as it's excluded from display everywhere else.
  */
-export function getStartingMonthlyPriceLabel(): string {
+export function getStartingMonthlyPriceCents(): number {
   const numericPrices = MANAGED_PLANS.map((plan) => plan.monthlyPriceCents).filter(
     (cents): cents is number => cents !== null,
   );
-  const lowestCents = Math.min(...numericPrices);
-  return formatPriceCents(lowestCents);
+  return Math.min(...numericPrices);
+}
+
+/** `getStartingMonthlyPriceCents()`, formatted for "Plans start at X/month" copy. */
+export function getStartingMonthlyPriceLabel(): string {
+  return formatPriceCents(getStartingMonthlyPriceCents());
 }
 
 /** Builds the validated /contact query string for a catalog entry's
