@@ -4,6 +4,7 @@ import {
   activeClientsLabel,
   budgetLabel,
   serviceOrNeedLabel,
+  teamSizeLabel,
 } from "@/lib/agency-admin/labels";
 import { buildCsv, buildCsvFilename } from "@/lib/agency-admin/csv-core";
 import { utcInstantToDhakaDateOnly } from "@/lib/agency-admin/timezone";
@@ -19,6 +20,7 @@ const CSV_HEADER = [
   "Service or need",
   "Budget",
   "Active clients",
+  "Team size",
   "UTM campaign",
   "Status",
 ];
@@ -33,6 +35,7 @@ export function buildLeadsCsv(leads: LeadListRow[]): string {
     serviceOrNeedLabel(lead.source, lead.service, lead.need),
     budgetLabel(lead.budgetRange),
     lead.activeClients ? activeClientsLabel(lead.activeClients) : "",
+    lead.teamSize ? teamSizeLabel(lead.teamSize) : "",
     lead.utmCampaign ?? "",
     STATUS_LABELS[lead.status],
   ]);

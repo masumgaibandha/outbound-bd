@@ -58,6 +58,7 @@ export interface LeadListRow {
   need?: string;
   budgetRange: string;
   activeClients?: string;
+  teamSize?: string;
   utmCampaign?: string;
   status: InquiryStatus;
 }
@@ -79,6 +80,7 @@ function toListRow(doc: InquiryDocument & { _id: unknown }): LeadListRow {
     need: doc.need,
     budgetRange: doc.budgetRange,
     activeClients: doc.activeClients,
+    teamSize: doc.teamSize,
     utmCampaign: doc.attribution?.utmCampaign,
     status: doc.status,
   };

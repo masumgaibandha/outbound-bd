@@ -3,6 +3,7 @@ import "server-only";
 import { Resend } from "resend";
 
 import { ACTIVE_CLIENTS_OPTIONS, AGENCY_NEED_OPTIONS } from "@/lib/agency-inquiry-schema";
+import { COLD_EMAIL_NEED_OPTIONS, TEAM_SIZE_OPTIONS } from "@/lib/cold-email-inquiry-schema";
 import { BUDGET_RANGE_OPTIONS, SERVICE_INTEREST_OPTIONS } from "@/lib/inquiry-schema";
 import type { InquirySource } from "@/lib/models/inquiry";
 
@@ -38,13 +39,16 @@ export interface ContactNotificationInput {
   goals?: string;
   /** Agencies-landing only - raw slug, resolved to its label here. */
   activeClients?: string;
-  /** Agencies-landing only - raw slug, resolved to its label here. */
+  /** Cold-email-landing only - raw slug, resolved to its label here. */
+  teamSize?: string;
+  /** Both landing forms - raw slug, resolved to its label (per source) here. */
   need?: string;
 }
 
 const SOURCE_LABELS: Record<InquirySource, string> = {
   contact: "Contact form",
   "agencies-landing": "Agencies landing page",
+  "cold-email-landing": "Cold email landing page",
 };
 
 const SERVICE_LABELS = new Map<string, string>(
@@ -58,6 +62,12 @@ const ACTIVE_CLIENTS_LABELS = new Map<string, string>(
 );
 const AGENCY_NEED_LABELS = new Map<string, string>(
   AGENCY_NEED_OPTIONS.map((option) => [option.value, option.label]),
+);
+const TEAM_SIZE_LABELS = new Map<string, string>(
+  TEAM_SIZE_OPTIONS.map((option) => [option.value, option.label]),
+);
+const COLD_EMAIL_NEED_LABELS = new Map<string, string>(
+  COLD_EMAIL_NEED_OPTIONS.map((option) => [option.value, option.label]),
 );
 
 /** Never renders undefined/null/empty as literal text - falls back to an explicit placeholder. */
@@ -137,10 +147,17 @@ function buildRows(input: ContactNotificationInput): NotificationRow[] {
       value: displayValue(ACTIVE_CLIENTS_LABELS.get(input.activeClients) ?? input.activeClients),
     });
   }
+  if (input.teamSize !== undefined) {
+    rows.push({
+      label: "Team size",
+      value: displayValue(TEAM_SIZE_LABELS.get(input.teamSize) ?? input.teamSize),
+    });
+  }
   if (input.need !== undefined) {
+    const needLabels = input.source === "cold-email-landing" ? COLD_EMAIL_NEED_LABELS : AGENCY_NEED_LABELS;
     rows.push({
       label: "What they need",
-      value: displayValue(AGENCY_NEED_LABELS.get(input.need) ?? input.need),
+      value: displayValue(needLabels.get(input.need) ?? input.need),
     });
   }
 
@@ -162,7 +179,9 @@ function buildEmailBody(input: ContactNotificationInput): { subject: string; htm
   const subject = sanitizeForHeader(
     input.source === "agencies-landing"
       ? `New agencies landing lead - ${displayValue(input.name)}`
-      : `New contact inquiry - ${displayValue(input.name)} (${displayValue(input.company)})`,
+      : input.source === "cold-email-landing"
+        ? `New cold email landing lead - ${displayValue(input.name)}`
+        : `New contact inquiry - ${displayValue(input.name)} (${displayValue(input.company)})`,
   );
 
   const rows = buildRows(input);

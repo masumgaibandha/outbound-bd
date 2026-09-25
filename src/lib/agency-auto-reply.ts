@@ -6,7 +6,7 @@ import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
 
 /**
  * Auto-reply sent to the prospect themselves after a successful
- * /agencies-lead submission — distinct from `contact-notification.ts`,
+ * landing-page submission (/api/agencies-lead or /api/cold-email-lead) — distinct from `contact-notification.ts`,
  * which is the INTERNAL notification sent to CONTACT_NOTIFICATION_EMAIL for
  * both forms (untouched by this file). Same lazy-env-check, never-throws
  * contract as that module: every failure path returns
@@ -23,12 +23,16 @@ import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
 
 const DEFAULT_AUTOREPLY_FROM = "Masum from Outbound BD <masum@updates.outboundbd.com>";
 
+const DEFAULT_TOPIC = "your agency";
+
 export type SendAgencyAutoReplyResult = { ok: true } | { ok: false; errorCode: string };
 
 export interface AgencyAutoReplyInput {
   inquiryId: string;
   name: string;
   email: string;
+  /** Completes "Thanks for reaching out about cold email for ___." Defaults to "your agency" (the /agencies wording). */
+  topic?: string;
 }
 
 function getFirstName(name: string): string {
@@ -43,14 +47,14 @@ function getAutoReplyFromAddress(): string {
   return raw && raw.trim().length > 0 ? raw.trim() : DEFAULT_AUTOREPLY_FROM;
 }
 
-function buildAutoReply(firstName: string): { subject: string; text: string } {
+function buildAutoReply(firstName: string, topic: string): { subject: string; text: string } {
   const subject = `Got your details, ${firstName}`;
   const calendlyUrl = STRATEGY_CALL_HREF;
 
   const text = [
     `Hi ${firstName},`,
     "",
-    "Thanks for reaching out about cold email for your agency.",
+    `Thanks for reaching out about cold email for ${topic}.`,
     "",
     "I'll look at your site and reply personally within one business day. If you'd rather talk it through sooner, you can book a time here:",
     calendlyUrl,
@@ -78,7 +82,7 @@ export async function sendAgencyAutoReply(
   const replyToRaw = process.env.RESEND_REPLY_TO_EMAIL;
   const replyTo = replyToRaw && replyToRaw.trim().length > 0 ? replyToRaw.trim() : fromAddress;
 
-  const { subject, text } = buildAutoReply(getFirstName(input.name));
+  const { subject, text } = buildAutoReply(getFirstName(input.name), input.topic ?? DEFAULT_TOPIC);
   const resend = new Resend(apiKey);
 
   try {

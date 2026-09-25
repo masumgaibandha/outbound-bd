@@ -11,11 +11,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  ACTIVE_CLIENTS_OPTIONS,
-  AGENCY_NEED_OPTIONS,
-  agencyInquirySchema,
-  type AgencyInquiryFieldErrors,
-} from "@/lib/agency-inquiry-schema";
+  LANDING_LEAD_FORM_VARIANTS,
+  type LandingLeadFormVariantKey,
+} from "@/components/agencies/landing-lead-form-variants";
 import { captureAgencyAttributionOnLoad, getStoredAgencyAttribution } from "@/lib/agency-attribution";
 import { storeAgencyLeadPrefill } from "@/lib/agency-lead-prefill";
 import { AlertTriangleIcon, ChevronDownIcon } from "@/components/public/icons";
@@ -33,9 +31,18 @@ const labelClass = "text-ink block text-sm font-medium";
 
 type SubmitState = "idle" | "submitting" | "error";
 
-export function AgencyLeadForm() {
+type FieldErrors = Partial<Record<string, string>>;
+
+/**
+ * The lead form for every paid-traffic landing page. `variant` picks the
+ * page-specific labels, options, endpoint and thank-you path (see
+ * landing-lead-form-variants.ts); everything else is shared.
+ */
+export function AgencyLeadForm({ variant = "agencies" }: { variant?: LandingLeadFormVariantKey }) {
+  const config = LANDING_LEAD_FORM_VARIANTS[variant];
+  const sizeField = config.sizeField;
   const router = useRouter();
-  const [fieldErrors, setFieldErrors] = useState<AgencyInquiryFieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [topLevelError, setTopLevelError] = useState<string | null>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -56,17 +63,17 @@ export function AgencyLeadForm() {
       name: String(formData.get("name") ?? ""),
       email: String(formData.get("email") ?? ""),
       website: String(formData.get("website") ?? ""),
-      activeClients: String(formData.get("activeClients") ?? ""),
+      [sizeField.name]: String(formData.get(sizeField.name) ?? ""),
       need: String(formData.get("need") ?? ""),
       budgetRange: String(formData.get("budgetRange") ?? ""),
       privacyConsent,
     };
 
-    const parsed = agencyInquirySchema.safeParse(raw);
+    const parsed = config.schema.safeParse(raw);
     if (!parsed.success) {
-      const errors: AgencyInquiryFieldErrors = {};
+      const errors: FieldErrors = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as keyof AgencyInquiryFieldErrors;
+        const key = String(issue.path[0]);
         errors[key] ??= issue.message;
       }
       setFieldErrors(errors);
@@ -82,7 +89,7 @@ export function AgencyLeadForm() {
     const eventId = crypto.randomUUID();
 
     try {
-      const response = await fetch("/api/agencies-lead", {
+      const response = await fetch(config.endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -104,13 +111,13 @@ export function AgencyLeadForm() {
         // Passed via sessionStorage, never a URL — see
         // src/lib/agency-lead-prefill.ts's own doc comment for why.
         storeAgencyLeadPrefill({ name: parsed.data.name, email: parsed.data.email });
-        router.push("/agencies/thank-you");
+        router.push(config.thankYouPath);
         return;
       }
 
       const payload = (await response.json().catch(() => null)) as {
         message?: string;
-        fieldErrors?: AgencyInquiryFieldErrors;
+        fieldErrors?: FieldErrors;
       } | null;
 
       if (response.status === 400 && payload?.fieldErrors) {
@@ -182,7 +189,7 @@ export function AgencyLeadForm() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@agency.com"
+            placeholder={config.emailPlaceholder}
             aria-invalid={Boolean(fieldErrors.email)}
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
             className={fieldClass}
@@ -190,13 +197,13 @@ export function AgencyLeadForm() {
         </Field>
 
         <div className="sm:col-span-2">
-          <Field id="website" label="Agency website" error={fieldErrors.website}>
+          <Field id="website" label={config.websiteLabel} error={fieldErrors.website}>
             <input
               id="website"
               name="website"
               type="text"
               autoComplete="url"
-              placeholder="youragency.com"
+              placeholder={config.websitePlaceholder}
               aria-invalid={Boolean(fieldErrors.website)}
               aria-describedby={fieldErrors.website ? "website-error" : undefined}
               className={fieldClass}
@@ -204,20 +211,20 @@ export function AgencyLeadForm() {
           </Field>
         </div>
 
-        <Field id="activeClients" label="Active clients" error={fieldErrors.activeClients}>
+        <Field id={sizeField.name} label={sizeField.label} error={fieldErrors[sizeField.name]}>
           <div className="relative">
             <select
-              id="activeClients"
-              name="activeClients"
+              id={sizeField.name}
+              name={sizeField.name}
               defaultValue=""
               className={selectFieldClass}
-              aria-invalid={Boolean(fieldErrors.activeClients)}
-              aria-describedby={fieldErrors.activeClients ? "activeClients-error" : undefined}
+              aria-invalid={Boolean(fieldErrors[sizeField.name])}
+              aria-describedby={fieldErrors[sizeField.name] ? `${sizeField.name}-error` : undefined}
             >
               <option value="" disabled>
                 Select a range
               </option>
-              {ACTIVE_CLIENTS_OPTIONS.map((option) => (
+              {sizeField.options.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -245,7 +252,7 @@ export function AgencyLeadForm() {
               <option value="" disabled>
                 Select one
               </option>
-              {AGENCY_NEED_OPTIONS.map((option) => (
+              {config.needOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

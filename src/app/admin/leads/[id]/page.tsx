@@ -11,10 +11,11 @@ import {
   SOURCE_LABELS,
   STATUS_LABELS,
   activeClientsLabel,
-  agencyNeedLabel,
   budgetLabel,
+  needLabel,
   outreachVolumeLabel,
   serviceLabel,
+  teamSizeLabel,
 } from "@/lib/agency-admin/labels";
 import { findLeadById } from "@/lib/agency-admin/leads-repository";
 import { leadIdSchema } from "@/lib/agency-admin/validation";
@@ -99,7 +100,8 @@ export default async function AdminLeadDetailPage({ params }: AdminLeadDetailPag
           ) : null}
           {lead.goals ? <Field label="Goals">{lead.goals}</Field> : null}
           {lead.activeClients ? <Field label="Active clients">{activeClientsLabel(lead.activeClients)}</Field> : null}
-          {lead.need ? <Field label="Need">{agencyNeedLabel(lead.need)}</Field> : null}
+          {lead.teamSize ? <Field label="Team size">{teamSizeLabel(lead.teamSize)}</Field> : null}
+          {lead.need ? <Field label="Need">{needLabel(lead.source, lead.need)}</Field> : null}
         </dl>
       </section>
 

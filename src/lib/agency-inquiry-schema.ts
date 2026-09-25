@@ -40,35 +40,50 @@ const BUDGET_RANGE_VALUES = BUDGET_RANGE_OPTIONS.map(
   (option) => option.value,
 ) as [string, ...string[]];
 
-export const agencyInquirySchema = z.object({
-  name: z
+// Field rules shared with the /cold-email landing form's schema
+// (src/lib/cold-email-inquiry-schema.ts), which collects the same fields
+// apart from its own size question and need options.
+export const landingLeadNameField = z
+  .string()
+  .trim()
+  .min(2, "Enter your full name")
+  .max(100, "Name is too long");
+
+export const landingLeadEmailField = z
+  .string()
+  .trim()
+  .min(1, "Enter your work email")
+  .pipe(z.email("Enter a valid email address"));
+
+export function landingLeadWebsiteField(requiredMessage: string) {
+  return z
     .string()
     .trim()
-    .min(2, "Enter your full name")
-    .max(100, "Name is too long"),
-  email: z
-    .string()
-    .trim()
-    .min(1, "Enter your work email")
-    .pipe(z.email("Enter a valid email address")),
-  website: z
-    .string()
-    .trim()
-    .min(1, "Enter your agency website")
+    .min(1, requiredMessage)
     .transform(normalizeWebsite)
-    .pipe(z.url("Enter a valid website URL")),
+    .pipe(z.url("Enter a valid website URL"));
+}
+
+export const landingLeadBudgetField = z.enum(BUDGET_RANGE_VALUES, {
+  error: "Select a budget range",
+});
+
+export const landingLeadPrivacyConsentField = z.literal(true, {
+  error: "You must agree to the Privacy Policy to continue",
+});
+
+export const agencyInquirySchema = z.object({
+  name: landingLeadNameField,
+  email: landingLeadEmailField,
+  website: landingLeadWebsiteField("Enter your agency website"),
   activeClients: z.enum(ACTIVE_CLIENTS_VALUES, {
     error: "Select how many active clients you run",
   }),
   need: z.enum(AGENCY_NEED_VALUES, {
     error: "Select what you need",
   }),
-  budgetRange: z.enum(BUDGET_RANGE_VALUES, {
-    error: "Select a budget range",
-  }),
-  privacyConsent: z.literal(true, {
-    error: "You must agree to the Privacy Policy to continue",
-  }),
+  budgetRange: landingLeadBudgetField,
+  privacyConsent: landingLeadPrivacyConsentField,
 });
 
 export type AgencyInquiryInput = z.infer<typeof agencyInquirySchema>;

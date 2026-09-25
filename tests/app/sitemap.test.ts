@@ -47,6 +47,12 @@ describe("sitemap", () => {
     }
   });
 
+  it("includes both paid-traffic landing pages but neither thank-you page", () => {
+    expect(urls).toContain("http://localhost:3000/agencies");
+    expect(urls).toContain("http://localhost:3000/cold-email");
+    expect(urls.filter((url) => url.includes("thank-you"))).toEqual([]);
+  });
+
   it("includes all four named service pages", () => {
     for (const slug of [
       "cold-email-outreach",

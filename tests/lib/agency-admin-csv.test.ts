@@ -28,11 +28,20 @@ describe("buildLeadsCsv", () => {
     const csv = buildLeadsCsv([baseLead()]);
     const lines = csv.replace(/^﻿/, "").split("\r\n").filter(Boolean);
     expect(lines[0]).toBe(
-      "Date,Name,Email,Website,Source,Service or need,Budget,Active clients,UTM campaign,Status",
+      "Date,Name,Email,Website,Source,Service or need,Budget,Active clients,Team size,UTM campaign,Status",
     );
     expect(lines[1]).toContain("Alex Lead");
     expect(lines[1]).toContain("Contact form");
     expect(lines[1]).toContain("New");
+  });
+
+  it("labels a cold-email-landing lead's source, need and team size", () => {
+    const csv = buildLeadsCsv([
+      baseLead({ source: "cold-email-landing", service: undefined, need: "offload-outreach", teamSize: "just-me" }),
+    ]);
+    const lines = csv.replace(/^﻿/, "").split("\r\n").filter(Boolean);
+    expect(lines[1]).toContain(",Cold email landing page,Take outreach off my plate,");
+    expect(lines[1]).toContain(",,Just me,");
   });
 
   it("prefixes a leading = with a single quote to prevent formula injection", () => {

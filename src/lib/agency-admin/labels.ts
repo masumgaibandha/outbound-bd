@@ -2,6 +2,7 @@ import {
   ACTIVE_CLIENTS_OPTIONS,
   AGENCY_NEED_OPTIONS,
 } from "@/lib/agency-inquiry-schema";
+import { COLD_EMAIL_NEED_OPTIONS, TEAM_SIZE_OPTIONS } from "@/lib/cold-email-inquiry-schema";
 import {
   BUDGET_RANGE_OPTIONS,
   OUTREACH_VOLUME_OPTIONS,
@@ -39,9 +40,10 @@ export const STATUS_VALUES: InquiryStatus[] = [
 export const SOURCE_LABELS: Record<InquirySource, string> = {
   contact: "Contact form",
   "agencies-landing": "Agencies landing page",
+  "cold-email-landing": "Cold email landing page",
 };
 
-export const SOURCE_VALUES: InquirySource[] = ["contact", "agencies-landing"];
+export const SOURCE_VALUES: InquirySource[] = ["contact", "agencies-landing", "cold-email-landing"];
 
 const SERVICE_LABELS = new Map<string, string>(
   SERVICE_INTEREST_OPTIONS.map((option) => [option.value, option.label]),
@@ -84,7 +86,23 @@ export function agencyNeedLabel(value: string | undefined): string {
   return labelOrRaw(AGENCY_NEED_LABELS, value);
 }
 
-/** "Service or need" column: the contact form's `service`, or the agencies-landing form's `need` — the two never coexist on one document. */
+const TEAM_SIZE_LABELS = new Map<string, string>(
+  TEAM_SIZE_OPTIONS.map((option) => [option.value, option.label]),
+);
+const COLD_EMAIL_NEED_LABELS = new Map<string, string>(
+  COLD_EMAIL_NEED_OPTIONS.map((option) => [option.value, option.label]),
+);
+
+export function teamSizeLabel(value: string | undefined): string {
+  return labelOrRaw(TEAM_SIZE_LABELS, value);
+}
+
+/** A landing-page lead's `need`, labeled from its own form's option list. */
+export function needLabel(source: InquirySource, value: string | undefined): string {
+  return labelOrRaw(source === "cold-email-landing" ? COLD_EMAIL_NEED_LABELS : AGENCY_NEED_LABELS, value);
+}
+
+/** "Service or need" column: the contact form's `service`, or a landing-page form's `need` — the two never coexist on one document. */
 export function serviceOrNeedLabel(source: InquirySource, service?: string, need?: string): string {
-  return source === "agencies-landing" ? agencyNeedLabel(need) : serviceLabel(service);
+  return source === "contact" ? serviceLabel(service) : needLabel(source, need);
 }

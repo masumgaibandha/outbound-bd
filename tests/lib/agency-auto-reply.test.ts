@@ -113,6 +113,15 @@ describe("sendAgencyAutoReply — plain text only", () => {
     );
   });
 
+  it("uses the caller's topic in the thanks line (the /cold-email wording), leaving the rest unchanged", async () => {
+    await sendAgencyAutoReply(validInput({ topic: "your business" }));
+    const [payload] = sendMock.mock.calls[0];
+    const lines = (payload.text as string).split("\n");
+    expect(lines[2]).toBe("Thanks for reaching out about cold email for your business.");
+    expect(payload.text).not.toContain("your agency");
+    expect(payload.subject).toBe("Got your details, Jordan");
+  });
+
   it("uses the visitor-controlled first name in the plain-text body literally (no HTML escaping needed for a text-only email)", async () => {
     await sendAgencyAutoReply(validInput({ name: "O'Brien Agency" }));
     const [payload] = sendMock.mock.calls[0];

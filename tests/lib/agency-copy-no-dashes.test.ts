@@ -22,6 +22,8 @@ const SCOPE_DIRS = [
   "src/app/(public)",
   "src/components/agencies",
   "src/app/agencies",
+  "src/components/cold-email",
+  "src/app/cold-email",
 ];
 
 // Individual files outside the directories above that still carry
@@ -31,6 +33,7 @@ const SCOPE_FILES = [
   "src/lib/pricing-catalog.ts",
   "src/lib/agency-auto-reply.ts",
   "src/lib/contact-notification.ts",
+  "src/lib/cold-email-inquiry-schema.ts",
 ];
 
 // Files inside an in-scope directory that are deliberately excluded: a live

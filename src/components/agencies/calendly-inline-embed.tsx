@@ -68,6 +68,8 @@ interface CalendlyInlineEmbedProps {
    * "agencies-cold-email").
    */
   utmContent: string;
+  /** `utm_campaign` used only when the visitor arrived with none of their own. Defaults to "agencies". */
+  defaultUtmCampaign?: string;
 }
 
 /**
@@ -102,7 +104,10 @@ interface CalendlyInlineEmbedProps {
  * ancestor measured 0px of overflow), is what motivated switching to this
  * live-height approach instead of guessing a larger fixed number.
  */
-export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
+export function CalendlyInlineEmbed({
+  utmContent,
+  defaultUtmCampaign = DEFAULT_UTM_CAMPAIGN,
+}: CalendlyInlineEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
   const [height, setHeight] = useState(MIN_HEIGHT_PX);
@@ -128,14 +133,14 @@ export function CalendlyInlineEmbed({ utmContent }: CalendlyInlineEmbedProps) {
       utm: {
         utmSource: attribution.utmSource || DEFAULT_UTM_SOURCE,
         utmMedium: attribution.utmMedium || DEFAULT_UTM_MEDIUM,
-        utmCampaign: attribution.utmCampaign || DEFAULT_UTM_CAMPAIGN,
+        utmCampaign: attribution.utmCampaign || defaultUtmCampaign,
         utmContent,
         ...(attribution.utmTerm ? { utmTerm: attribution.utmTerm } : {}),
       },
       resize: true,
     });
     initializedRef.current = true;
-  }, [utmContent]);
+  }, [utmContent, defaultUtmCampaign]);
 
   useEffect(() => {
     // Covers the case where the Calendly script is already loaded (e.g. a

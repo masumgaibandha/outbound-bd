@@ -89,6 +89,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             <option value="">All</option>
             <option value="contact">Contact form</option>
             <option value="agencies-landing">Agencies landing page</option>
+            <option value="cold-email-landing">Cold email landing page</option>
           </select>
         </Field>
         <Field label="Search">

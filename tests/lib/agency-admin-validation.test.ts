@@ -24,6 +24,10 @@ describe("parseLeadFilters", () => {
     ).toEqual({ from: "2026-09-01", to: "2026-09-30", status: "WON", source: "contact", q: "acme" });
   });
 
+  it("accepts the cold-email-landing source filter", () => {
+    expect(parseLeadFilters({ source: "cold-email-landing" })).toEqual({ source: "cold-email-landing" });
+  });
+
   it("drops an individually invalid field without discarding the rest", () => {
     expect(parseLeadFilters({ from: "not-a-date", status: "WON" })).toEqual({ status: "WON" });
     expect(parseLeadFilters({ status: "NOT_A_STATUS", source: "contact" })).toEqual({ source: "contact" });

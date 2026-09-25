@@ -18,8 +18,9 @@ export type InquiryStatus =
 
 /**
  * "contact" is every submission through the original `/contact` form;
- * "agencies-landing" is the Round 2 `/agencies` white-label landing page.
- * Both are stored in this one collection (Round 4's admin lists them
+ * "agencies-landing" is the Round 2 `/agencies` white-label landing page;
+ * "cold-email-landing" is the `/cold-email` landing page for B2B founders.
+ * All are stored in this one collection (Round 4's admin lists them
  * together) — `source` is the discriminant a caller filters on. Defaults to
  * "contact" at the schema level, which covers every read through the
  * Mongoose model (a pre-Round-2 document has no `source` field stored at
@@ -28,9 +29,9 @@ export type InquiryStatus =
  * or a `.lean()` read, which is why `scripts/migrations/0002-backfill-inquiry-source.ts`
  * exists — see that file's doc comment.
  */
-export type InquirySource = "contact" | "agencies-landing";
+export type InquirySource = "contact" | "agencies-landing" | "cold-email-landing";
 
-/** First-touch ad/campaign attribution, captured client-side on landing — see src/lib/agency-attribution.ts. Only ever populated for source: "agencies-landing"; a contact-form submission has none of this. */
+/** First-touch ad/campaign attribution, captured client-side on landing — see src/lib/agency-attribution.ts. Only ever populated for the two landing-page sources; a contact-form submission has none of this. */
 export interface InquiryAttribution {
   utmSource?: string;
   utmMedium?: string;
@@ -75,7 +76,9 @@ export interface InquiryDocument {
   goals?: string;
   /** Agencies-landing only: how many active clients the agency runs. */
   activeClients?: string;
-  /** Agencies-landing only: white-label for clients, for their own agency, or not sure yet. */
+  /** Cold-email-landing only: the business's team size (see TEAM_SIZE_OPTIONS). */
+  teamSize?: string;
+  /** Both landing forms: agencies-landing uses AGENCY_NEED_OPTIONS, cold-email-landing uses COLD_EMAIL_NEED_OPTIONS. */
   need?: string;
   attribution?: InquiryAttribution;
   privacyConsent: boolean;
@@ -131,6 +134,7 @@ const inquirySchema = new Schema<InquiryDocument>(
     currentOutreachSetup: { type: String, trim: true, default: "" },
     goals: { type: String, trim: true },
     activeClients: { type: String },
+    teamSize: { type: String },
     need: { type: String },
     attribution: { type: attributionSchema },
     privacyConsent: { type: Boolean, required: true },

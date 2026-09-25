@@ -12,19 +12,34 @@ function statValue(label: string): string {
   return founderStats.find((stat) => stat.label === label)?.value ?? "";
 }
 
-const HERO_POINTS = [
-  "Month-to-month, no long contract",
-  "Your brand on every report",
-  "Live in about 3 weeks",
-] as const;
+export interface AgencyHeroCopy {
+  eyebrow: string;
+  headline: string;
+  subtext: string;
+  points: readonly string[];
+}
+
+const AGENCIES_HERO_COPY: AgencyHeroCopy = {
+  eyebrow: "White-label cold email for agencies",
+  headline: "Sell cold email to your clients. I'll run it under your brand.",
+  subtext:
+    "Your clients already ask for more leads. I handle the domains, inboxes, lead lists, copy and campaigns. You keep the client and the margin.",
+  points: [
+    "Month-to-month, no long contract",
+    "Your brand on every report",
+    "Live in about 3 weeks",
+  ],
+};
 
 /**
  * Copy is fixed, exact wording from the round's own instructions, so do not
  * reword it here. Numbers in the trust line come from founder-stats.ts,
  * never restated as a literal here (see that file's own "single source of
  * truth" doc comment). Portrait pattern mirrors the homepage `HeroSection`.
+ * Other landing pages (e.g. /cold-email) pass their own `copy`; the
+ * layout, buttons and trust line stay shared.
  */
-export function AgencyHeroSection() {
+export function AgencyHeroSection({ copy = AGENCIES_HERO_COPY }: { copy?: AgencyHeroCopy }) {
   const jobs = statValue("Upwork jobs");
   const hours = statValue("Upwork hours");
   const years = statValue("Years of outreach experience");
@@ -40,21 +55,19 @@ export function AgencyHeroSection() {
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
           <div>
             <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
-              White-label cold email for agencies
+              {copy.eyebrow}
             </p>
 
             <h1 className="type-display text-ink mt-5 text-balance">
-              Sell cold email to your clients. I&apos;ll run it under your brand.
+              {copy.headline}
             </h1>
 
             <p className="text-ink-muted mt-6 max-w-prose text-base leading-relaxed lg:text-[1.0625rem]">
-              Your clients already ask for more leads. I handle the domains,
-              inboxes, lead lists, copy and campaigns. You keep the client and
-              the margin.
+              {copy.subtext}
             </p>
 
             <ul className="mt-7 space-y-2.5">
-              {HERO_POINTS.map((point) => (
+              {copy.points.map((point) => (
                 <li key={point} className="text-ink flex items-center gap-2.5 text-sm font-medium md:text-base">
                   <CheckIcon width={18} height={18} aria-hidden="true" className="text-action shrink-0" />
                   {point}

@@ -4,13 +4,21 @@ import { ChevronDownIcon } from "@/components/public/icons";
 import { Section } from "@/components/public/section";
 import { SectionHeading } from "@/components/public/section-heading";
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/** Shared verbatim with /cold-email. */
+export const EMAIL_MARKETING_FAQ: FaqItem = {
+  question: "Isn't this just email marketing?",
+  answer:
+    "No. Email marketing sends newsletters to people who already signed up. Cold email sends short, personal emails to hand-picked prospects who don't know your client yet, from separate domains so your client's main domain stays safe. The goal is booked sales calls.",
+};
+
 // Exact wording from the round's own copy, so do not reword.
-const FAQ_ITEMS = [
-  {
-    question: "Isn't this just email marketing?",
-    answer:
-      "No. Email marketing sends newsletters to people who already signed up. Cold email sends short, personal emails to hand-picked prospects who don't know your client yet, from separate domains so your client's main domain stays safe. The goal is booked sales calls.",
-  },
+const AGENCY_FAQ_ITEMS: readonly FaqItem[] = [
+  EMAIL_MARKETING_FAQ,
   {
     question: "Will my client know you exist?",
     answer: "Only if you want them to. Everything runs under your agency's name.",
@@ -35,9 +43,9 @@ const FAQ_ITEMS = [
     answer:
       "By invoice, once we agree on the scope. International payments are fine, and I'll send the payment options with your invoice.",
   },
-] as const;
+];
 
-export function AgencyFaqSection() {
+export function AgencyFaqSection({ items = AGENCY_FAQ_ITEMS }: { items?: readonly FaqItem[] }) {
   return (
     <Section tone="canvasAlt" labelledBy="agency-faq-heading">
       <div className="mx-auto max-w-3xl">
@@ -46,7 +54,7 @@ export function AgencyFaqSection() {
         </div>
 
         <div className="divide-hairline border-hairline mt-12 divide-y border-t border-b">
-          {FAQ_ITEMS.map((faq) => (
+          {items.map((faq) => (
             <details key={faq.question} className="group py-5">
               <summary className="text-ink flex cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-medium marker:content-none [&::-webkit-details-marker]:hidden">
                 {faq.question}

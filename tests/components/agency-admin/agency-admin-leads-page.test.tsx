@@ -67,6 +67,34 @@ describe("AdminLeadsPage", () => {
     expect(link?.getAttribute("href")).toBe(`/admin/leads/${created._id}`);
   });
 
+  it("lists cold-email-landing leads with their source and need labels, and offers the source filter", async () => {
+    await createLead({
+      source: "cold-email-landing",
+      email: "founder@example.com",
+      need: "more-sales-calls",
+      teamSize: "2-10",
+    });
+    await createLead({ source: "agencies-landing", email: "agency@example.com", need: "white-label" });
+
+    const element = await AdminLeadsPage({ searchParams: Promise.resolve({ source: "cold-email-landing" }) });
+    render(element);
+
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent("founder@example.com");
+    expect(rows[0]).toHaveTextContent("Cold email landing page");
+    expect(rows[0]).toHaveTextContent("More sales calls for my business");
+
+    const sourceSelect = screen.getByDisplayValue("Cold email landing page") as HTMLSelectElement;
+    expect(sourceSelect.name).toBe("source");
+    expect(Array.from(sourceSelect.options).map((option) => option.value)).toEqual([
+      "",
+      "contact",
+      "agencies-landing",
+      "cold-email-landing",
+    ]);
+  });
+
   it("shows pagination controls when there are more leads than one page", async () => {
     for (let i = 0; i < 30; i++) {
       await createLead({ email: `lead-${i}@example.com` });

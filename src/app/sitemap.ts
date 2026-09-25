@@ -7,6 +7,7 @@ import { publicEnv } from "@/lib/public-env";
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "monthly", priority: 1 },
   { path: "/agencies", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/cold-email", changeFrequency: "monthly", priority: 0.7 },
   { path: "/about", changeFrequency: "yearly", priority: 0.6 },
   { path: "/about/founder", changeFrequency: "yearly", priority: 0.6 },
   { path: "/services", changeFrequency: "monthly", priority: 0.8 },
