@@ -161,15 +161,15 @@ export function ColdEmailProofSection() {
           />
         </figure>
 
-        {/* Same tone and size as the hero's "Get the details" button. The
-            grid keeps both buttons equal width: stacked full width on
-            mobile, two equal columns from sm up. */}
+        {/* Mirrors the hero pair: Upwork filled like "Get the details",
+            LinkedIn outlined like "Book a call". The grid keeps both equal
+            width: stacked full width on mobile, two columns from sm up. */}
         <div className="mx-auto mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
           <ButtonLink href={UPWORK_PROFILE_URL} tone="action" size="lg" fullWidth {...EXTERNAL_LINK_PROPS}>
             See the full Upwork profile
             <ArrowUpRightIcon width={16} height={16} aria-hidden="true" />
           </ButtonLink>
-          <ButtonLink href={LINKEDIN_PROFILE_URL} tone="action" size="lg" fullWidth {...EXTERNAL_LINK_PROPS}>
+          <ButtonLink href={LINKEDIN_PROFILE_URL} tone="outline" size="lg" fullWidth {...EXTERNAL_LINK_PROPS}>
             Connect on LinkedIn
             <ArrowUpRightIcon width={16} height={16} aria-hidden="true" />
           </ButtonLink>
