@@ -5,9 +5,9 @@ import { AgencyFaqSection } from "@/components/agencies/agency-faq-section";
 import { AgencyHeroSection } from "@/components/agencies/agency-hero-section";
 import { AgencyHowItWorksSection } from "@/components/agencies/agency-how-it-works-section";
 import { AgencyLeadForm } from "@/components/agencies/agency-lead-form";
-import { AgencyProofSection } from "@/components/agencies/agency-proof-section";
 import { AgencyStickyCta } from "@/components/agencies/agency-sticky-cta";
 import { ColdEmailAudienceSection } from "@/components/cold-email/cold-email-audience-section";
+import { ColdEmailProofSection } from "@/components/cold-email/cold-email-proof-section";
 import {
   COLD_EMAIL_FAQ_ITEMS,
   COLD_EMAIL_HERO_COPY,
@@ -26,12 +26,16 @@ export const metadata: Metadata = {
 /**
  * The /agencies page's structure and components, pointed at B2B owners and
  * founders instead of agencies. No pricing or margin section on this page.
+ * Proof sits above the form. Section backgrounds alternate so each band
+ * separates: audience and how it works on the deeper canvas-alt tone, form
+ * and FAQ on cream, and proof on its own gold tint.
  */
 export default function ColdEmailLandingPage() {
   return (
     <>
       <AgencyHeroSection copy={COLD_EMAIL_HERO_COPY} />
       <ColdEmailAudienceSection />
+      <ColdEmailProofSection />
 
       {/* scroll-mt clears the sticky AgenciesHeader (h-16 / md:h-20). */}
       <Section
@@ -54,8 +58,7 @@ export default function ColdEmailLandingPage() {
       </Section>
 
       <AgencyHowItWorksSection steps={COLD_EMAIL_STEPS} inclusions={COLD_EMAIL_INCLUSIONS} />
-      <AgencyProofSection />
-      <AgencyFaqSection items={COLD_EMAIL_FAQ_ITEMS} />
+      <AgencyFaqSection items={COLD_EMAIL_FAQ_ITEMS} tone="canvas" />
       <AgencyStickyCta />
     </>
   );

@@ -1,7 +1,7 @@
 import { FINAL_CTA_ID } from "@/components/agencies/agency-anchors";
 import { AgencyScrollToFormLink } from "@/components/agencies/agency-scroll-to-form-link";
 import { ChevronDownIcon } from "@/components/public/icons";
-import { Section } from "@/components/public/section";
+import { Section, type SectionTone } from "@/components/public/section";
 import { SectionHeading } from "@/components/public/section-heading";
 
 export interface FaqItem {
@@ -45,9 +45,16 @@ const AGENCY_FAQ_ITEMS: readonly FaqItem[] = [
   },
 ];
 
-export function AgencyFaqSection({ items = AGENCY_FAQ_ITEMS }: { items?: readonly FaqItem[] }) {
+export function AgencyFaqSection({
+  items = AGENCY_FAQ_ITEMS,
+  tone = "canvasAlt",
+}: {
+  items?: readonly FaqItem[];
+  /** /cold-email passes "canvas" to keep its section banding alternating. */
+  tone?: SectionTone;
+}) {
   return (
-    <Section tone="canvasAlt" labelledBy="agency-faq-heading">
+    <Section tone={tone} labelledBy="agency-faq-heading">
       <div className="mx-auto max-w-3xl">
         <div id="agency-faq-heading">
           <SectionHeading title="Common questions" />

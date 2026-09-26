@@ -35,6 +35,10 @@ export const STRATEGY_CALL_LINK_PROPS = CALENDLY_URL
 export const UPWORK_PROFILE_URL =
   "https://www.upwork.com/freelancers/~01a5eccfaf40a8a065?viewMode=1";
 
+// The founder's public LinkedIn profile. Same rules as UPWORK_PROFILE_URL:
+// one place to change it, and every consumer spreads EXTERNAL_LINK_PROPS.
+export const LINKEDIN_PROFILE_URL = "https://www.linkedin.com/in/almasumbd/";
+
 export const EXTERNAL_LINK_PROPS = {
   target: "_blank",
   rel: "noopener noreferrer",

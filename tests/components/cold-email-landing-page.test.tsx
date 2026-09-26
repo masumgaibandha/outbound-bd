@@ -26,7 +26,16 @@ import ColdEmailLandingPage from "@/app/cold-email/page";
 import ColdEmailThankYouPage from "@/app/cold-email/thank-you/page";
 import { FINAL_CTA_ID, GET_DETAILS_ID, HERO_ID } from "@/components/agencies/agency-anchors";
 import { AgencyLeadForm } from "@/components/agencies/agency-lead-form";
-import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
+import {
+  COLD_EMAIL_FEEDBACK_ITEM,
+  COLD_EMAIL_PROOF_ITEMS,
+} from "@/components/cold-email/cold-email-copy";
+import { COLD_EMAIL_PROOF_ID } from "@/components/cold-email/cold-email-proof-section";
+import {
+  LINKEDIN_PROFILE_URL,
+  STRATEGY_CALL_HREF,
+  UPWORK_PROFILE_URL,
+} from "@/components/public/site-config";
 
 const ROOT = path.resolve(__dirname, "../..");
 
@@ -131,6 +140,103 @@ describe("/cold-email page copy and structure", () => {
       "Do you guarantee meetings?",
       "How do I pay?",
     ]);
+  });
+});
+
+describe("/cold-email proof section", () => {
+  function proofSection() {
+    return document.getElementById(COLD_EMAIL_PROOF_ID)!;
+  }
+
+  it("puts the sections in order: hero, audience, proof, form, how it works, FAQ", () => {
+    render(<ColdEmailLandingPage />);
+    const headings = Array.from(document.querySelectorAll("h1, h2")).map((node) => node.textContent);
+    expect(headings).toEqual([
+      "More sales conversations, without chasing leads yourself.",
+      "Who this works for",
+      "Real campaigns, real numbers",
+      "Tell me about your business",
+      "How it works",
+      "Common questions",
+    ]);
+  });
+
+  it("renders the four labelled screenshots plus the feedback image, each with its alt text", () => {
+    render(<ColdEmailLandingPage />);
+    const scope = within(proofSection());
+
+    expect(scope.getByText("Every screenshot below is from a live client campaign.")).toBeInTheDocument();
+    expect(scope.getAllByRole("img")).toHaveLength(5);
+    for (const item of [...COLD_EMAIL_PROOF_ITEMS, COLD_EMAIL_FEEDBACK_ITEM]) {
+      expect(scope.getByAltText(item.alt)).toBeInTheDocument();
+      expect(scope.getByText(item.label)).toBeInTheDocument();
+    }
+    expect(COLD_EMAIL_PROOF_ITEMS.map((item) => item.label)).toEqual([
+      "Campaign performance, Instantly",
+      "Inbox placement test, Instantly",
+      "Campaign at scale, Instantly",
+      "Inbox warm-up report, Smartlead",
+    ]);
+    expect(
+      scope.getByText(
+        "These are specific client results, not a guaranteed or typical outcome for every campaign or market.",
+      ),
+    ).toBeInTheDocument();
+    expect(scope.getByRole("heading", { name: "What clients say" })).toBeInTheDocument();
+  });
+
+  it("bolds the figures inside the captions", () => {
+    render(<ColdEmailLandingPage />);
+    const bold = Array.from(proofSection().querySelectorAll("figcaption strong")).map((node) => node.textContent);
+    for (const figure of ["5.6K", "83.9%", "2.7%", "25", "3,907", "3,975", "127,149", "140", "42"]) {
+      expect(bold).toContain(figure);
+    }
+  });
+
+  it("links to the Upwork and LinkedIn profiles from site-config, in a new tab", () => {
+    render(<ColdEmailLandingPage />);
+    const scope = within(proofSection());
+    const upwork = scope.getByRole("link", { name: "See the full Upwork profile" });
+    const linkedin = scope.getByRole("link", { name: "Connect on LinkedIn" });
+
+    expect(upwork).toHaveAttribute("href", UPWORK_PROFILE_URL);
+    expect(linkedin).toHaveAttribute("href", LINKEDIN_PROFILE_URL);
+    for (const link of [upwork, linkedin]) {
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+
+    // The URLs live only in site-config.ts, never hardcoded in the component.
+    const source = readFileSync(path.join(ROOT, "src/components/cold-email/cold-email-proof-section.tsx"), "utf-8");
+    expect(source).not.toMatch(/upwork\.com|linkedin\.com/);
+  });
+
+  it("opens a screenshot in the shared lightbox, steps to the next one, and closes it", async () => {
+    render(<ColdEmailLandingPage />);
+    const user = userEvent.setup();
+    const [first, second] = COLD_EMAIL_PROOF_ITEMS;
+
+    await user.click(screen.getByRole("button", { name: `Enlarge screenshot: ${first.alt}` }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(first.caption)).toBeInTheDocument();
+    expect(within(dialog).getByText(first.label)).toBeInTheDocument();
+    expect(within(dialog).getByText("1 of 4")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Next result" }));
+    expect(within(dialog).getByText(second.caption)).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Close enlarged image" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("opens the feedback image in its own single-item lightbox", async () => {
+    render(<ColdEmailLandingPage />);
+    await userEvent.click(
+      screen.getByRole("button", { name: `Enlarge screenshot: ${COLD_EMAIL_FEEDBACK_ITEM.alt}` }),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("1 of 1")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: "Next result" })).not.toBeInTheDocument();
   });
 });
 
