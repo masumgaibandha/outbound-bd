@@ -206,6 +206,20 @@ describe("/cold-email proof section", () => {
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     }
 
+    // Styled like the hero's primary "Get the details" button: every class on
+    // it (tone, size, radius, hover) is also on both profile buttons.
+    const heroClasses = within(document.getElementById(HERO_ID)!)
+      .getByRole("link", { name: "Get the details" })
+      .className.split(/\s+/)
+      .filter(Boolean);
+    expect(heroClasses).toEqual(expect.arrayContaining(["bg-action", "hover:bg-action-hover", "rounded-full"]));
+    for (const link of [upwork, linkedin]) {
+      const classes = link.className.split(/\s+/);
+      for (const cls of heroClasses.filter((c) => !c.startsWith("w-"))) {
+        expect(classes, `${link.textContent} missing ${cls}`).toContain(cls);
+      }
+    }
+
     // The URLs live only in site-config.ts, never hardcoded in the component.
     const source = readFileSync(path.join(ROOT, "src/components/cold-email/cold-email-proof-section.tsx"), "utf-8");
     expect(source).not.toMatch(/upwork\.com|linkedin\.com/);
