@@ -27,8 +27,10 @@ import ColdEmailThankYouPage from "@/app/cold-email/thank-you/page";
 import { FINAL_CTA_ID, GET_DETAILS_ID, HERO_ID } from "@/components/agencies/agency-anchors";
 import { AgencyLeadForm } from "@/components/agencies/agency-lead-form";
 import {
+  COLD_EMAIL_FAMILIAR,
   COLD_EMAIL_FEEDBACK_ITEM,
   COLD_EMAIL_PROOF_ITEMS,
+  COLD_EMAIL_WHY_FAILS,
 } from "@/components/cold-email/cold-email-copy";
 import { COLD_EMAIL_PROOF_ID } from "@/components/cold-email/cold-email-proof-section";
 import {
@@ -78,9 +80,13 @@ describe("/cold-email page copy and structure", () => {
     expect(
       scope.getByRole("heading", { level: 1, name: "More sales conversations, without chasing leads yourself." }),
     ).toBeInTheDocument();
-    for (const point of ["Month-to-month, no long contract", "Your domain stays safe", "Live in about 3 weeks"]) {
-      expect(scope.getByText(point)).toBeInTheDocument();
-    }
+    const points = Array.from(hero.querySelectorAll("li")).map((node) => node.textContent);
+    expect(points).toEqual([
+      "Month-to-month, no long contract",
+      "Your main domain is never used",
+      "Verified lists, no risky addresses",
+      "Live in about 3 weeks",
+    ]);
     expect(scope.getByRole("link", { name: "Get the details" })).toHaveAttribute("href", `#${GET_DETAILS_ID}`);
     expect(scope.getByRole("link", { name: "Book a call" })).toHaveAttribute("href", STRATEGY_CALL_HREF);
     expect(scope.getByText(/^Top Rated on Upwork · .+ jobs · .+ hours · .+ years$/)).toBeInTheDocument();
@@ -96,12 +102,56 @@ describe("/cold-email page copy and structure", () => {
     expect(fbq).not.toHaveBeenCalledWith("track", "Lead", expect.anything(), expect.anything());
   });
 
-  it("renders the audience cards, how it works and the business-worded checklist", () => {
+  it("renders the four Sound familiar? cards, each with a title and body, and the closing line", () => {
     render(<ColdEmailLandingPage />);
-    expect(screen.getByRole("heading", { name: "Who this works for" })).toBeInTheDocument();
+    const section = screen.getByRole("region", { name: "Sound familiar?" });
+    const scope = within(section);
+    expect(scope.queryByText("Who this works for")).not.toBeInTheDocument();
+
+    const titles = scope.getAllByRole("heading", { level: 3 }).map((node) => node.textContent);
+    expect(titles).toEqual([
+      "Your pipeline runs on referrals",
+      "You tried cold email and it went to spam",
+      "You are doing outreach yourself",
+      "Ads bring traffic, not conversations",
+    ]);
+    for (const card of COLD_EMAIL_FAMILIAR.cards) {
+      expect(scope.getByText(card.body)).toBeInTheDocument();
+    }
+    expect(scope.getByText("If any of these sound like your month, this is the part I fix.")).toBeInTheDocument();
+    // Problems, not benefits: no check icons in these cards.
+    expect(section.querySelectorAll("li svg")).toHaveLength(0);
+  });
+
+  it("renders the four numbered Why most cold email fails blocks, subtext and closing line", () => {
+    render(<ColdEmailLandingPage />);
+    const scope = within(screen.getByRole("region", { name: "Why most cold email fails" }));
     expect(
-      screen.getByText("B2B companies selling to other businesses, with a deal size above $2,000"),
+      scope.getByText(
+        "Four things decide whether your emails reach the inbox. Most campaigns get at least one of them wrong.",
+      ),
     ).toBeInTheDocument();
+
+    const blocks = scope.getAllByRole("listitem");
+    expect(blocks.map((block) => within(block).getByRole("heading", { level: 3 }).textContent)).toEqual([
+      "The technical setup",
+      "The list",
+      "The emails themselves",
+      "Protecting the domain",
+    ]);
+    blocks.forEach((block, index) => {
+      expect(block).toHaveTextContent(String(index + 1).padStart(2, "0"));
+      expect(within(block).getByText(COLD_EMAIL_WHY_FAILS.blocks[index].body)).toBeInTheDocument();
+    });
+    expect(
+      scope.getByText(
+        "This is the work that happens before anyone reads your offer. It is also the part most people skip.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("renders how it works and the business-worded checklist", () => {
+    render(<ColdEmailLandingPage />);
     expect(screen.getByText("We agree who to target.")).toBeInTheDocument();
     expect(screen.getByText("You get replies.")).toBeInTheDocument();
     expect(screen.getByText("Verified lead lists matched to your ideal customer")).toBeInTheDocument();
@@ -148,13 +198,14 @@ describe("/cold-email proof section", () => {
     return document.getElementById(COLD_EMAIL_PROOF_ID)!;
   }
 
-  it("puts the sections in order: hero, audience, proof, form, how it works, FAQ", () => {
+  it("puts the sections in order: hero, sound familiar, proof, why it fails, form, how it works, FAQ", () => {
     render(<ColdEmailLandingPage />);
     const headings = Array.from(document.querySelectorAll("h1, h2")).map((node) => node.textContent);
     expect(headings).toEqual([
       "More sales conversations, without chasing leads yourself.",
-      "Who this works for",
+      "Sound familiar?",
       "Real campaigns, real numbers",
+      "Why most cold email fails",
       "Tell me about your business",
       "How it works",
       "Common questions",

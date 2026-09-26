@@ -37,9 +37,17 @@ const AGENCIES_HERO_COPY: AgencyHeroCopy = {
  * never restated as a literal here (see that file's own "single source of
  * truth" doc comment). Portrait pattern mirrors the homepage `HeroSection`.
  * Other landing pages (e.g. /cold-email) pass their own `copy`; the
- * layout, buttons and trust line stay shared.
+ * layout, buttons and trust line stay shared. `compact` tightens the
+ * vertical rhythm so a longer points list still fits a laptop viewport; it
+ * is off by default, so /agencies is unchanged.
  */
-export function AgencyHeroSection({ copy = AGENCIES_HERO_COPY }: { copy?: AgencyHeroCopy }) {
+export function AgencyHeroSection({
+  copy = AGENCIES_HERO_COPY,
+  compact = false,
+}: {
+  copy?: AgencyHeroCopy;
+  compact?: boolean;
+}) {
   const jobs = statValue("Upwork jobs");
   const hours = statValue("Upwork hours");
   const years = statValue("Years of outreach experience");
@@ -51,22 +59,36 @@ export function AgencyHeroSection({ copy = AGENCIES_HERO_COPY }: { copy?: Agency
         className="hero-wash pointer-events-none absolute inset-0 -z-10"
       />
 
-      <Container className="pt-12 pb-16 md:pt-16 md:pb-20 lg:pt-20 lg:pb-24">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+      <Container
+        className={
+          compact
+            ? "pt-10 pb-16 md:pt-12 md:pb-20 lg:pt-8 lg:pb-16"
+            : "pt-12 pb-16 md:pt-16 md:pb-20 lg:pt-20 lg:pb-24"
+        }
+      >
+        <div
+          className={`grid items-center gap-12 lg:gap-14 ${
+            compact ? "lg:grid-cols-[1.3fr_0.7fr]" : "lg:grid-cols-[1.1fr_0.9fr]"
+          }`}
+        >
           <div>
             <p className="text-ink-muted text-xs font-semibold tracking-[0.18em] uppercase">
               {copy.eyebrow}
             </p>
 
-            <h1 className="type-display text-ink mt-5 text-balance">
+            <h1
+              className={`type-display text-ink text-balance ${
+                compact ? "mt-4 [--type-display:clamp(2.5rem,4vw,3.75rem)]" : "mt-5"
+              }`}
+            >
               {copy.headline}
             </h1>
 
-            <p className="text-ink-muted mt-6 max-w-prose text-base leading-relaxed lg:text-[1.0625rem]">
+            <p className={`text-ink-muted max-w-prose ${compact ? "mt-4" : "mt-6"} text-base leading-relaxed lg:text-[1.0625rem]`}>
               {copy.subtext}
             </p>
 
-            <ul className="mt-7 space-y-2.5">
+            <ul className={compact ? "mt-5 space-y-2" : "mt-7 space-y-2.5"}>
               {copy.points.map((point) => (
                 <li key={point} className="text-ink flex items-center gap-2.5 text-sm font-medium md:text-base">
                   <CheckIcon width={18} height={18} aria-hidden="true" className="text-action shrink-0" />
@@ -75,7 +97,7 @@ export function AgencyHeroSection({ copy = AGENCIES_HERO_COPY }: { copy?: Agency
               ))}
             </ul>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
+            <div className={`flex flex-wrap items-center gap-3 ${compact ? "mt-6" : "mt-9"}`}>
               <AgencyScrollToFormLink>Get the details</AgencyScrollToFormLink>
               <AgencyBookACallButton />
             </div>

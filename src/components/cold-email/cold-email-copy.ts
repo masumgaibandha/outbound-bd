@@ -24,14 +24,67 @@ export const COLD_EMAIL_HERO_COPY: AgencyHeroCopy = {
   headline: "More sales conversations, without chasing leads yourself.",
   subtext:
     "I set up and run cold email outreach for B2B businesses. Domains, inboxes, verified lead lists, copy and campaigns. You get replies from people who want to talk.",
-  points: ["Month-to-month, no long contract", "Your domain stays safe", "Live in about 3 weeks"],
+  points: [
+    "Month-to-month, no long contract",
+    "Your main domain is never used",
+    "Verified lists, no risky addresses",
+    "Live in about 3 weeks",
+  ],
 };
 
-export const COLD_EMAIL_AUDIENCE = [
-  "B2B companies selling to other businesses, with a deal size above $2,000",
-  "Teams who need a predictable flow of sales calls, not more website traffic",
-  "Founders doing outreach themselves and running out of hours",
-] as const;
+export interface ColdEmailTitledItem {
+  title: string;
+  body: string;
+}
+
+export const COLD_EMAIL_FAMILIAR = {
+  heading: "Sound familiar?",
+  cards: [
+    {
+      title: "Your pipeline runs on referrals",
+      body: "When referrals slow down, so does revenue. There is no second channel bringing in new conversations.",
+    },
+    {
+      title: "You tried cold email and it went to spam",
+      body: "Thousands sent, almost nothing back. Nine times out of ten the setup was wrong before the first email went out, not the copy.",
+    },
+    {
+      title: "You are doing outreach yourself",
+      body: "Between delivery and client calls, prospecting is the thing that keeps getting pushed to next week.",
+    },
+    {
+      title: "Ads bring traffic, not conversations",
+      body: "Clicks and form fills that go nowhere, while the buyers you actually want are not searching for you yet.",
+    },
+  ] satisfies readonly ColdEmailTitledItem[],
+  closing: "If any of these sound like your month, this is the part I fix.",
+} as const;
+
+export const COLD_EMAIL_WHY_FAILS = {
+  heading: "Why most cold email fails",
+  subtext:
+    "Four things decide whether your emails reach the inbox. Most campaigns get at least one of them wrong.",
+  blocks: [
+    {
+      title: "The technical setup",
+      body: "Every sending domain needs SPF, DKIM and DMARC configured correctly before a single email goes out. Without them, mailbox providers treat your mail as unauthenticated and route it straight to spam. I set this up on separate domains, never your main one, so your company email is never at risk.",
+    },
+    {
+      title: "The list",
+      body: "Sending to invalid or risky addresses is the fastest way to get a domain flagged. Every list I build is verified before sending, and I remove addresses sitting behind security gateways like Barracuda, Mimecast and Proofpoint, because those bounce or block automated mail and damage your sender reputation.",
+    },
+    {
+      title: "The emails themselves",
+      body: "Identical emails sent to thousands of people look exactly like what they are. I write at least three variants per sequence, rotate the wording within each one, and personalize with a real detail about the prospect. I also keep out the words and formatting that spam filters score against.",
+    },
+    {
+      title: "Protecting the domain",
+      body: "Warm-up is not something you do once and stop. I keep it running while the campaign is live, cap the volume per inbox, rotate across inboxes, and match sending providers to recipient providers so mail follows a trusted path. I watch reply and bounce rates daily, so a problem gets caught before the domain burns.",
+    },
+  ] satisfies readonly ColdEmailTitledItem[],
+  closing:
+    "This is the work that happens before anyone reads your offer. It is also the part most people skip.",
+} as const;
 
 export const COLD_EMAIL_STEPS: readonly HowItWorksStep[] = [
   {
