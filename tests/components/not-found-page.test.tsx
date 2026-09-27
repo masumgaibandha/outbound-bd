@@ -17,11 +17,25 @@ vi.mock("@/components/public/logo", () => ({
   Logo: () => null,
 }));
 
+// Same SHOW_MASTERCLASS_BANNER override as public-layout-banner.test.tsx.
+// `undefined` means "use the real committed value".
+const bannerOverride = vi.hoisted(() => ({ value: undefined as boolean | undefined }));
+vi.mock("@/components/public/site-config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/components/public/site-config")>();
+  return {
+    ...actual,
+    get SHOW_MASTERCLASS_BANNER() {
+      return bannerOverride.value ?? actual.SHOW_MASTERCLASS_BANNER;
+    },
+  };
+});
+
 import NotFound from "@/app/not-found";
 import { masterclassSlug } from "@/lib/masterclass/constants";
 
 beforeEach(() => {
   vi.unstubAllEnvs();
+  bannerOverride.value = undefined;
 });
 
 afterEach(() => {
@@ -85,8 +99,15 @@ describe("NotFound (root 404 page)", () => {
     expect(screen.queryByRole("region", { name: "Masterclass announcement" })).not.toBeInTheDocument();
   });
 
-  it("still shows the masterclass announcement banner while registration is open", () => {
+  it("never shows the banner while SHOW_MASTERCLASS_BANNER is off, even with registration open", () => {
+    vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "true");
+    render(<NotFound />);
+    expect(screen.queryByRole("region", { name: "Masterclass announcement" })).not.toBeInTheDocument();
+  });
+
+  it("shows the banner again once SHOW_MASTERCLASS_BANNER is on and registration is open", () => {
     // Only the homepage hides it; a 404 is never "/".
+    bannerOverride.value = true;
     vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "true");
     render(<NotFound />);
     expect(screen.getByRole("region", { name: "Masterclass announcement" })).toBeInTheDocument();

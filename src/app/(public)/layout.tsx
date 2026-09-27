@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { MasterclassAnnouncementBanner } from "@/components/public/masterclass-announcement-banner";
 import { SiteFooter } from "@/components/public/site-footer";
+import { SHOW_MASTERCLASS_BANNER } from "@/components/public/site-config";
 import { SiteHeader } from "@/components/public/site-header";
 import { TrackingGate } from "@/components/public/tracking-gate";
 import { isRegistrationEnabled } from "@/lib/masterclass/env";
@@ -11,7 +12,8 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   // never reads MASTERCLASS_REGISTRATION_ENABLED (or any env var) itself,
   // and isn't even mounted when this is false, so there's no client-side
   // toggle that could flash the banner after hydration.
-  const showMasterclassBanner = isRegistrationEnabled();
+  // SHOW_MASTERCLASS_BANNER (site-config.ts) is the banner-only switch.
+  const showMasterclassBanner = SHOW_MASTERCLASS_BANNER && isRegistrationEnabled();
 
   return (
     <>

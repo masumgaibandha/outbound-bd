@@ -30,6 +30,14 @@ export const STRATEGY_CALL_LINK_PROPS = CALENDLY_URL
   ? ({ target: "_blank", rel: "noopener noreferrer" } as const)
   : {};
 
+// Controls only the masterclass announcement banner on agency pages
+// (src/app/(public)/layout.tsx and src/app/not-found.tsx). Set to true to
+// show it again. The banner still also requires
+// MASTERCLASS_REGISTRATION_ENABLED, so it never advertises a closed
+// registration. Flipping this never affects registration, payment,
+// indexing or the sitemap, which read MASTERCLASS_REGISTRATION_ENABLED only.
+export const SHOW_MASTERCLASS_BANNER = false;
+
 // The founder's official public Upwork profile — the single source for the
 // "View verified Upwork profile" link shown near founder stats. Centralized
 // here so it's set in exactly one place; every consumer also spreads

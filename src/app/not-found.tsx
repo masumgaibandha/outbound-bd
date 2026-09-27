@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/public/button";
 import { Container } from "@/components/public/container";
 import { MasterclassAnnouncementBanner } from "@/components/public/masterclass-announcement-banner";
+import { SHOW_MASTERCLASS_BANNER } from "@/components/public/site-config";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { masterclassSlug } from "@/lib/masterclass/constants";
@@ -43,7 +44,8 @@ export const metadata: Metadata = {
  * still looks and behaves like the rest of the site's chrome.
  */
 export default function NotFound() {
-  const showMasterclassBanner = isRegistrationEnabled();
+  // Same banner-only switch as PublicLayout (site-config.ts).
+  const showMasterclassBanner = SHOW_MASTERCLASS_BANNER && isRegistrationEnabled();
 
   return (
     <>

@@ -12,8 +12,9 @@ import { formatClassDatesEn } from "@/lib/masterclass/format";
 const MASTERCLASS_HREF = `/masterclass/${masterclassSlug}`;
 
 /**
- * Only ever mounted by `(public)/layout.tsx` when
- * `isRegistrationEnabled()` is true — that check happens server-side, so
+ * Only ever mounted by `(public)/layout.tsx` and `not-found.tsx` when both
+ * `SHOW_MASTERCLASS_BANNER` (site-config.ts) and `isRegistrationEnabled()`
+ * are true — that check happens server-side, so
  * this component itself never reads the flag (and never could: it's a
  * Client Component). Dismissal is local `useState`, intentionally lost on
  * reload/navigation to a fresh document — no cookie, no localStorage, no
