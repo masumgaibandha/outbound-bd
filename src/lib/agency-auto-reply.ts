@@ -2,11 +2,13 @@ import "server-only";
 
 import { Resend } from "resend";
 
-import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
+import { CALENDLY_URL } from "@/components/public/site-config";
 
 /**
  * Auto-reply sent to the prospect themselves after a successful
- * landing-page submission (/api/agencies-lead or /api/cold-email-lead) — distinct from `contact-notification.ts`,
+ * submission: the landing pages (/api/agencies-lead, /api/cold-email-lead)
+ * use the "landing" variant, the /contact form (/api/inquiries) the
+ * "contact" variant. Distinct from `contact-notification.ts`,
  * which is the INTERNAL notification sent to CONTACT_NOTIFICATION_EMAIL for
  * both forms (untouched by this file). Same lazy-env-check, never-throws
  * contract as that module: every failure path returns
@@ -19,6 +21,12 @@ import { STRATEGY_CALL_HREF } from "@/components/public/site-config";
  *
  * Sent from its own address, independent of RESEND_FROM_EMAIL (the internal
  * notification's sender) — see `getAutoReplyFromAddress()` below.
+ *
+ * The booking link is `CALENDLY_URL` itself, never `STRATEGY_CALL_HREF`:
+ * that one falls back to the relative "/contact", which is a broken link in
+ * an email. If `CALENDLY_URL` is ever empty, the booking sentence and link
+ * are left out of the email entirely and a non-sensitive diagnostic is
+ * logged instead.
  */
 
 const DEFAULT_AUTOREPLY_FROM = "Masum from Outbound BD <masum@updates.outboundbd.com>";
@@ -27,13 +35,46 @@ const DEFAULT_TOPIC = "your agency";
 
 export type SendAgencyAutoReplyResult = { ok: true } | { ok: false; errorCode: string };
 
-export interface AgencyAutoReplyInput {
+interface AutoReplyRecipient {
   inquiryId: string;
   name: string;
   email: string;
-  /** Completes "Thanks for reaching out about cold email for ___." Defaults to "your agency" (the /agencies wording). */
-  topic?: string;
 }
+
+export type AgencyAutoReplyInput = AutoReplyRecipient &
+  (
+    | {
+        variant?: "landing";
+        /** Completes "Thanks for reaching out about cold email for ___." Defaults to "your agency" (the /agencies wording). */
+        topic?: string;
+      }
+    | { variant: "contact" }
+  );
+
+/** The only lines that differ between variants; everything else in the email is shared. */
+interface AutoReplyCopy {
+  subject: (firstName: string) => string;
+  thanksLine: string;
+  replyLine: string;
+}
+
+// Exact wording from each round's own instructions. Do not reword here.
+function getAutoReplyCopy(input: AgencyAutoReplyInput): AutoReplyCopy {
+  if (input.variant === "contact") {
+    return {
+      subject: (firstName) => `Got your message, ${firstName}`,
+      thanksLine: "Thanks for getting in touch about your project.",
+      replyLine: "I'll read through what you sent and reply personally within one business day.",
+    };
+  }
+  return {
+    subject: (firstName) => `Got your details, ${firstName}`,
+    thanksLine: `Thanks for reaching out about cold email for ${input.topic ?? DEFAULT_TOPIC}.`,
+    replyLine: "I'll look at your site and reply personally within one business day.",
+  };
+}
+
+const BOOKING_SENTENCE = "If you'd rather talk it through sooner, you can book a time here:";
 
 function getFirstName(name: string): string {
   const trimmed = name.trim();
@@ -47,23 +88,28 @@ function getAutoReplyFromAddress(): string {
   return raw && raw.trim().length > 0 ? raw.trim() : DEFAULT_AUTOREPLY_FROM;
 }
 
-function buildAutoReply(firstName: string, topic: string): { subject: string; text: string } {
-  const subject = `Got your details, ${firstName}`;
-  const calendlyUrl = STRATEGY_CALL_HREF;
+/** An empty `calendlyUrl` omits the booking sentence and link rather than pointing anywhere broken. */
+function buildAutoReply(
+  copy: AutoReplyCopy,
+  firstName: string,
+  calendlyUrl: string,
+): { subject: string; text: string } {
+  const bookingLines = calendlyUrl
+    ? [`${copy.replyLine} ${BOOKING_SENTENCE}`, calendlyUrl]
+    : [copy.replyLine];
 
   const text = [
     `Hi ${firstName},`,
     "",
-    `Thanks for reaching out about cold email for ${topic}.`,
+    copy.thanksLine,
     "",
-    "I'll look at your site and reply personally within one business day. If you'd rather talk it through sooner, you can book a time here:",
-    calendlyUrl,
+    ...bookingLines,
     "",
     "Masum",
     "Outbound BD",
   ].join("\n");
 
-  return { subject, text };
+  return { subject: copy.subject(firstName), text };
 }
 
 export async function sendAgencyAutoReply(
@@ -82,7 +128,18 @@ export async function sendAgencyAutoReply(
   const replyToRaw = process.env.RESEND_REPLY_TO_EMAIL;
   const replyTo = replyToRaw && replyToRaw.trim().length > 0 ? replyToRaw.trim() : fromAddress;
 
-  const { subject, text } = buildAutoReply(getFirstName(input.name), input.topic ?? DEFAULT_TOPIC);
+  const calendlyUrl: string = CALENDLY_URL;
+  if (!calendlyUrl) {
+    // Non-sensitive diagnostic only: never the visitor's name or email.
+    console.warn(
+      JSON.stringify({
+        event: "auto_reply_booking_link_missing",
+        inquiryId: input.inquiryId,
+      }),
+    );
+  }
+
+  const { subject, text } = buildAutoReply(getAutoReplyCopy(input), getFirstName(input.name), calendlyUrl);
   const resend = new Resend(apiKey);
 
   try {

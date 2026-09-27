@@ -1,6 +1,7 @@
 import type { HydratedDocument } from "mongoose";
 import { NextResponse } from "next/server";
 
+import { sendAgencyAutoReply } from "@/lib/agency-auto-reply";
 import { sendContactNotification } from "@/lib/contact-notification";
 import { connectToDatabase } from "@/lib/mongoose";
 import { inquirySchema } from "@/lib/inquiry-schema";
@@ -145,6 +146,29 @@ export async function POST(request: Request) {
         event: "contact_notification_failed",
         inquiryId: String(created._id),
         errorCode: notificationResult.errorCode,
+      }),
+    );
+  }
+
+  // Auto-reply to the visitor — the same implementation the landing pages
+  // use, with the /contact wording. Best-effort and strictly after
+  // persistence like the notification above, so it is never reached for a
+  // honeypot/timing-tripped, duplicate, or validation-failed submission.
+  const autoReplyResult = await sendAgencyAutoReply({
+    inquiryId: String(created._id),
+    name: parsed.data.name,
+    email: parsed.data.email,
+    variant: "contact",
+  });
+
+  if (!autoReplyResult.ok) {
+    // Same non-sensitive diagnostic as the landing routes: never the
+    // visitor's name or email.
+    console.error(
+      JSON.stringify({
+        event: "agency_auto_reply_failed",
+        inquiryId: String(created._id),
+        errorCode: autoReplyResult.errorCode,
       }),
     );
   }

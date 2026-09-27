@@ -7,6 +7,7 @@ vi.mock("resend", () => ({
   },
 }));
 
+import { CALENDLY_URL } from "@/components/public/site-config";
 import { sendAgencyAutoReply, type AgencyAutoReplyInput } from "@/lib/agency-auto-reply";
 
 const DEFAULT_FROM = "Masum from Outbound BD <masum@updates.outboundbd.com>";
@@ -126,6 +127,51 @@ describe("sendAgencyAutoReply — plain text only", () => {
     await sendAgencyAutoReply(validInput({ name: "O'Brien Agency" }));
     const [payload] = sendMock.mock.calls[0];
     expect(payload.text).toContain("Hi O'Brien,");
+  });
+});
+
+describe("sendAgencyAutoReply — /contact variant", () => {
+  it("uses the exact /contact subject and body, with the first name only", async () => {
+    await sendAgencyAutoReply(validInput({ name: "Jordan Rivera", variant: "contact" }));
+    const [payload] = sendMock.mock.calls[0];
+
+    expect(payload.subject).toBe("Got your message, Jordan");
+    expect(payload.text).toBe(
+      [
+        "Hi Jordan,",
+        "",
+        "Thanks for getting in touch about your project.",
+        "",
+        "I'll read through what you sent and reply personally within one business day. If you'd rather talk it through sooner, you can book a time here:",
+        "https://calendly.com/almasumbd/discovery-call",
+        "",
+        "Masum",
+        "Outbound BD",
+      ].join("\n"),
+    );
+  });
+
+  it("shares the landing variant's sender, reply-to, plain text format and idempotency key", async () => {
+    vi.stubEnv("RESEND_REPLY_TO_EMAIL", "masum@outboundbd.com");
+    await sendAgencyAutoReply(validInput({ variant: "contact" }));
+    const [payload, options] = sendMock.mock.calls[0];
+    expect(payload.to).toBe("jordan@agency.com");
+    expect(payload.from).toBe(DEFAULT_FROM);
+    expect(payload.replyTo).toBe("masum@outboundbd.com");
+    expect(payload).not.toHaveProperty("html");
+    expect(options).toEqual({ idempotencyKey: "agency-auto-reply-64f000000000000000000456" });
+  });
+});
+
+describe("sendAgencyAutoReply — booking link", () => {
+  it("both variants link to CALENDLY_URL from site-config, always absolute", async () => {
+    await sendAgencyAutoReply(validInput());
+    await sendAgencyAutoReply(validInput({ variant: "contact" }));
+    for (const [payload] of sendMock.mock.calls) {
+      const lines = (payload.text as string).split("\n");
+      expect(lines).toContain(CALENDLY_URL);
+      expect(CALENDLY_URL).toMatch(/^https:\/\//);
+    }
   });
 });
 

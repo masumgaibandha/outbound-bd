@@ -231,11 +231,15 @@ describe("POST /api/inquiries — contact notification", () => {
     const response = await POST(postRequest(validPayload()));
     expect(response.status).toBe(201);
     expect(sawPersistedDocWhenSending).toBe(true);
-    expect(sendMock).toHaveBeenCalledTimes(1);
+    // One internal notification plus the visitor's auto-reply (see below).
+    expect(sendMock).toHaveBeenCalledTimes(2);
 
     const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
-    const [payload] = sendMock.mock.calls[0];
-    expect(payload.to).toBe("hello@outboundbd.com");
+    const notifications = sendMock.mock.calls
+      .map(([payload]) => payload)
+      .filter((payload) => payload.to === "hello@outboundbd.com");
+    expect(notifications).toHaveLength(1);
+    const [payload] = notifications;
     expect(payload.from).toBe("Outbound BD <notifications@updates.outboundbd.com>");
     expect(payload.replyTo).toBe("jordan@acme.com");
     expect(payload.html).toContain(String(saved?._id));
@@ -325,6 +329,123 @@ describe("POST /api/inquiries — contact notification", () => {
     expect(loggedText).not.toContain("Sensitive provider detail");
 
     errorSpy.mockRestore();
+  });
+});
+
+describe("POST /api/inquiries — auto-reply to the visitor", () => {
+  function stubEmailEnv() {
+    vi.stubEnv("RESEND_API_KEY", "test-resend-key");
+    vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
+    vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "hello@outboundbd.com");
+  }
+
+  function autoReplies() {
+    return sendMock.mock.calls
+      .map(([payload]) => payload)
+      .filter((payload) => payload.to === "jordan@acme.com");
+  }
+
+  it("sends the /contact auto-reply to the visitor after the inquiry is saved, with the landing pages' sender and plain text format", async () => {
+    stubEmailEnv();
+    let savedBeforeAutoReply = false;
+    sendMock.mockImplementation(async (payload: { to: string }) => {
+      if (payload.to === "jordan@acme.com") {
+        savedBeforeAutoReply = (await Inquiry.findOne({ email: "jordan@acme.com" })) !== null;
+      }
+      return { data: { id: "email_1" }, error: null };
+    });
+
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(savedBeforeAutoReply).toBe(true);
+
+    const replies = autoReplies();
+    expect(replies).toHaveLength(1);
+    const [reply] = replies;
+    expect(reply.from).toBe("Masum from Outbound BD <masum@updates.outboundbd.com>");
+    expect(reply).not.toHaveProperty("html");
+    expect(reply.subject).toBe("Got your message, Jordan");
+    expect(reply.text).toContain("Thanks for getting in touch about your project.");
+
+    const saved = await Inquiry.findOne({ email: "jordan@acme.com" });
+    const options = sendMock.mock.calls.find(([payload]) => payload.to === "jordan@acme.com")?.[1];
+    expect(options).toEqual({ idempotencyKey: `agency-auto-reply-${String(saved?._id)}` });
+  });
+
+  it("sends no auto-reply for a honeypot-tripped submission", async () => {
+    stubEmailEnv();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    await POST(postRequest(validPayload({ honeypot: "http://spam.example" })));
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no auto-reply for a submission that was too fast to be human", async () => {
+    stubEmailEnv();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    await POST(postRequest(validPayload({ startedAt: Date.now() })));
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no auto-reply for an invalid submission", async () => {
+    stubEmailEnv();
+    await POST(postRequest(validPayload({ email: "not-an-email" })));
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("sends no second auto-reply for a duplicate resubmission", async () => {
+    stubEmailEnv();
+    await POST(postRequest(validPayload()));
+    expect(autoReplies()).toHaveLength(1);
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const second = await POST(postRequest(validPayload()));
+    expect(second.status).toBe(201);
+    expect(autoReplies()).toHaveLength(1);
+    expect(JSON.parse(logSpy.mock.calls[0][0] as string)).toEqual({
+      event: "lead_submission_skipped",
+      route: "/api/inquiries",
+      reason: "duplicate",
+    });
+  });
+
+  it("never affects the response when the auto-reply fails, and logs only a non-sensitive diagnostic", async () => {
+    stubEmailEnv();
+    sendMock.mockImplementation(async (payload: { to: string }) =>
+      payload.to === "jordan@acme.com"
+        ? { data: null, error: { message: "Sensitive provider detail" } }
+        : { data: { id: "email_1" }, error: null },
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(((await response.json()) as { ok: boolean }).ok).toBe(true);
+    expect(await Inquiry.countDocuments({ email: "jordan@acme.com" })).toBe(1);
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const logged = errorSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(logged) as Record<string, unknown>;
+    expect(parsed).toEqual({
+      event: "agency_auto_reply_failed",
+      inquiryId: expect.any(String),
+      errorCode: "PROVIDER_ERROR",
+    });
+    expect(logged).not.toContain("Jordan");
+    expect(logged).not.toContain("jordan@acme.com");
+    expect(logged).not.toContain("Sensitive provider detail");
+  });
+
+  it("also never affects the response when the auto-reply send throws", async () => {
+    stubEmailEnv();
+    sendMock.mockImplementation(async (payload: { to: string }) => {
+      if (payload.to === "jordan@acme.com") throw new Error("network down");
+      return { data: { id: "email_1" }, error: null };
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(postRequest(validPayload()));
+    expect(response.status).toBe(201);
+    expect(await Inquiry.countDocuments({ email: "jordan@acme.com" })).toBe(1);
   });
 });
 

@@ -10,8 +10,10 @@ export const REQUEST_PROPOSAL_HREF = "/contact";
 // site-wide reads STRATEGY_CALL_HREF below rather than this constant
 // directly, so there is exactly one place to change it. If this is ever
 // cleared, STRATEGY_CALL_HREF falls back to the contact form — never fill
-// it with a placeholder, "#", or an example.com URL.
-const CALENDLY_URL = "https://calendly.com/almasumbd/discovery-call";
+// it with a placeholder, "#", or an example.com URL. Exported only for
+// the auto-reply emails (src/lib/agency-auto-reply.ts), which need an
+// absolute link and omit the booking line instead of using the fallback.
+export const CALENDLY_URL = "https://calendly.com/almasumbd/discovery-call";
 
 export const STRATEGY_CALL_HREF = CALENDLY_URL || REQUEST_PROPOSAL_HREF;
 
