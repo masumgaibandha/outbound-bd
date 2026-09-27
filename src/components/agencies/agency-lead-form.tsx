@@ -19,11 +19,12 @@ import { storeAgencyLeadPrefill } from "@/lib/agency-lead-prefill";
 import { AlertTriangleIcon, ChevronDownIcon } from "@/components/public/icons";
 import { buttonClass } from "@/components/public/button";
 import { BUDGET_RANGE_OPTIONS } from "@/lib/inquiry-schema";
+import { focusFirstInvalidField } from "@/lib/focus-first-invalid-field";
 import { readBrowserCookie } from "@/lib/tracking/browser-cookie";
 import { fireAgencyLeadPixelEvent } from "@/lib/tracking/fire-lead-pixel-event";
 
 const fieldClass =
-  "border-hairline bg-canvas text-ink placeholder:text-ink-muted/70 focus-visible:border-ink focus-visible:outline-action w-full rounded-lg border px-4 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2";
+  "border-hairline bg-canvas text-ink placeholder:text-ink-muted/70 focus-visible:border-ink focus-visible:outline-action w-full rounded-lg border px-4 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-[invalid=true]:border-error aria-[invalid=true]:focus-visible:border-error aria-[invalid=true]:focus-visible:outline-error";
 
 const selectFieldClass = `${fieldClass} appearance-none pr-9`;
 
@@ -77,6 +78,7 @@ export function AgencyLeadForm({ variant = "agencies" }: { variant?: LandingLead
         errors[key] ??= issue.message;
       }
       setFieldErrors(errors);
+      focusFirstInvalidField(form, errors);
       return;
     }
 
@@ -122,6 +124,7 @@ export function AgencyLeadForm({ variant = "agencies" }: { variant?: LandingLead
 
       if (response.status === 400 && payload?.fieldErrors) {
         setFieldErrors(payload.fieldErrors);
+        focusFirstInvalidField(form, payload.fieldErrors);
       }
 
       setTopLevelError(
@@ -306,7 +309,7 @@ export function AgencyLeadForm({ variant = "agencies" }: { variant?: LandingLead
           onChange={(event) => setPrivacyConsent(event.target.checked)}
           aria-invalid={Boolean(fieldErrors.privacyConsent)}
           aria-describedby={fieldErrors.privacyConsent ? "privacyConsent-error" : undefined}
-          className="border-hairline text-action focus-visible:outline-action mt-0.5 h-4 w-4 shrink-0 rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="border-hairline text-action focus-visible:outline-action aria-[invalid=true]:outline-error mt-0.5 h-4 w-4 shrink-0 rounded focus-visible:outline-2 focus-visible:outline-offset-2 aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-offset-2"
         />
         <div>
           <label htmlFor="privacyConsent" className="text-ink-muted text-sm">
@@ -320,7 +323,7 @@ export function AgencyLeadForm({ variant = "agencies" }: { variant?: LandingLead
             .
           </label>
           {fieldErrors.privacyConsent ? (
-            <p id="privacyConsent-error" role="alert" className="text-ink mt-1 text-sm font-medium">
+            <p id="privacyConsent-error" role="alert" className="text-error mt-1 text-sm font-medium">
               {fieldErrors.privacyConsent}
             </p>
           ) : null}
@@ -372,7 +375,7 @@ function Field({
       </label>
       <div className="mt-2">{children}</div>
       {error ? (
-        <p id={`${id}-error`} role="alert" className="text-ink mt-2 text-sm font-medium">
+        <p id={`${id}-error`} role="alert" className="text-error mt-2 text-sm font-medium">
           {error}
         </p>
       ) : null}

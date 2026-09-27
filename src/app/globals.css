@@ -35,6 +35,11 @@
   /* Lightened for legibility on dark bands. */
   --color-action-dark: #d4674a;
 
+  /* Deep brick crimson: form validation errors only (borders, messages).
+     Deliberately not the terracotta, so an error never reads as a CTA.
+     7.2:1 on surface, 7.0:1 on canvas, 6.4:1 on canvas-alt. */
+  --color-error: #a8202f;
+
   --color-ink: #1a1815;
   --color-ink-muted: #57534e;
   --color-hairline: #e7e1d4;
