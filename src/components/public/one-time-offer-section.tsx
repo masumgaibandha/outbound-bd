@@ -1,4 +1,6 @@
-import { ButtonLink } from "@/components/public/button";
+import Link from "next/link";
+
+import { ArrowRightIcon } from "@/components/public/icons";
 import {
   formatPriceCents,
   getCatalogContactHref,
@@ -19,24 +21,28 @@ export function OneTimeOfferSection({
       </h3>
       <div className="divide-hairline border-hairline mt-5 divide-y border-t border-b">
         {offers.map((offer) => (
-          <div
+          // The whole row is the link, so its accessible name is the offer
+          // name and price (plus the sr-only purpose); the arrow is decorative.
+          <Link
             key={offer.id}
-            className="flex flex-col gap-3 py-6 sm:flex-row sm:items-center sm:justify-between"
+            href={getCatalogContactHref(offer)}
+            className="group hover:bg-accent/40 focus-visible:outline-action flex items-center justify-between gap-4 px-3 py-6 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 motion-reduce:transition-none"
           >
             <div>
-              <p className="text-ink font-medium">{offer.name}</p>
+              <span className="sr-only">Request a proposal: </span>
+              <p className="text-ink group-hover:text-action group-focus-visible:text-action font-medium transition-colors motion-reduce:transition-none">
+                {offer.name}
+              </p>
               <p className="text-ink-muted mt-0.5 text-sm">
                 {formatPriceCents(offer.priceCents)} &middot; {offer.unit}
               </p>
             </div>
-            <ButtonLink
-              href={getCatalogContactHref(offer)}
-              tone="outline"
-              className="shrink-0"
-            >
-              Request a Proposal
-            </ButtonLink>
-          </div>
+            <ArrowRightIcon
+              width={18}
+              height={18}
+              className="text-ink-muted group-hover:text-action group-focus-visible:text-action shrink-0 transition-[color,transform] duration-200 group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-focus-visible:translate-x-0"
+            />
+          </Link>
         ))}
       </div>
     </div>

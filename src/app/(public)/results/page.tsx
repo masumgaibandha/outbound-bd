@@ -5,7 +5,6 @@ import { campaignEvidence } from "@/components/public/campaign-evidence-data";
 import { CampaignEvidenceSection } from "@/components/public/campaign-evidence-section";
 import { Container } from "@/components/public/container";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
-import { ResultsSection } from "@/components/public/results-section";
 import { Section } from "@/components/public/section";
 import { SectionHeading } from "@/components/public/section-heading";
 import { TestimonialsGrid } from "@/components/public/testimonials-grid";
@@ -14,7 +13,7 @@ import { testimonials } from "@/components/public/testimonials-data";
 export const metadata: Metadata = {
   title: "Results",
   description:
-    "Real evidence from Abdullah Al Masum's independent client work, plus how Outbound BD publishes agency case studies as engagements complete.",
+    "Real evidence from Abdullah Al Masum's independent client work: campaign performance, inbox placement, sender infrastructure, and verified client feedback.",
 };
 
 export default function ResultsPage() {
@@ -30,8 +29,8 @@ export default function ResultsPage() {
           </h1>
           <p className="text-ink-muted mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-pretty">
             We only publish a metric once the client who ran the campaign has
-            reviewed and approved it. Here&apos;s what real evidence exists
-            today, and how each future case study will be added.
+            reviewed and approved it. Here&apos;s the real evidence that
+            exists today.
           </p>
         </Container>
       </section>
@@ -41,20 +40,16 @@ export default function ResultsPage() {
           eyebrow="Available today"
           title="Selected results from Abdullah Al Masum's independent client work"
           description="The same discipline every Outbound BD engagement is run on: campaign performance, inbox-placement tests, and sender infrastructure, each shown on its own terms."
-          align="left"
         />
         <div className="mt-14">
           <CampaignEvidenceSection items={campaignEvidence} />
         </div>
       </Section>
 
-      <ResultsSection />
-
       <Section tone="canvas" labelledBy="testimonials-heading">
         <SectionHeading
           eyebrow="Client feedback"
           title="Verified client feedback from Abdullah Al Masum"
-          align="left"
         />
         <div className="mt-14">
           <TestimonialsGrid items={testimonials} />
