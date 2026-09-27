@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ChevronDownIcon } from "@/components/public/icons";
 import type { FaqEntry } from "@/components/public/faq-data";
 import { Section, type SectionTone } from "@/components/public/section";
@@ -31,6 +33,14 @@ export function FaqCategorySection({ id, label, items, tone = "canvas" }: FaqCat
               <p className="text-ink-muted mt-3 pr-8 text-sm leading-relaxed">
                 {faq.answer}
               </p>
+              {faq.link ? (
+                <Link
+                  href={faq.link.href}
+                  className="text-ink decoration-action hover:text-action focus-visible:outline-action mt-3 inline-block rounded-sm text-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
+                >
+                  {faq.link.label} <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
             </details>
           ))}
         </div>

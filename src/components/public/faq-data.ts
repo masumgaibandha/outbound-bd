@@ -24,6 +24,8 @@ export type FaqEntry = {
   category: FaqCategoryId;
   question: string;
   answer: string;
+  /** Optional follow-up link rendered after the answer on /faq. Answers stay plain text. */
+  link?: { href: string; label: string };
 };
 
 // Single source of truth for FAQ content. The homepage teaser and individual
@@ -64,7 +66,7 @@ export const FAQS: FaqEntry[] = [
     category: "timelines",
     question: "How quickly can we expect results?",
     answer:
-      "Most programs launch within two to three weeks of kickoff, covering ICP definition, list build, and infrastructure warm-up. Reply and meeting volume typically builds over the following weeks as sequences are tested and refined. The exact pace depends on your market and list size.",
+      "Most programs send their first emails around week 3 of kickoff, after ICP definition, list build, and infrastructure warm-up. Reply and meeting volume typically builds over the following weeks as sequences are tested and refined. The exact pace depends on your market and list size.",
   },
   {
     id: "timelines-warmup",
@@ -78,7 +80,7 @@ export const FAQS: FaqEntry[] = [
     category: "deliverability",
     question: "How do you protect our sender reputation?",
     answer:
-      "Every client sends from dedicated domains and mailboxes, never a shared pool. We stage warm-up carefully, monitor bounce and spam-complaint rates daily, and pull back volume automatically if deliverability signals dip.",
+      "Every client sends from dedicated domains and mailboxes, never a shared pool. We stage warm-up carefully, watch bounce and spam-complaint rates daily, and pull back volume by hand when deliverability signals dip.",
   },
   {
     id: "deliverability-blocklist",
@@ -127,7 +129,7 @@ export const FAQS: FaqEntry[] = [
     category: "support",
     question: "Who will we be working with day to day?",
     answer:
-      "Every account is run by an experienced outbound operator who understands your market, not a rotating cast of contractors. You have a direct line to the person actually running your program.",
+      "Masum runs every account personally, never a rotating cast of contractors. You have a direct line to the person actually running your program.",
   },
   {
     id: "support-pause-adjust",
@@ -155,7 +157,8 @@ export const FAQS: FaqEntry[] = [
     category: "results",
     question: "Do you have case studies or client results we can see?",
     answer:
-      "Not yet published. We only share performance figures once a client has reviewed and approved them for release. You can see the format each case study will follow on the homepage's Results section, and we're happy to discuss reference conversations directly on a call.",
+      "Yes. The Results page shows published evidence from Abdullah Al Masum's client work: campaign performance, inbox placement tests, and verified client feedback. Full client case studies are added once an engagement is complete and the client has approved the figures for release.",
+    link: { href: "/results", label: "See the results" },
   },
 ];
 
