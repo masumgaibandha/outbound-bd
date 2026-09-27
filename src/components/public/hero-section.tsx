@@ -5,8 +5,8 @@ import founderPortrait from "@/assets/founder/abdullah-al-masum-portrait.webp";
 import { ButtonLink } from "@/components/public/button";
 import { Container } from "@/components/public/container";
 import { founderStats } from "@/components/public/founder-stats";
+import { HOME_HERO_SECONDARY_CTA } from "@/components/public/home-copy";
 import {
-  REQUEST_PROPOSAL_HREF,
   STRATEGY_CALL_HREF,
   STRATEGY_CALL_LABEL,
   STRATEGY_CALL_LINK_PROPS,
@@ -57,15 +57,10 @@ export function HeroSection() {
               >
                 {STRATEGY_CALL_LABEL}
               </ButtonLink>
-              <ButtonLink href={REQUEST_PROPOSAL_HREF} tone="outline" size="lg">
-                Request a Proposal
+              <ButtonLink href={HOME_HERO_SECONDARY_CTA.href} tone="outline" size="lg">
+                {HOME_HERO_SECONDARY_CTA.label}
               </ButtonLink>
             </div>
-
-            <p className="text-ink-muted mt-6 text-sm">
-              No purchased lists. No spray-and-pray. Every send is targeted,
-              reviewed, and accountable to a real pipeline number.
-            </p>
           </div>
 
           <div className="relative">

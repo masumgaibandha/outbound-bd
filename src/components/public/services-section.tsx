@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowRightIcon, CheckIcon } from "@/components/public/icons";
+import { ArrowRightIcon } from "@/components/public/icons";
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
 import { SERVICES } from "@/components/public/services-data";
@@ -30,26 +30,9 @@ export function ServicesSection() {
               <h3 className="font-heading text-ink mt-3 text-2xl tracking-tight">
                 {service.navLabel}
               </h3>
-              <p className="text-ink-muted mt-4 leading-relaxed">
+              <p className="text-ink-muted mt-4 flex-1 leading-relaxed">
                 {service.shortDescription}
               </p>
-
-              <ul className="mt-6 flex-1 space-y-2.5">
-                {service.deliverables.slice(0, 4).map((item) => (
-                  <li
-                    key={item.title}
-                    className="flex items-start gap-2.5 text-sm"
-                  >
-                    <CheckIcon
-                      width={16}
-                      height={16}
-                      className="text-action mt-0.5 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="text-ink">{item.title}</span>
-                  </li>
-                ))}
-              </ul>
 
               <span className="text-action group-hover:text-action-hover mt-7 inline-flex items-center gap-2 text-sm font-medium">
                 Learn more

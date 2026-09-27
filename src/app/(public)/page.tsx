@@ -1,6 +1,7 @@
 import { CampaignEvidencePreviewSection } from "@/components/public/campaign-evidence-preview-section";
 import { FinalCtaSection } from "@/components/public/final-cta-section";
 import { HeroSection } from "@/components/public/hero-section";
+import { HomeWhyFailsSection } from "@/components/public/home-why-fails-section";
 import { PricingTeaserSection } from "@/components/public/pricing-teaser-section";
 import { ProcessSection } from "@/components/public/process-section";
 import { ServicesSection } from "@/components/public/services-section";
@@ -11,8 +12,9 @@ export default function HomePage() {
     <>
       <HeroSection />
       <ServicesSection />
-      <ProcessSection compact />
+      <HomeWhyFailsSection />
       <CampaignEvidencePreviewSection />
+      <ProcessSection compact />
       <TestimonialsSection />
       <PricingTeaserSection />
       <FinalCtaSection />

@@ -52,7 +52,7 @@ export function CampaignEvidenceSection({ items }: CampaignEvidenceSectionProps)
                   )}
                 >
                   <Image
-                    src={item.src}
+                    src={item.cardSrc ?? item.src}
                     alt=""
                     unoptimized
                     className="h-auto w-full rounded-md"

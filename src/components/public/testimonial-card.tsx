@@ -7,10 +7,15 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         <span className="sr-only">Reviewed on </span>
         {testimonial.source}
       </span>
-      <blockquote className="text-ink leading-relaxed">
+      {/*
+       * The quote, not the caption's margin, absorbs a row's spare height.
+       * A `md:mt-auto` caption collapsed to 0 in the taller card of each
+       * row, leaving the last quote line flush against the divider.
+       */}
+      <blockquote className="text-ink leading-relaxed md:flex-1">
         <p>&ldquo;{testimonial.quote}&rdquo;</p>
       </blockquote>
-      <figcaption className="border-hairline mt-6 border-t pt-5 md:mt-auto">
+      <figcaption className="border-hairline mt-6 border-t pt-5">
         <span className="text-ink block text-sm font-medium">
           Verified client feedback from Abdullah Al Masum
         </span>

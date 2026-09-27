@@ -8,25 +8,25 @@ const STEPS = [
     number: "01",
     title: "Discover",
     description:
-      "We map your ideal-customer profile, offer, and competitive position in a working session with your team.",
+      "We map your ideal-customer profile and offer with your team, then source and verify a prospect list that matches it.",
   },
   {
     number: "02",
     title: "Build",
     description:
-      "We source and verify your prospect list, stand up dedicated sending infrastructure, and write your first sequences.",
+      "We stand up dedicated sending domains and inboxes, authenticate them, and warm them before anything goes out.",
   },
   {
     number: "03",
     title: "Launch",
     description:
-      "Sequences go live on a warmed, monitored inbox setup. Every send is tracked against deliverability and reply signals.",
+      "We write your sequences and go live, testing subject lines, angles, and offers against real reply data.",
   },
   {
     number: "04",
     title: "Optimize",
     description:
-      "We test subject lines, angles, and offers against real reply data, and reallocate volume toward what's converting.",
+      "We monitor deliverability and reply signals on every send, and reallocate volume toward what's converting.",
   },
   {
     number: "05",
@@ -45,7 +45,7 @@ export function ProcessSection({ compact = false }: ProcessSectionProps) {
   const steps = compact ? STEPS.slice(0, 4) : STEPS;
 
   return (
-    <Section id="process" tone="canvas" labelledBy="process-heading">
+    <Section id="process" tone="canvas" labelledBy="process-heading" compact={compact}>
       <SectionHeading
         eyebrow="How we work"
         title="A disciplined process, not a black box"

@@ -7,8 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // isNavLinkActive() then dereferences. Stubbing it is the standard way to
 // unit-test a component that only needs "some current pathname", not real
 // router behavior.
+// Mutable so one test can render the homepage, where the banner is hidden;
+// every other test renders a non-home agency page, where it still shows.
+let mockPathname = "/services";
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/",
+  usePathname: () => mockPathname,
 }));
 
 // Logo renders 6 static PNG imports through next/image. Vite's default
@@ -32,6 +35,7 @@ function renderLayout() {
 
 beforeEach(() => {
   vi.unstubAllEnvs();
+  mockPathname = "/services";
 });
 
 afterEach(() => {
@@ -55,6 +59,24 @@ describe("PublicLayout — masterclass announcement banner gating", () => {
     // vi.unstubAllEnvs() in beforeEach already leaves it unset.
     renderLayout();
     expect(screen.queryByRole("region", { name: "Masterclass announcement" })).not.toBeInTheDocument();
+  });
+
+  it("hides the banner on the homepage only, even with the flag on", () => {
+    vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "true");
+    mockPathname = "/";
+    renderLayout();
+    expect(screen.queryByRole("region", { name: "Masterclass announcement" })).not.toBeInTheDocument();
+    expect(screen.getByText("page content")).toBeInTheDocument();
+  });
+
+  it("still renders the banner on other agency pages", () => {
+    vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "true");
+    for (const pathname of ["/services", "/pricing", "/contact", "/about"]) {
+      mockPathname = pathname;
+      const { unmount } = renderLayout();
+      expect(screen.getByRole("region", { name: "Masterclass announcement" })).toBeInTheDocument();
+      unmount();
+    }
   });
 
   it("renders no banner markup for any invalid/truthy-looking-but-wrong value", () => {

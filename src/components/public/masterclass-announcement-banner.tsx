@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Container } from "@/components/public/container";
 import { XIcon } from "@/components/public/icons";
@@ -17,10 +18,15 @@ const MASTERCLASS_HREF = `/masterclass/${masterclassSlug}`;
  * Client Component). Dismissal is local `useState`, intentionally lost on
  * reload/navigation to a fresh document — no cookie, no localStorage, no
  * tracking.
+ *
+ * Hidden on the homepage only, which stays a focused agency page; every
+ * other agency page and the 404 still show it. The pathname is known at
+ * prerender time, so this keeps pages static and never flashes.
  */
 export function MasterclassAnnouncementBanner() {
+  const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
+  if (dismissed || pathname === "/") return null;
 
   const dateLabel = formatClassDatesEn(classDates.day1, classDates.day2);
 

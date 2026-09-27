@@ -77,6 +77,11 @@ export type CampaignEvidenceItem = {
   category: EvidenceCategory;
   caption: string;
   note?: string;
+  /**
+   * Optional tighter crop for the card thumbnail only (the lightbox always
+   * shows `src`). Set by the homepage from the /cold-email card crops.
+   */
+  cardSrc?: StaticImageData;
   /** Shown on the homepage teaser; the full set is /results-only. */
   featured?: boolean;
 };
@@ -129,6 +134,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     caption:
       "127,149 sequence starts generated 140 opportunities. Instantly reported a 78.65% Positive Reply Rate among replies, not an overall campaign reply rate.",
     note: "An exceptional individual result, not a typical or guaranteed outcome. Most campaigns perform closer to the other examples shown here. Platform-assigned monetary value hidden because it is not verified revenue.",
+    featured: true,
   },
   {
     id: "campaign-result-smartlead",
@@ -138,6 +144,7 @@ export const campaignEvidence: readonly CampaignEvidenceItem[] = [
     category: "infrastructure",
     caption:
       "Sender warm-up health on Smartlead: 42 of 42 warm-up emails landed in the inbox in this snapshot, with zero flagged as spam, the kind of ongoing infrastructure monitoring every managed inbox gets.",
+    featured: true,
   },
 ];
 

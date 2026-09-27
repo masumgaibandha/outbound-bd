@@ -1,38 +1,30 @@
-import Link from "next/link";
-
-import { PricingPlanCard } from "@/components/public/pricing-plan-card";
+import { ButtonLink } from "@/components/public/button";
+import { HOME_PRICING } from "@/components/public/home-copy";
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
-import { MANAGED_PLANS } from "@/lib/pricing-catalog";
+import { getStartingMonthlyPriceLabel } from "@/lib/pricing-catalog";
 
 /**
- * Homepage pricing guidance — starting points to qualify a prospect before
- * they reach the full /pricing page, not a purchase flow.
+ * Homepage pricing overview: one starting price, read from the catalog, and
+ * a route to the full plan cards on /pricing. Guidance, not a purchase flow.
  */
 export function PricingTeaserSection() {
   return (
-    <Section id="pricing" tone="canvas" labelledBy="pricing-heading">
-      <SectionHeading
-        eyebrow="Pricing guidance"
-        title="Starting points for a managed program"
-        description="Every engagement is scoped on a call. These are transparent starting prices, not instant checkout prices."
-      />
+    <Section id="pricing" tone="canvas" labelledBy="pricing-heading" compact>
+      <div id="pricing-heading">
+        <SectionHeading eyebrow={HOME_PRICING.eyebrow} title={HOME_PRICING.heading} />
+      </div>
 
-      <ul className="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
-        {MANAGED_PLANS.map((plan) => (
-          <li key={plan.id} className="flex h-full" data-reveal>
-            <PricingPlanCard plan={plan} />
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8 text-center">
-        <Link
-          href="/pricing"
-          className="text-ink decoration-action hover:text-action focus-visible:outline-action rounded-sm text-sm font-medium underline decoration-2 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
-        >
-          See full pricing guidance →
-        </Link>
+      <div className="mx-auto mt-6 max-w-2xl text-center" data-reveal>
+        <p className="text-ink text-lg leading-relaxed md:text-xl" data-testid="home-pricing-starting">
+          {HOME_PRICING.startingLine(getStartingMonthlyPriceLabel())}
+        </p>
+        <p className="text-ink-muted mt-3 text-sm leading-relaxed">{HOME_PRICING.notIncluded}</p>
+        <div className="mt-8">
+          <ButtonLink href={HOME_PRICING.ctaHref} tone="outline" size="lg">
+            {HOME_PRICING.ctaLabel}
+          </ButtonLink>
+        </div>
       </div>
     </Section>
   );

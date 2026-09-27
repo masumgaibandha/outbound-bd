@@ -84,4 +84,11 @@ describe("NotFound (root 404 page)", () => {
     render(<NotFound />);
     expect(screen.queryByRole("region", { name: "Masterclass announcement" })).not.toBeInTheDocument();
   });
+
+  it("still shows the masterclass announcement banner while registration is open", () => {
+    // Only the homepage hides it; a 404 is never "/".
+    vi.stubEnv("MASTERCLASS_REGISTRATION_ENABLED", "true");
+    render(<NotFound />);
+    expect(screen.getByRole("region", { name: "Masterclass announcement" })).toBeInTheDocument();
+  });
 });

@@ -1,9 +1,32 @@
 import Link from "next/link";
 
-import { getFeaturedEvidence } from "@/components/public/campaign-evidence-data";
+import { COLD_EMAIL_PROOF_ITEMS } from "@/components/cold-email/cold-email-copy";
+import {
+  getFeaturedEvidence,
+  type CampaignEvidenceItem,
+} from "@/components/public/campaign-evidence-data";
 import { CampaignEvidenceSection } from "@/components/public/campaign-evidence-section";
 import { SectionHeading } from "@/components/public/section-heading";
 import { Section } from "@/components/public/section";
+
+// The two items added to the homepage from /cold-email use its shorter,
+// verified captions. The original two keep their own captions, which carry
+// the "platform-reported" open-rate wording. Every item keeps its note.
+const COLD_EMAIL_CAPTION_IDS = new Set(["instantly-campaign-result-2", "campaign-result-smartlead"]);
+
+/** Featured evidence with the /cold-email card crops (and, where listed above, captions) joined in by id. */
+export function getHomeEvidence(): CampaignEvidenceItem[] {
+  const coldEmailById = new Map(COLD_EMAIL_PROOF_ITEMS.map((item) => [item.id, item]));
+  return getFeaturedEvidence().map((item) => {
+    const coldEmail = coldEmailById.get(item.id);
+    if (!coldEmail) return item;
+    return {
+      ...item,
+      cardSrc: coldEmail.cardSrc,
+      caption: COLD_EMAIL_CAPTION_IDS.has(item.id) ? coldEmail.caption : item.caption,
+    };
+  });
+}
 
 /**
  * Homepage's single Results section — real evidence from the founder's
@@ -13,7 +36,7 @@ import { Section } from "@/components/public/section";
  */
 export function CampaignEvidencePreviewSection() {
   return (
-    <Section id="results" tone="canvas" labelledBy="results-heading">
+    <Section id="results" tone="canvasAlt" labelledBy="results-heading">
       <SectionHeading
         eyebrow="Results"
         title="Real evidence from real outreach work"
@@ -21,7 +44,7 @@ export function CampaignEvidencePreviewSection() {
       />
 
       <div className="mt-14">
-        <CampaignEvidenceSection items={getFeaturedEvidence()} />
+        <CampaignEvidenceSection items={getHomeEvidence()} />
       </div>
 
       <div className="border-hairline mt-10 flex flex-col gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
