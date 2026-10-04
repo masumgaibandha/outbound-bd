@@ -398,10 +398,10 @@ export const registrationForm = {
   turnstileWidgetError:
     "যাচাইকরণ লোড করা যায়নি। অনুগ্রহ করে পেজ রিফ্রেশ করে আবার চেষ্টা করুন।",
   genericError:
-    "দুঃখিত, অনুরোধটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
+    "দুঃখিত, অনুরোধটি সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন, অথবা masum@masumdev.com-এ যোগাযোগ করুন।",
   /* REGISTRATION_CONFLICT — the submitted email is already registered under a different phone number. Rotating the idempotency key would not fix this, so the message asks for a data correction or direct contact instead of "try again." */
   registrationConflictError:
-    "এই ইমেইল দিয়ে ভিন্ন তথ্যসহ ইতিমধ্যে একটি রেজিস্ট্রেশন আছে। অনুগ্রহ করে আপনার ইমেইল ও মোবাইল নম্বর যাচাই করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
+    "এই ইমেইল দিয়ে ভিন্ন তথ্যসহ ইতিমধ্যে একটি রেজিস্ট্রেশন আছে। অনুগ্রহ করে আপনার ইমেইল ও মোবাইল নম্বর যাচাই করুন, অথবা masum@masumdev.com-এ যোগাযোগ করুন।",
   /* IDEMPOTENCY_CONFLICT — the previous idempotency key is now invalid; the next submit must use a fresh one, so this explicitly invites a retry. */
   idempotencyConflictError:
     'একটি সাময়িক সমস্যা হয়েছে। অনুগ্রহ করে আবার "এখনই ভর্তি হোন" বাটনে চাপ দিন।',
@@ -443,9 +443,9 @@ export const registrationForm = {
   changeMethodLabel: "মাধ্যম পরিবর্তন করুন",
   /* DUPLICATE_TRANSACTION_ID — this exact TxID is already recorded against another order. */
   duplicateTransactionError:
-    "এই Transaction ID ইতিমধ্যে অন্য একটি রেজিস্ট্রেশনে ব্যবহৃত হয়েছে। অনুগ্রহ করে আইডিটি আবার যাচাই করুন, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।",
+    "এই Transaction ID ইতিমধ্যে অন্য একটি রেজিস্ট্রেশনে ব্যবহৃত হয়েছে। অনুগ্রহ করে আইডিটি আবার যাচাই করুন, অথবা masum@masumdev.com-এ যোগাযোগ করুন।",
   orderNotEditableError:
-    "এই রেজিস্ট্রেশনের পেমেন্ট ইতিমধ্যে প্রক্রিয়া করা হয়েছে। প্রশ্ন থাকলে hello@outboundbd.com-এ যোগাযোগ করুন।",
+    "এই রেজিস্ট্রেশনের পেমেন্ট ইতিমধ্যে প্রক্রিয়া করা হয়েছে। প্রশ্ন থাকলে masum@masumdev.com-এ যোগাযোগ করুন।",
   /* Toasts — supplementary to the inline messages above, never a replacement for them. */
   paymentSuccessToast:
     "পেমেন্ট তথ্য সফলভাবে জমা হয়েছে। যাচাই শেষে আপনাকে ইমেইলে জানানো হবে।",

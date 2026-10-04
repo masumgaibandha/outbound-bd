@@ -51,7 +51,7 @@ function postRequest(body: unknown, headers: Record<string, string> = {}) {
 function stubEmailEnv() {
   vi.stubEnv("RESEND_API_KEY", "test-resend-key");
   vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
-  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "hello@outboundbd.com");
+  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "masum@masumdev.com");
 }
 
 function stubCapiEnv() {
@@ -274,7 +274,7 @@ describe("POST /api/agencies-lead — internal notification and auto-reply", () 
     expect(sendMock).toHaveBeenCalledTimes(2);
 
     const [notificationPayload] = sendMock.mock.calls[0];
-    expect(notificationPayload.to).toBe("hello@outboundbd.com");
+    expect(notificationPayload.to).toBe("masum@masumdev.com");
     expect(notificationPayload.subject).toContain("agencies landing");
 
     const [autoReplyPayload] = sendMock.mock.calls[1];

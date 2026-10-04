@@ -1,6 +1,6 @@
 import { SERVICES } from "@/components/public/services-data";
 
-export const CONTACT_EMAIL = "hello@outboundbd.com";
+export const CONTACT_EMAIL = "masum@masumdev.com";
 
 // Outbound BD is consultation-led, not self-serve checkout: every pricing
 // and service CTA routes here rather than to a purchase flow.

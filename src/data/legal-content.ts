@@ -57,7 +57,7 @@ export const privacyPolicy: LegalPageContent = {
       id: "who-we-are",
       heading: "১. কে এই সার্ভিস পরিচালনা করে",
       paragraphs: [
-        "এই মাস্টারক্লাস ও ওয়েবসাইট outboundbd.com পরিচালনা করেন আব্দুল্লাহ আল মাসুম, একজন স্বাধীন freelancer, বাংলাদেশ থেকে। যেকোনো প্রশ্নের জন্য hello@outboundbd.com-এ যোগাযোগ করা যাবে।",
+        "এই মাস্টারক্লাস ও ওয়েবসাইট outboundbd.com পরিচালনা করেন আব্দুল্লাহ আল মাসুম, একজন স্বাধীন freelancer, বাংলাদেশ থেকে। যেকোনো প্রশ্নের জন্য masum@masumdev.com-এ যোগাযোগ করা যাবে।",
       ],
     },
     {
@@ -149,7 +149,7 @@ export const privacyPolicy: LegalPageContent = {
       id: "rights-contact",
       heading: "১০. প্রয়োজনীয় প্রক্রিয়াকরণ বনাম ঐচ্ছিক Marketing",
       paragraphs: [
-        "উপরের অধিকারগুলো ব্যবহার করতে hello@outboundbd.com-এ যোগাযোগ করুন। রেজিস্ট্রেশন ও পেমেন্ট সম্পন্ন করার জন্য প্রয়োজনীয় তথ্য প্রক্রিয়াকরণ ঐচ্ছিক marketing consent থেকে সম্পূর্ণ আলাদা—marketing consent প্রত্যাহার করলেও আপনার রেজিস্ট্রেশন রেকর্ড প্রভাবিত হয় না।",
+        "উপরের অধিকারগুলো ব্যবহার করতে masum@masumdev.com-এ যোগাযোগ করুন। রেজিস্ট্রেশন ও পেমেন্ট সম্পন্ন করার জন্য প্রয়োজনীয় তথ্য প্রক্রিয়াকরণ ঐচ্ছিক marketing consent থেকে সম্পূর্ণ আলাদা—marketing consent প্রত্যাহার করলেও আপনার রেজিস্ট্রেশন রেকর্ড প্রভাবিত হয় না।",
       ],
     },
     {
@@ -171,7 +171,7 @@ export const privacyPolicy: LegalPageContent = {
     {
       id: "updates-privacy",
       heading: "১৩. পরিবর্তন ও যোগাযোগ",
-      paragraphs: [legalMeta.updateNotice, `প্রশ্ন থাকলে যোগাযোগ করুন: hello@outboundbd.com`],
+      paragraphs: [legalMeta.updateNotice, `প্রশ্ন থাকলে যোগাযোগ করুন: masum@masumdev.com`],
     },
   ],
 };
@@ -295,7 +295,7 @@ export const termsAndConditions: LegalPageContent = {
     {
       id: "updates-terms",
       heading: "১৫. পরিবর্তন ও যোগাযোগ",
-      paragraphs: [legalMeta.updateNotice, "প্রশ্ন থাকলে যোগাযোগ করুন: hello@outboundbd.com"],
+      paragraphs: [legalMeta.updateNotice, "প্রশ্ন থাকলে যোগাযোগ করুন: masum@masumdev.com"],
     },
   ],
 };
@@ -371,7 +371,7 @@ export const refundPolicy: LegalPageContent = {
       id: "how-to-request",
       heading: "৮. রিফান্ডের জন্য কীভাবে যোগাযোগ করবেন",
       paragraphs: [
-        "রিফান্ড অনুরোধ করতে hello@outboundbd.com-এ ইমেইল করুন এবং সঙ্গে দিন আপনার রেজিস্ট্রেশনে ব্যবহৃত ইমেইল ঠিকানা এবং একটি নিরাপদ payment reference (যেমন transaction ID)।",
+        "রিফান্ড অনুরোধ করতে masum@masumdev.com-এ ইমেইল করুন এবং সঙ্গে দিন আপনার রেজিস্ট্রেশনে ব্যবহৃত ইমেইল ঠিকানা এবং একটি নিরাপদ payment reference (যেমন transaction ID)।",
         "গুরুত্বপূর্ণ: আমরা কখনোই আপনার PIN, OTP বা সম্পূর্ণ card তথ্য ইমেইলে পাঠাতে বলব না। এই ধরনের তথ্য কখনো শেয়ার করবেন না।",
       ],
     },
@@ -395,7 +395,7 @@ export const refundPolicy: LegalPageContent = {
       paragraphs: [
         "সম্পূর্ণ শর্তাবলীর জন্য Terms and Conditions এবং তথ্য সংক্রান্ত বিস্তারিত জানতে Privacy Policy দেখুন।",
         legalMeta.updateNotice,
-        "প্রশ্ন থাকলে যোগাযোগ করুন: hello@outboundbd.com",
+        "প্রশ্ন থাকলে যোগাযোগ করুন: masum@masumdev.com",
       ],
     },
   ],

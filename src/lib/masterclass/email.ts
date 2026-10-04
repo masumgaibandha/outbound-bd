@@ -59,7 +59,7 @@ function buildEmailBody(input: ConfirmationEmailInput): { subject: string; html:
         <tr><td style="padding: 6px 0; color: #57534e;">ক্লাসের তারিখ</td><td style="padding: 6px 0; text-align: right; font-weight: 600;">${input.classDateLabel}</td></tr>
       </table>
       <p>ক্লাসে যোগ দেওয়ার জন্য প্রয়োজনীয় live link ক্লাস শুরুর আগে এই ইমেইলেই আলাদাভাবে পাঠানো হবে।</p>
-      <p>কোনো প্রশ্ন থাকলে সরাসরি এই ইমেইলে reply করুন অথবা hello@outboundbd.com-এ যোগাযোগ করুন।</p>
+      <p>কোনো প্রশ্ন থাকলে সরাসরি এই ইমেইলে reply করুন অথবা masum@masumdev.com-এ যোগাযোগ করুন।</p>
       <p>ধন্যবাদ,<br />Outbound BD</p>
     </div>
   `.trim();
@@ -94,7 +94,7 @@ function buildRejectionEmailBody(input: RejectionEmailInput): { subject: string;
         <tr><td style="padding: 6px 0; color: #57534e;">রেজিস্ট্রেশন আইডি</td><td style="padding: 6px 0; text-align: right; font-weight: 600;">${registrationRef}</td></tr>
       </table>
       <p><strong>এই মুহূর্তে আপনার রেজিস্ট্রেশন এখনো কনফার্ম হয়নি।</strong></p>
-      <p>অনুগ্রহ করে আপনার পাঠানো পেমেন্টের তথ্য (নম্বর ও Transaction/Reference ID) আরেকবার যাচাই করুন এবং এই ইমেইলেই সরাসরি reply করে আমাদের জানান, অথবা hello@outboundbd.com-এ যোগাযোগ করুন।</p>
+      <p>অনুগ্রহ করে আপনার পাঠানো পেমেন্টের তথ্য (নম্বর ও Transaction/Reference ID) আরেকবার যাচাই করুন এবং এই ইমেইলেই সরাসরি reply করে আমাদের জানান, অথবা masum@masumdev.com-এ যোগাযোগ করুন।</p>
       <p>ধন্যবাদ,<br />Outbound BD</p>
     </div>
   `.trim();

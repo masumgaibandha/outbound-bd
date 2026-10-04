@@ -31,7 +31,7 @@ beforeEach(() => {
   vi.unstubAllEnvs();
   vi.stubEnv("RESEND_API_KEY", "test-resend-key");
   vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
-  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "hello@outboundbd.com");
+  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "masum@masumdev.com");
 });
 
 afterEach(() => {
@@ -45,7 +45,7 @@ describe("sendContactNotification — configuration sourcing", () => {
     expect(sendMock).toHaveBeenCalledTimes(1);
 
     const [payload] = sendMock.mock.calls[0];
-    expect(payload.to).toBe("hello@outboundbd.com");
+    expect(payload.to).toBe("masum@masumdev.com");
     expect(payload.from).toBe("Outbound BD <notifications@updates.outboundbd.com>");
     expect(payload.replyTo).toBe("jordan@acme.com");
   });

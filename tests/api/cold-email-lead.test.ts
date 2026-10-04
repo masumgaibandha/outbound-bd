@@ -53,7 +53,7 @@ const coldEmailRequest = (body: unknown, headers: Record<string, string> = {}) =
 function stubEmailEnv() {
   vi.stubEnv("RESEND_API_KEY", "test-resend-key");
   vi.stubEnv("RESEND_FROM_EMAIL", "Outbound BD <notifications@updates.outboundbd.com>");
-  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "hello@outboundbd.com");
+  vi.stubEnv("CONTACT_NOTIFICATION_EMAIL", "masum@masumdev.com");
 }
 
 beforeAll(async () => {
@@ -179,7 +179,7 @@ describe("POST /api/cold-email-lead", () => {
     expect(autoReply?.text).toContain("Thanks for reaching out about cold email for your business.");
     expect(autoReply?.text).not.toContain("your agency");
 
-    const notification = payloads.find((payload) => payload.to === "hello@outboundbd.com");
+    const notification = payloads.find((payload) => payload.to === "masum@masumdev.com");
     expect(notification?.subject).toBe("New cold email landing lead - Sam Founder");
     expect(notification?.text).toContain("Source: Cold email landing page");
     expect(notification?.text).toContain("Team size: 2 to 10");
